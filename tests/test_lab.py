@@ -147,9 +147,7 @@ def test_triposg_blocked_without_install(tmp_path, monkeypatch):
 
 def _fake_triposg(root, with_torch: bool):
     """A stand-in TripoSG checkout for testing the subprocess plumbing only."""
-    (root / "triposg" / "pipelines").mkdir(parents=True)
-    (root / "triposg" / "__init__.py").write_text("")
-    (root / "triposg" / "pipelines" / "__init__.py").write_text("")
+    (root / "triposg" / "pipelines").mkdir(parents=True)  # no __init__.py: a namespace package, as upstream
     (root / "triposg" / "pipelines" / "pipeline_triposg.py").write_text(textwrap.dedent("""
         import numpy as np
         class _Out:
@@ -162,7 +160,10 @@ def _fake_triposg(root, with_torch: bool):
             @classmethod
             def from_pretrained(cls, path): return cls()
             def to(self, *a): return self
-            def __call__(self, **kw): return _Out()
+            def __call__(self, **kw):
+                import sys
+                print('\\u258d', file=sys.stderr)  # tqdm bar glyph: byte 0x8d is not in cp1252
+                return _Out()
         """))
     (root / "scripts").mkdir()
     (root / "scripts" / "image_process.py").write_text("def prepare_image(p, bg_color, rmbg_net=None):\n    return p\n")

@@ -99,7 +99,9 @@ class TripoSGBackend(Backend):
             cmd.append("--download")
         rec.config["command"] = cmd
         try:
-            p = subprocess.run(cmd, capture_output=True, text=True, timeout=self.timeout)
+            # progress bars and model logs are not in the console code page on Windows
+            p = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                               env={**os.environ, "PYTHONIOENCODING": "utf-8"}, timeout=self.timeout)
             (run_dir / "runner.log").write_text(p.stdout + "\n--- stderr ---\n" + p.stderr, encoding="utf-8")
         except subprocess.TimeoutExpired:
             rec.status, rec.reason = "failed", f"timed out after {self.timeout}s"

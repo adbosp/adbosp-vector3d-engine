@@ -48,7 +48,7 @@ def main() -> int:
         torch.cuda.set_per_process_memory_fraction(a.vram_fraction, 0)
         torch.cuda.reset_peak_memory_stats()
 
-        sys.path[:0] = [a.repo, os.path.join(a.repo, "scripts")]
+        sys.path[:] = import_path(a.repo, os.path.dirname(os.path.abspath(__file__)), sys.path)
         from image_process import prepare_image
         from triposg.pipelines.pipeline_triposg import TripoSGPipeline
 
@@ -101,6 +101,13 @@ def main() -> int:
         except Exception:  # noqa: BLE001
             pass
         return _finish(a, res, 1)
+
+
+def import_path(repo: str, here: str, path: list) -> list:
+    """TripoSG's repo first, and this file's folder removed: it holds the engine's triposg.py, which would shadow TripoSG's package."""
+    here = os.path.normcase(os.path.abspath(here))
+    kept = [p for p in path if os.path.normcase(os.path.abspath(p or os.curdir)) != here]
+    return [repo, os.path.join(repo, "scripts")] + kept
 
 
 def _fingerprint(root: str) -> str:
