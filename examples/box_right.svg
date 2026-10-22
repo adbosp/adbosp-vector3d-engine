@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" viewBox="0 0 600 200" data-v3d-view="right">
+  <g transform="translate(50 50) scale(2)">
+    <path id="outline" d="M0 0 h150 v50 h-150 z"/>
+    <path id="hole_hidden" d="M0 18.75 H150 M0 31.25 H150" style="stroke-dasharray:4 2"/>
+  </g>
+</svg>

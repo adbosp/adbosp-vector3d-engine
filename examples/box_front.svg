@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200mm" height="100mm" viewBox="0 0 200 100"
+     data-v3d-view="front" data-v3d-drawing-scale="1:10">
+  <g id="body" data-v3d-part="box">
+    <rect x="0" y="0" width="200" height="100"/>
+    <circle cx="100" cy="50" r="25" data-v3d-part="hole"/>
+  </g>
+</svg>

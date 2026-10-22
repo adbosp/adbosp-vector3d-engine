@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 220 320" data-v3d-view="top">
+  <polygon points="0,0 200,0 200,300 0,300"/>
+  <line x1="0" y1="0" x2="200" y2="0" data-v3d-role="dimension" data-v3d-dimension="2m"/>
+</svg>
