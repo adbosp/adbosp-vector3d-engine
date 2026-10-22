@@ -73,7 +73,7 @@ if /i "%CMD%"=="ui" (
   "%PY%" -m vector3d generate --front "!IMG!" --mode photo -o "!OUT!"
   echo Ket qua: %~dp0!OUT!
 ) else if /i "%CMD%"=="benchmark" (
-  if not exist "audit.json" "%PY%" -m vector3d lab audit -o audit.json ^>nul
+  if not exist "audit.json" "%PY%" -m vector3d lab audit -o audit.json >nul
   if not exist "bench\data\manifest.json" "%PY%" -m vector3d lab dataset -o bench\data
   "%PY%" -m vector3d lab benchmark --data bench\data -o bench\triposg --profile balanced
   if not exist "bench\exp001\summary.json" "%PY%" -m vector3d lab experiment --data bench\data -o bench\exp001
