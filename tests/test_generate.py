@@ -268,3 +268,25 @@ def test_svg_open_profile_strokes_become_a_solid():
     # Without filling, only the small eye circle would survive carving.
     lo, hi = np.array(r.metadata["validation"]["bbox"])
     assert (hi - lo)[1] > 150
+
+
+def test_fit_helpers_box_roundtrip():
+    from vector3d.reconstruct.fit import drop_small_parts, fit_to_extent, target_masks, view_cameras, view_ious
+    from vector3d.reconstruct.hull import carve
+    from vector3d.reconstruct.surface import Mesh, occupancy_to_mesh
+
+    scene = normalize_views({v: load_view(v, n, d) for v, (n, d) in box_inputs().items()})
+    hull = carve(scene, 64)
+    mesh = occupancy_to_mesh(hull.occupancy, hull.grid)
+    cams = view_cameras(scene, hull)
+    assert all(x > 0.98 for x in view_ious(mesh, target_masks(scene, hull, cams), cams).values())
+
+    tiny = Mesh(mesh.vertices[:4] * 0.01 + 50, np.array([[0, 1, 2], [0, 2, 3]]))
+    both = Mesh(np.vstack([mesh.vertices, tiny.vertices]), np.vstack([mesh.faces, tiny.faces + len(mesh.vertices)]))
+    clean, removed = drop_small_parts(both)
+    assert removed == 1 and len(clean.faces) == len(mesh.faces)
+
+    fitted, k = fit_to_extent(mesh, {0: (0.0, 4.0), 1: (-1.0, 1.0)})
+    lo, hi = fitted.vertices.min(axis=0), fitted.vertices.max(axis=0)
+    assert np.allclose(lo[:2], [0, -1]) and np.allclose(hi[:2], [4, 1])
+    assert np.isclose(k[2], (k[0] + k[1]) / 2) and np.isclose((lo[2] + hi[2]) / 2, 0)

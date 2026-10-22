@@ -69,6 +69,10 @@ AI_STEPS: tuple[tuple[str, str], ...] = (
     ("load", "Read input image"),
     ("segment", "Remove background"),
     ("ai_generate", "Generate 3D shape (TripoSG, GPU)"),
+    ("cleanup", "Remove floating fragments"),
+    ("normalize", "Normalize all views"),
+    ("fit_views", "Fit model to the views' extents"),
+    ("refine", "Refine against every view's silhouette"),
     ("place", "Place and scale model"),
     ("color", "Colour from image"),
     ("validate", "Validate mesh"),
@@ -434,7 +438,7 @@ def _generate_ai(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResult:
     rgba = load_image(data)
     ignored = [v for v in inputs if v != primary]
     done("load", f"{name}: {rgba.shape[1]}x{rgba.shape[0]} px" +
-         (f"; TripoSG uses one image, ignored: {', '.join(ignored)}" if ignored else ""))
+         (f"; TripoSG sees this image, {', '.join(ignored)} fit the result" if ignored else ""))
 
     step("segment")
     from .ai.segment import segment
@@ -462,33 +466,80 @@ def _generate_ai(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResult:
     raw = load_mesh(rec.output_path)
     done("ai_generate", f"{len(raw.faces):,} triangles in {rec.duration_s:.0f} s, peak VRAM {rec.peak_vram_mb:.0f} MB")
 
+    from .lab.metrics import normal_consistency
+    from .lab.refine import RefineParams, refine_silhouettes
+    from .reconstruct.fit import drop_small_parts, fit_to_extent, target_masks, view_cameras, view_ious
+    from .reconstruct.relief import sample_colors
+
+    step("cleanup")
+    mesh, removed = drop_small_parts(raw)
+    done("cleanup", f"removed {removed} floating piece(s)" if removed else "one connected piece",
+         "done" if removed else "skipped")
+
+    step("normalize")
+    # Every view is a measurement: the front image (as its silhouette) plus any other drawings.
+    docs = {"front": mask_document(mask, seg_method, name, "front")}
+    docs.update({v: load_view(v, n, d) for v, (n, d) in inputs.items() if v != primary and v != "front"})
+    scene = normalize_views(docs, tolerance=opts.tolerance)
+    hull = carve(scene, resolution=128)
+    cams = view_cameras(scene, hull)
+    targets = target_masks(scene, hull, cams)
+    bad = [c for c in scene.checks if not c.ok]
+    done("normalize", f"{len(scene.views)} view(s), units: {scene.units}; "
+                      f"{len(scene.checks) - len(bad)}/{len(scene.checks)} cross-view checks ok")
+
+    step("fit_views")
+    # TripoSG outputs +Y up with the front toward +Z, so only scale and position change.
+    ext = scene_extent(scene)
+    mesh, k_axes = fit_to_extent(mesh, ext)
+    iou_raw = view_ious(mesh, targets, cams)
+    observed = "".join("XYZ"[a] for a in sorted(ext))
+    done("fit_views", f"bounding box fitted on {observed}" + ("" if 2 in ext else "; depth Z scaled like X/Y (not observed)")
+         + "; IoU " + ", ".join(f"{v} {x:.0%}" for v, x in iou_raw.items()))
+
+    step("refine")
+    iou_final, refined_used = iou_raw, False
+    nc_raw = normal_consistency(mesh)
+    if len(targets) < 2:
+        done("refine", "one view only: nothing beyond the front silhouette to fit", "skipped")
+        nc_final = nc_raw
+    else:
+        ref = refine_silhouettes(mesh, targets, cams, RefineParams(iterations=12, step=0.4, patience=2))
+        iou_ref = view_ious(ref.mesh, targets, cams)
+        nc_ref = normal_consistency(ref.mesh)
+        gain = np.mean(list(iou_ref.values())) - np.mean(list(iou_raw.values()))
+        if gain >= 0.02 and nc_raw - nc_ref < 0.01:
+            mesh, iou_final, nc_final, refined_used = ref.mesh, iou_ref, nc_ref, True
+            done("refine", f"accepted: mean IoU +{gain:.1%}; " + ", ".join(f"{v} {x:.0%}" for v, x in iou_ref.items()))
+        else:
+            nc_final = nc_raw
+            done("refine", f"rejected (mean IoU {gain:+.1%}, smoothness {nc_ref - nc_raw:+.3f}): kept the fitted model",
+                 "skipped")
+
     step("place")
-    # TripoSG already outputs +Y up with the front toward +Z; only scale and centre.
-    lo, hi = raw.vertices.min(axis=0), raw.vertices.max(axis=0)
-    k = opts.size_m / float((hi - lo).max())
-    c = (lo + hi) / 2
-    mesh = Mesh((raw.vertices - c) * k, raw.faces)
-    done("place", f"largest dimension {opts.size_m:g} m (assumed scale)")
+    if scene.units == "m":
+        to_model = 1.0
+        done("place", "drawings carry a physical scale: kept in metres")
+    else:
+        lo, hi = mesh.vertices.min(axis=0), mesh.vertices.max(axis=0)
+        to_model = opts.size_m / float((hi - lo).max())
+        done("place", f"largest dimension {opts.size_m:g} m (assumed scale)")
 
     step("color")
-    ys, xs = np.nonzero(mask)
-    v = mesh.vertices
-    vlo, vhi = v.min(axis=0), v.max(axis=0)
-    u = (v[:, 0] - vlo[0]) / max(vhi[0] - vlo[0], 1e-9)
-    w = (vhi[1] - v[:, 1]) / max(vhi[1] - vlo[1], 1e-9)
-    px = np.clip(np.rint(xs.min() + u * (xs.max() - xs.min())), 0, rgba.shape[1] - 1).astype(int)
-    py = np.clip(np.rint(ys.min() + w * (ys.max() - ys.min())), 0, rgba.shape[0] - 1).astype(int)
-    mesh.colors = rgba[py, px, :3] / 255.0
+    mesh.colors = sample_colors(rgba[..., :3], scene.views[ViewName.FRONT], mesh.vertices)
+    mesh = Mesh(mesh.vertices * to_model, mesh.faces, mesh.colors)
     done("color", "vertex colours projected from the front image (back side reuses them)")
 
     step("validate")
     checks = validate(mesh)
-    checks["silhouette_iou"] = {"front": front_silhouette_iou(mesh, mask)}
-    done("validate", f"watertight: {'yes' if checks['watertight'] else 'no'}; "
-                     f"front silhouette match {checks['silhouette_iou']['front']:.1%}")
+    checks["silhouette_iou"] = iou_final
+    checks["silhouette_iou_before_refine"] = iou_raw
+    checks["normal_consistency"] = nc_final
+    worst = min(iou_final.values()) if iou_final else 1.0
+    done("validate", f"watertight: {'yes' if checks['watertight'] else 'no'}; worst view silhouette match {worst:.1%}")
 
     step("export")
-    conf = Confidence.AI_GENERATED
+    conf = Confidence.ESTIMATED if refined_used else Confidence.AI_GENERATED
     metadata = {
         "generator": "Vector3D Engine",
         "mode": "ai",
@@ -502,8 +553,14 @@ def _generate_ai(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResult:
                   "duration_s": rec.duration_s, "load_s": rec.load_s, "peak_vram_mb": rec.peak_vram_mb,
                   "raw_output": rec.output_path},
         "segmentation": seg_method,
-        "notes": ["Shape generated by TripoSG from one image; unseen sides are the model's guess.",
-                  "Colours are projected from the front image, so the back repeats the front."] + rec.warnings,
+        "fit": {"views": sorted(targets), "observed_axes": observed, "axis_scale": k_axes,
+                "refined": refined_used, "removed_fragments": removed,
+                "drawing_to_model_scale": to_model,
+                "label": "ESTIMATED where the views constrain the shape; the rest is the model's guess"},
+        "notes": ["Shape generated by TripoSG from the front image only; the other views fit its size and outline.",
+                  "Colours are projected from the front image, so the back repeats the front."]
+                 + hull.assumptions + rec.warnings,
+        "views": summary(scene),
         "validation": checks,
     }
     glb = to_glb(mesh, extras={"vector3d": {"geometry_confidence": conf.value, "mode": "ai", "model": rec.model}})

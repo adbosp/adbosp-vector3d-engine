@@ -163,6 +163,7 @@ ul.warn { padding-left: 18px; margin: 6px 0; color: var(--warn); font-size: 12px
         <span>Hints AI</span>
         <span class="row"><button class="btn" id="hintsBtn" style="padding:4px 9px;font-size:12px">Chọn hints.json</button><span class="hint" id="hintsName" style="margin:0">không dùng</span></span>
       </div>
+      <h2 id="stepsTitle" style="margin-top:12px" hidden>Pipeline của lần chạy này</h2>
       <ul class="steps" id="steps"></ul>
       <div class="maps" id="maps"></div>
       <div class="downloads" id="downloads"></div>
@@ -183,8 +184,11 @@ ul.warn { padding-left: 18px; margin: 6px 0; color: var(--warn); font-size: 12px
       <input type="file" id="meshInput" accept=".obj,.glb,.gltf,.stl" hidden>
     </section>
     <section>
-      <h2>Pipeline</h2>
-      <ul class="stages" id="stages"></ul>
+      <details>
+        <summary class="hint" style="cursor:pointer">Lộ trình engine v0.1 (roadmap, không phải các bước đang chạy)</summary>
+        <p class="hint">Các bước thật của mỗi lần Generate hiện ở mục "Pipeline của lần chạy này" phía trên. Danh sách dưới là kế hoạch dài hạn; mục "chưa" là module chưa được viết.</p>
+        <ul class="stages" id="stages"></ul>
+      </details>
     </section>
   </aside>
   <main>
@@ -348,6 +352,7 @@ const STEP_LABEL = {
   segment: "Tách nền (AI)", depth: "Ước lượng chiều sâu (AI)", normals: "Tạo normal map",
   relief: "Dựng khối từ depth", color: "Tô màu từ ảnh",
   ai_generate: "Sinh hình khối 3D (TripoSG, GPU)", place: "Đặt vị trí và tỉ lệ",
+  cleanup: "Bỏ mảnh rời", fit_views: "Khớp model theo kích thước các view", refine: "Tinh chỉnh theo silhouette mọi view",
 };
 let AI = { ai: false, ai_reason: "" };
 fetch("/api/capabilities").then((r) => r.json()).then((c) => {
@@ -376,6 +381,7 @@ $("hintsInput").onchange = async (e) => {
   catch { hints = null; $("hintsName").textContent = "file JSON không hợp lệ"; }
 };
 function renderSteps(steps) {
+  $("stepsTitle").hidden = !steps.length;
   const icon = { pending: "○", running: '<span class="spin"></span>', done: "✓", skipped: "–", error: "✗" };
   $("steps").innerHTML = steps.map((s) => `<li class="${s.status}"><span class="ic">${icon[s.status] || "○"}</span>
     <span class="t">${esc(STEP_LABEL[s.key] || s.title)}</span>${s.detail ? `<span class="d">${esc(s.detail)}</span>` : ""}</li>`).join("");
@@ -401,7 +407,7 @@ $("genBtn").onclick = async () => {
     if (snap.status === "error") throw new Error(snap.error);
     await inspected;
     await loadMesh(snap.files.glb, "model.glb", "glb");
-    if (snap.metadata.mode === "photo" || snap.metadata.mode === "ai") matchViewsToMesh();
+    if (snap.metadata.mode === "photo" || snap.metadata.mode === "ai") matchViewsToMesh(snap.metadata.fit?.drawing_to_model_scale);
     const v = snap.metadata.validation;
     $("meshInfo").textContent = `Model đã tạo: ${v.triangles.toLocaleString()} tam giác, ${v.watertight ? "kín nước" : "CHƯA kín"}, độ tin cậy: ${snap.metadata.geometry_confidence}` +
       (snap.metadata.mode === "ai" ? ` (AI: TripoSG, ${Math.round(snap.metadata.model.duration_s)} s, VRAM ${Math.round(snap.metadata.model.peak_vram_mb)} MB)` :
@@ -558,13 +564,14 @@ function build3D() {
     frame("iso", bb);
   }
 }
-// Photo models are resized to metres while the 2D views stay in pixels: scale the outlines onto the mesh.
-function matchViewsToMesh() {
+// Photo and AI models are resized to metres while the 2D views stay in drawing units: scale the outlines onto
+// the mesh. AI mode reports the exact factor (its mesh is fitted in the views' frame); photo mode is estimated.
+function matchViewsToMesh(exact) {
   if (!viewsGroup.children.length || !meshGroup.children.length) return;
   viewsGroup.scale.setScalar(1); boxGroup.scale.setScalar(1);
   const vs = new THREE.Box3().setFromObject(viewsGroup).getSize(new THREE.Vector3());
   const ms = new THREE.Box3().setFromObject(meshGroup).getSize(new THREE.Vector3());
-  const k = Math.max(ms.x, ms.y) / (Math.max(vs.x, vs.y) || 1);
+  const k = exact || Math.max(ms.x, ms.y) / (Math.max(vs.x, vs.y) || 1);
   viewsGroup.scale.setScalar(k); boxGroup.scale.setScalar(k);
   size = Math.max(ms.x, ms.y, ms.z) || 1; rebuildHelpers();
   grid.position.y = new THREE.Box3().setFromObject(meshGroup).min.y;

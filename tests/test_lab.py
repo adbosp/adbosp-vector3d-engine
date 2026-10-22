@@ -261,3 +261,25 @@ def test_ai_mode_unavailable_is_an_error_not_a_fallback(tmp_path, monkeypatch):
     assert resolve_mode({"front": ("f.png", data)}) == "photo"
     with pytest.raises(RuntimeError, match="TripoSG is not available"):
         generate({"front": ("f.png", data)}, GenerateOptions(mode="ai"))
+
+
+def test_ai_mode_fits_the_model_to_every_view(tmp_path, monkeypatch):
+    from vector3d.generate import GenerateOptions, generate
+
+    repo = _fake_triposg(tmp_path / "TripoSG", with_torch=True)
+    monkeypatch.setenv("V3D_TRIPOSG_DIR", str(repo))
+    monkeypatch.setenv("V3D_TRIPOSG_PYTHON", sys.executable)
+    monkeypatch.setenv("PYTHONPATH", str(repo / "fake_site"))
+    monkeypatch.chdir(tmp_path)
+    data = _png(tmp_path / "f.png").read_bytes()   # a 24 x 32 px block: X 24, Y 32, and Z 24 from the side
+    seen = []
+    r = generate({"front": ("f.png", data), "left": ("l.png", data)}, GenerateOptions(mode="ai"),
+                 lambda k, s, d: s != "running" and seen.append(k))
+    assert seen == ["load", "segment", "ai_generate", "cleanup", "normalize", "fit_views", "refine", "place",
+                    "color", "validate", "export"]
+    md = r.metadata
+    assert md["fit"]["views"] == ["front", "left"] and md["fit"]["observed_axes"] == "XYZ"
+    assert set(md["validation"]["silhouette_iou"]) == {"front", "left"}
+    lo, hi = np.array(md["validation"]["bbox"])
+    assert np.allclose((hi - lo) / (hi - lo).max(), [0.75, 1.0, 0.75], atol=0.05)
+    assert md["geometry_confidence"] == ("estimated" if md["fit"]["refined"] else "ai_generated")
