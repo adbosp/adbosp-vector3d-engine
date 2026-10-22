@@ -1,4 +1,8 @@
-"""CLI: python -m vector3d inspect --front f.svg --right r.svg [--top t.svg] [--json]"""
+"""CLI.
+
+  python -m vector3d inspect --front f.svg --right r.svg [--top t.svg] [--json]
+  python -m vector3d ui [--port 8765]
+"""
 from __future__ import annotations
 
 import argparse
@@ -7,28 +11,8 @@ import sys
 
 from .normalize.normalizer import normalize_views
 from .normalize.views import ViewName
+from .report import summary as _summary
 from .svg.parser import parse_svg
-
-
-def _summary(scene) -> dict:
-    out = {"units": scene.units, "views": {}, "checks": [], "warnings": scene.warnings}
-    for v, nv in scene.views.items():
-        box = nv.bbox()
-        out["views"][v.value] = {
-            "source": nv.source,
-            "contours": len(nv.contours),
-            "segments": sum(len(c.segments) for c in nv.contours),
-            "scale": {"meters_per_unit": nv.scale.meters_per_unit, "source": nv.scale.source,
-                      "confidence": nv.scale.confidence.value if nv.scale.confidence else None},
-            "origin": {"source": nv.origin_source, "confidence": nv.origin_confidence.value},
-            "world_extent": {"XYZ"[w]: [round(a, 6), round(b, 6)] for w, (a, b) in nv.world_extent().items()},
-            "bbox_uv": None if box is None else [box[0].round(6).tolist(), box[1].round(6).tolist()],
-        }
-    for c in scene.checks:
-        out["checks"].append({"views": [c.view_a.value, c.view_b.value], "axis": c.world_axis,
-                              "extents": [round(c.extent_a, 6), round(c.extent_b, 6)],
-                              "relative_error": round(c.relative_error, 6), "ok": c.ok})
-    return out
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -39,7 +23,16 @@ def main(argv: list[str] | None = None) -> int:
         insp.add_argument(f"--{v.value}", metavar="SVG")
     insp.add_argument("--tolerance", type=float, default=0.01)
     insp.add_argument("--json", action="store_true")
+    ui = sub.add_parser("ui", help="open the local web interface")
+    ui.add_argument("--host", default="127.0.0.1")
+    ui.add_argument("--port", type=int, default=8765)
+    ui.add_argument("--no-browser", action="store_true")
     args = ap.parse_args(argv)
+
+    if args.cmd == "ui":
+        from .ui.server import serve
+        serve(args.host, args.port, open_browser=not args.no_browser)
+        return 0
 
     docs = {v: parse_svg(getattr(args, v.value)) for v in ViewName if getattr(args, v.value)}
     if not docs:

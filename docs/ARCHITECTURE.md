@@ -99,6 +99,7 @@ Nếu các nguồn mâu thuẫn, dùng nguồn ưu tiên cao hơn và ghi cảnh
 
 - **Python API:** mỗi giai đoạn là một hàm thuần (input/output dataclass), dễ test.
 - **CLI:** `python -m vector3d inspect --front f.svg --right r.svg --top t.svg [--json]`.
+- **Giao diện web:** `python -m vector3d ui`, server HTTP thuần Python (`vector3d/ui/server.py`) cùng API JSON `POST /api/inspect`, `GET /api/stages`, `GET /api/examples`. Trang dùng three.js cho 3D viewer (xem view trong hộp kính, mở OBJ/GLB/STL). Lớp MCP sau này có thể dùng lại chính các hàm `inspect()` / `report.*`.
 - **MCP server (kế hoạch):** mỗi mục trong `STAGES` thành một tool; trạng thái trung gian lưu dạng JSON có ID để agent gọi lại từng bước, so sánh, hoặc chạy lại một giai đoạn.
 
 ## 8. Câu hỏi mở

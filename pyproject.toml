@@ -17,3 +17,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["vector3d*"]
+
+[tool.setuptools.package-data]
+"vector3d.ui" = ["static/*"]

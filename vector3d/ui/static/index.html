@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vector3D Engine</title>
+<style>
+:root {
+  --bg: #f4f5f7; --panel: #ffffff; --panel-2: #f0f2f5; --border: #d9dde3;
+  --text: #1c2127; --muted: #5f6b7a; --accent: #2563eb; --accent-text: #ffffff;
+  --ok: #15803d; --bad: #b91c1c; --warn: #a16207; --viewport: #eef1f5;
+  --grid: #c3cad4; --mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+  --c-front: #2563eb; --c-back: #7c3aed; --c-left: #0891b2; --c-right: #ea580c;
+  --c-top: #16a34a; --c-bottom: #be185d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1217; --panel: #171b22; --panel-2: #1e232c; --border: #2b323d;
+    --text: #e6e9ee; --muted: #9aa4b2; --accent: #3b82f6; --accent-text: #ffffff;
+    --ok: #4ade80; --bad: #f87171; --warn: #facc15; --viewport: #12161c; --grid: #333b47;
+    --c-front: #60a5fa; --c-back: #a78bfa; --c-left: #22d3ee; --c-right: #fb923c;
+    --c-top: #4ade80; --c-bottom: #f472b6;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1217; --panel: #171b22; --panel-2: #1e232c; --border: #2b323d;
+  --text: #e6e9ee; --muted: #9aa4b2; --accent: #3b82f6; --accent-text: #ffffff;
+  --ok: #4ade80; --bad: #f87171; --warn: #facc15; --viewport: #12161c; --grid: #333b47;
+  --c-front: #60a5fa; --c-back: #a78bfa; --c-left: #22d3ee; --c-right: #fb923c;
+  --c-top: #4ade80; --c-bottom: #f472b6;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel); }
+header h1 { font-size: 16px; margin: 0; font-weight: 650; }
+.badge { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); }
+.badge.ok { color: var(--ok); } .badge.bad { color: var(--bad); }
+header .spacer { flex: 1; }
+.layout { display: grid; grid-template-columns: 300px 1fr; height: calc(100% - 49px); }
+aside { border-right: 1px solid var(--border); background: var(--panel); overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 16px; }
+main { display: grid; grid-template-rows: minmax(320px, 1.3fr) minmax(260px, 1fr); min-width: 0; min-height: 0; }
+h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+.slot { display: grid; grid-template-columns: 12px 64px 1fr auto; align-items: center; gap: 8px; padding: 7px 8px; border: 1px dashed var(--border); border-radius: 8px; margin-bottom: 6px; cursor: pointer; }
+.slot:hover, .slot.drag { border-color: var(--accent); background: var(--panel-2); }
+.slot.filled { border-style: solid; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.slot .name { font-weight: 600; }
+.slot .file { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot .x { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0 4px; visibility: hidden; }
+.slot.filled .x { visibility: visible; }
+.hint { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+button.btn { border: 1px solid var(--border); background: var(--panel-2); color: var(--text); padding: 7px 12px; border-radius: 7px; cursor: pointer; font: inherit; }
+button.btn:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+button.btn.on { border-color: var(--accent); color: var(--accent); }
+input[type=number] { width: 80px; padding: 5px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2); color: var(--text); font: inherit; }
+label.inline { display: flex; gap: 8px; align-items: center; color: var(--muted); }
+.stages { list-style: none; padding: 0; margin: 0; font-size: 12px; }
+.stages li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+.stages .s-done { color: var(--ok); } .stages .s-todo { color: var(--muted); }
+.viewer { position: relative; background: var(--viewport); border-bottom: 1px solid var(--border); min-height: 0; }
+#three { position: absolute; inset: 0; }
+#three canvas { display: block; }
+.toolbar { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; gap: 6px; flex-wrap: wrap; pointer-events: none; }
+.toolbar > * { pointer-events: auto; }
+.toolbar .btn { padding: 4px 9px; font-size: 12px; background: var(--panel); }
+.toolbar .sep { width: 1px; background: var(--border); margin: 0 2px; }
+.legend { position: absolute; bottom: 10px; left: 10px; display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 7px; padding: 4px 8px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+.legend span.off { opacity: .35; }
+.empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); text-align: center; padding: 16px; pointer-events: none; }
+.bottom { display: grid; grid-template-columns: 1.2fr 1fr; min-height: 0; }
+.panel { padding: 12px 14px; overflow: auto; min-width: 0; }
+.panel + .panel { border-left: 1px solid var(--border); }
+.tabs { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
+.tabs button { border: 1px solid var(--border); background: var(--panel); color: var(--muted); border-radius: 6px; padding: 3px 9px; cursor: pointer; font: inherit; font-size: 12px; }
+.tabs button.active { color: var(--text); border-color: var(--accent); }
+#plane { width: 100%; height: calc(100% - 64px); min-height: 180px; background: var(--viewport); border: 1px solid var(--border); border-radius: 8px; }
+.meta { font-size: 12px; color: var(--muted); margin-top: 6px; font-family: var(--mono); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 600; }
+td.num { font-family: var(--mono); text-align: right; }
+.ok { color: var(--ok); } .bad { color: var(--bad); }
+ul.warn { padding-left: 18px; margin: 6px 0; color: var(--warn); font-size: 12px; }
+.err { color: var(--bad); font-size: 13px; white-space: pre-wrap; }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; height: auto; }
+  aside { border-right: 0; border-bottom: 1px solid var(--border); }
+  main { grid-template-rows: 420px auto; }
+  .bottom { grid-template-columns: 1fr; }
+  .panel + .panel { border-left: 0; border-top: 1px solid var(--border); }
+  #plane { height: 300px; }
+}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<header>
+  <h1>Vector3D Engine</h1>
+  <span class="badge" id="units">chưa phân tích</span>
+  <span class="badge" id="checksBadge" hidden></span>
+  <span class="spacer"></span>
+  <button class="btn" id="themeBtn" title="Đổi giao diện sáng/tối">Sáng / Tối</button>
+</header>
+<div class="layout">
+  <aside>
+    <section>
+      <h2>Hình chiếu SVG</h2>
+      <div id="slots"></div>
+      <p class="hint">Bấm vào ô hoặc kéo thả file .svg. Kéo nhiều file cùng lúc: tên file chứa front/back/left/right/top/bottom sẽ tự vào đúng ô.</p>
+    </section>
+    <section class="row">
+      <button class="btn primary" id="runBtn">Phân tích</button>
+      <button class="btn" id="exampleBtn">Nạp ví dụ</button>
+      <label class="inline">Sai lệch <input type="number" id="tol" value="1" min="0" step="0.1">%</label>
+    </section>
+    <section>
+      <h2>Mô hình 3D</h2>
+      <div class="row">
+        <button class="btn" id="meshBtn">Mở OBJ / GLB / STL</button>
+        <button class="btn" id="meshClear" hidden>Gỡ</button>
+      </div>
+      <p class="hint" id="meshInfo">Mở file mesh để so với các hình chiếu trong khung 3D.</p>
+      <input type="file" id="meshInput" accept=".obj,.glb,.gltf,.stl" hidden>
+    </section>
+    <section>
+      <h2>Pipeline</h2>
+      <ul class="stages" id="stages"></ul>
+    </section>
+  </aside>
+  <main>
+    <div class="viewer">
+      <div id="three"></div>
+      <div class="toolbar">
+        <button class="btn" data-cam="front">Front</button>
+        <button class="btn" data-cam="right">Right</button>
+        <button class="btn" data-cam="top">Top</button>
+        <button class="btn" data-cam="iso">Iso</button>
+        <span class="sep"></span>
+        <button class="btn on" id="tBox">Hộp kính</button>
+        <button class="btn on" id="tGrid">Lưới</button>
+        <button class="btn on" id="tAxes">Trục</button>
+        <button class="btn" id="tWire">Khung dây</button>
+        <button class="btn" id="tOrtho">Trực giao</button>
+      </div>
+      <div class="legend" id="legend" hidden></div>
+      <div class="empty" id="empty">Nạp các hình chiếu SVG rồi bấm <b>Phân tích</b>, hoặc bấm <b>Nạp ví dụ</b>.</div>
+    </div>
+    <div class="bottom">
+      <div class="panel">
+        <div class="tabs" id="tabs"></div>
+        <svg id="plane"></svg>
+        <div class="meta" id="planeMeta"></div>
+      </div>
+      <div class="panel">
+        <h2>Kiểm tra giữa các view</h2>
+        <div id="checks"><p class="hint">Chưa có dữ liệu.</p></div>
+        <h2 style="margin-top:14px">Thang đo từng view</h2>
+        <div id="scales"></div>
+        <div id="warnings"></div>
+      </div>
+    </div>
+  </main>
+</div>
+<input type="file" id="svgInput" accept=".svg,image/svg+xml" hidden>
+<input type="file" id="svgMulti" accept=".svg,image/svg+xml" multiple hidden>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { STLLoader } from "three/addons/loaders/STLLoader.js";
+
+const VIEWS = ["front", "back", "left", "right", "top", "bottom"];
+const LABEL = { front: "Front", back: "Back", left: "Left", right: "Right", top: "Top", bottom: "Bottom" };
+const AXIS = ["X", "Y", "Z"];
+const files = {};         // view -> { name, text }
+let result = null;        // last /api/inspect response
+let activeTab = null;
+const hidden = new Set(); // views hidden in 3D
+
+const $ = (id) => document.getElementById(id);
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const color = (v) => css(`--c-${v}`);
+const fmt = (x) => (Math.abs(x) >= 100 ? x.toFixed(1) : Math.abs(x) >= 1 ? x.toFixed(3) : x.toPrecision(3));
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ---------- theme ----------
+try { const t = localStorage.getItem("v3d-theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
+$("themeBtn").onclick = () => {
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const cur = document.documentElement.dataset.theme || (dark ? "dark" : "light");
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("v3d-theme", next); } catch {}
+  applyThemeTo3D(); if (result) { build3D(); drawPlane(); }
+};
+
+// ---------- view slots ----------
+let pendingView = null;
+function renderSlots() {
+  $("slots").innerHTML = VIEWS.map((v) => `
+    <div class="slot ${files[v] ? "filled" : ""}" data-view="${v}">
+      <span class="dot" style="background:${color(v)}"></span>
+      <span class="name">${LABEL[v]}${v === "top" || v === "bottom" ? "" : ""}</span>
+      <span class="file">${files[v] ? esc(files[v].name) : (v === "top" || v === "bottom" ? "tùy chọn" : "chưa có")}</span>
+      <button class="x" title="Bỏ file">×</button>
+    </div>`).join("");
+  for (const el of $("slots").children) {
+    const v = el.dataset.view;
+    el.onclick = (e) => {
+      if (e.target.classList.contains("x")) { delete files[v]; renderSlots(); return; }
+      pendingView = v; $("svgInput").value = ""; $("svgInput").click();
+    };
+    el.ondragover = (e) => { e.preventDefault(); el.classList.add("drag"); };
+    el.ondragleave = () => el.classList.remove("drag");
+    el.ondrop = async (e) => {
+      e.preventDefault(); el.classList.remove("drag");
+      const list = [...e.dataTransfer.files];
+      if (list.length === 1) await setFile(v, list[0]); else await autoAssign(list);
+    };
+  }
+}
+async function setFile(view, file) {
+  files[view] = { name: file.name, text: await file.text() };
+  renderSlots();
+}
+async function autoAssign(list) {
+  for (const f of list) {
+    const n = f.name.toLowerCase();
+    const v = VIEWS.find((x) => n.includes(x));
+    if (v) files[v] = { name: f.name, text: await f.text() };
+  }
+  renderSlots();
+}
+$("svgInput").onchange = async (e) => { if (e.target.files[0] && pendingView) await setFile(pendingView, e.target.files[0]); };
+document.body.ondragover = (e) => e.preventDefault();
+document.body.ondrop = async (e) => { e.preventDefault(); if (!e.target.closest(".slot")) await autoAssign([...e.dataTransfer.files]); };
+
+// ---------- API ----------
+async function api(path, body) {
+  const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
+}
+$("exampleBtn").onclick = async () => {
+  const ex = await api("/api/examples");
+  if (!Object.keys(ex).length) { showError("Không tìm thấy thư mục examples."); return; }
+  for (const k of Object.keys(files)) delete files[k];
+  for (const [v, text] of Object.entries(ex)) files[v] = { name: `box_${v}.svg`, text };
+  renderSlots(); run();
+};
+$("runBtn").onclick = run;
+async function run() {
+  const views = Object.fromEntries(Object.entries(files).map(([v, f]) => [v, f.text]));
+  if (!Object.keys(views).length) { showError("Chưa có hình chiếu nào."); return; }
+  $("runBtn").disabled = true; $("runBtn").textContent = "Đang phân tích…";
+  try {
+    result = await api("/api/inspect", { views, tolerance: (parseFloat($("tol").value) || 0) / 100 });
+    if (!result.geometry[activeTab]) activeTab = Object.keys(result.geometry)[0];
+    renderResult();
+  } catch (err) { showError(err.message); }
+  finally { $("runBtn").disabled = false; $("runBtn").textContent = "Phân tích"; }
+}
+function showError(msg) {
+  $("checks").innerHTML = `<p class="err">${esc(msg)}</p>`;
+}
+
+api("/api/stages").then((stages) => {
+  $("stages").innerHTML = stages.map((s, i) => `<li><span>${i + 1}. ${esc(s.title)}${s.needs_llm ? " · AI" : ""}</span>
+    <span class="${s.implemented ? "s-done" : "s-todo"}">${s.implemented ? "xong" : "chưa"}</span></li>`).join("");
+});
+
+// ---------- result panels ----------
+function renderResult() {
+  const s = result.summary;
+  const meters = s.units === "m";
+  $("units").textContent = meters ? "đơn vị: mét" : "đơn vị: drawing units (chưa có thang đo)";
+  $("units").className = "badge " + (meters ? "ok" : "bad");
+  const bad = s.checks.filter((c) => !c.ok).length;
+  $("checksBadge").hidden = !s.checks.length;
+  $("checksBadge").textContent = bad ? `${bad} lỗi khớp` : `${s.checks.length} kiểm tra đạt`;
+  $("checksBadge").className = "badge " + (bad ? "bad" : "ok");
+
+  $("checks").innerHTML = s.checks.length ? `<table><tr><th>View</th><th>Trục</th><th class="num">Chiều dài</th><th class="num">Lệch</th><th></th></tr>
+    ${s.checks.map((c) => `<tr><td>${c.views.map((v) => LABEL[v]).join(" / ")}</td><td>${c.axis}</td>
+      <td class="num">${fmt(c.extents[0])} / ${fmt(c.extents[1])}</td><td class="num">${(c.relative_error * 100).toFixed(2)}%</td>
+      <td class="${c.ok ? "ok" : "bad"}">${c.ok ? "✓" : "✗"}</td></tr>`).join("")}</table>`
+    : `<p class="hint">Cần ít nhất 2 view để so khớp.</p>`;
+
+  $("scales").innerHTML = `<table><tr><th>View</th><th class="num">m / đơn vị</th><th>Nguồn</th><th>Tin cậy</th><th>Gốc</th></tr>
+    ${Object.entries(s.views).map(([v, i]) => `<tr><td style="color:${color(v)}">${LABEL[v]}</td>
+      <td class="num">${i.scale.meters_per_unit == null ? "—" : i.scale.meters_per_unit.toPrecision(4)}</td>
+      <td>${esc(i.scale.source)}</td><td>${esc(i.scale.confidence ?? "—")}</td><td>${esc(i.origin.source)}</td></tr>`).join("")}</table>`;
+  $("warnings").innerHTML = s.warnings.length ? `<ul class="warn">${s.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : "";
+
+  $("tabs").innerHTML = Object.keys(result.geometry).map((v) =>
+    `<button data-v="${v}" class="${v === activeTab ? "active" : ""}" style="${v === activeTab ? `border-color:${color(v)}` : ""}">${LABEL[v]}</button>`).join("");
+  for (const b of $("tabs").children) b.onclick = () => { activeTab = b.dataset.v; renderResult(); };
+
+  $("legend").hidden = false;
+  $("legend").innerHTML = Object.keys(result.geometry).map((v) =>
+    `<span data-v="${v}" class="${hidden.has(v) ? "off" : ""}"><i class="dot" style="background:${color(v)}"></i>${LABEL[v]}</span>`).join("");
+  for (const el of $("legend").children) el.onclick = () => {
+    const v = el.dataset.v; hidden.has(v) ? hidden.delete(v) : hidden.add(v); renderResult();
+  };
+  $("empty").hidden = true;
+  drawPlane();
+  build3D();
+}
+
+// 2D plane view: u right, v up, origin at world origin projection
+function drawPlane() {
+  const svg = $("plane");
+  const g = result?.geometry[activeTab];
+  if (!g) { svg.innerHTML = ""; return; }
+  const pts = g.contours.flatMap((c) => c.uv);
+  const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+  let [x0, x1, y0, y1] = [Math.min(0, ...xs), Math.max(0, ...xs), Math.min(0, ...ys), Math.max(0, ...ys)];
+  const span = Math.max(x1 - x0, y1 - y0) || 1, pad = span * 0.12;
+  x0 -= pad; x1 += pad; y0 -= pad; y1 += pad;
+  const k = (x1 - x0) / Math.max(svg.clientWidth, 1); // user units per screen px
+  const sw = k;
+  const uAxis = axisName(g.right), vAxis = axisName(g.up);
+  const col = color(activeTab), grid = css("--grid"), muted = css("--muted");
+  const path = (c) => "M" + c.uv.map((p) => `${p[0]},${-p[1]}`).join("L") + (c.closed ? "Z" : "");
+  svg.setAttribute("viewBox", `${x0} ${-y1} ${x1 - x0} ${y1 - y0}`);
+  svg.innerHTML = `
+    <line x1="${x0}" y1="0" x2="${x1}" y2="0" stroke="${grid}" stroke-width="${sw}"/>
+    <line x1="0" y1="${-y0}" x2="0" y2="${-y1}" stroke="${grid}" stroke-width="${sw}"/>
+    <text x="${x1 - pad * 0.3}" y="${-sw * 6}" font-size="${k * 13}" fill="${muted}" text-anchor="end">${uAxis}</text>
+    <text x="${sw * 6}" y="${-y1 + pad * 0.5}" font-size="${k * 13}" fill="${muted}">${vAxis}</text>
+    ${g.contours.map((c) => `<path d="${path(c)}" fill="none" stroke="${c.kind === "geometry" ? col : muted}"
+        stroke-width="${k * 1.6}" stroke-linejoin="round"
+        ${c.dashed || c.kind !== "geometry" ? `stroke-dasharray="${k * 7} ${k * 5}"` : ""}><title>${esc(c.id || c.part || c.kind)}</title></path>`).join("")}`;
+  const ext = result.summary.views[activeTab].world_extent;
+  $("planeMeta").textContent = `${LABEL[activeTab]}: →u = ${uAxis}, ↑v = ${vAxis}, camera ở ${axisName(g.toward_camera)}  ·  ` +
+    Object.entries(ext).map(([a, [lo, hi]]) => `${a} ∈ [${fmt(lo)}, ${fmt(hi)}]`).join("  ");
+}
+function axisName(vec) { const i = vec.findIndex((x) => x !== 0); return (vec[i] < 0 ? "−" : "+") + AXIS[i]; }
+
+// ---------- 3D viewer ----------
+const host = $("three");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+host.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const persp = new THREE.PerspectiveCamera(45, 1, 0.001, 1e6);
+const ortho = new THREE.OrthographicCamera(-1, 1, 1, -1, -1e6, 1e6);
+let camera = persp;
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
+const sun = new THREE.DirectionalLight(0xffffff, 1.2); sun.position.set(3, 5, 4); scene.add(sun);
+const viewsGroup = new THREE.Group(), boxGroup = new THREE.Group(), meshGroup = new THREE.Group();
+scene.add(viewsGroup, boxGroup, meshGroup);
+let grid = null, axes = null, size = 2;
+const toggles = { box: true, grid: true, axes: true, wire: false };
+
+function applyThemeTo3D() {
+  scene.background = new THREE.Color(css("--viewport"));
+  rebuildHelpers();
+}
+function rebuildHelpers() {
+  if (grid) scene.remove(grid);
+  if (axes) scene.remove(axes);
+  grid = new THREE.GridHelper(size * 4, 20, css("--grid"), css("--grid"));
+  grid.position.y = -size * 0.5 - 1e-4; grid.visible = toggles.grid;
+  axes = new THREE.AxesHelper(size * 0.6); axes.visible = toggles.axes;
+  scene.add(grid, axes);
+}
+function clearGroup(g) {
+  for (const o of [...g.children]) { g.remove(o); o.traverse?.((x) => { x.geometry?.dispose(); x.material?.dispose?.(); }); }
+}
+function build3D() {
+  clearGroup(viewsGroup); clearGroup(boxGroup);
+  const bb = new THREE.Box3();
+  for (const [v, g] of Object.entries(result.geometry)) {
+    const col = new THREE.Color(color(v));
+    for (const c of g.contours) {
+      const geo = new THREE.BufferGeometry().setFromPoints(c.world.map((p) => new THREE.Vector3(...p)));
+      const dashed = c.dashed || c.kind !== "geometry";
+      const mat = dashed
+        ? new THREE.LineDashedMaterial({ color: col, dashSize: 0.02, gapSize: 0.015, transparent: true, opacity: 0.8 })
+        : new THREE.LineBasicMaterial({ color: col });
+      const line = c.closed ? new THREE.LineLoop(geo, mat) : new THREE.Line(geo, mat);
+      line.userData.view = v; line.visible = !hidden.has(v);
+      viewsGroup.add(line);
+      geo.computeBoundingBox(); bb.union(geo.boundingBox);
+    }
+  }
+  if (!bb.isEmpty()) {
+    const s = bb.getSize(new THREE.Vector3());
+    size = Math.max(s.x, s.y, s.z) || 1;
+    for (const l of viewsGroup.children) {
+      if (l.material.isLineDashedMaterial) { l.material.dashSize = size / 60; l.material.gapSize = size / 90; l.computeLineDistances(); }
+    }
+    const box = new THREE.Box3Helper(bb, new THREE.Color(css("--muted")));
+    box.material.transparent = true; box.material.opacity = 0.35;
+    boxGroup.add(box);
+    boxGroup.visible = toggles.box;
+    rebuildHelpers();
+    grid.position.y = bb.min.y - 1e-4 * size;
+    frame("iso", bb);
+  }
+}
+function sceneBox() {
+  const bb = new THREE.Box3();
+  if (viewsGroup.children.length) bb.expandByObject(viewsGroup);
+  if (meshGroup.children.length) bb.expandByObject(meshGroup);
+  if (bb.isEmpty()) bb.set(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1));
+  return bb;
+}
+function frame(preset, bb = sceneBox()) {
+  const c = bb.getCenter(new THREE.Vector3());
+  const r = bb.getSize(new THREE.Vector3()).length() * 0.5 || 1;
+  const d = r * 2.6;
+  // Right view = object's right side, camera at -X (see docs/ARCHITECTURE.md)
+  const dir = { front: [0, 0, 1], right: [-1, 0, 0], top: [0, 1, 0.0001], iso: [0.75, 0.6, 1] }[preset];
+  const v = new THREE.Vector3(...dir).normalize().multiplyScalar(d);
+  camera.position.copy(c).add(v);
+  camera.up.set(0, 1, 0);
+  controls.target.copy(c);
+  ortho.zoom = 1;
+  const aspect = host.clientWidth / Math.max(host.clientHeight, 1);
+  Object.assign(ortho, { left: -r * 1.2 * aspect, right: r * 1.2 * aspect, top: r * 1.2, bottom: -r * 1.2 });
+  ortho.updateProjectionMatrix();
+  persp.near = r / 1000; persp.far = r * 1000; persp.updateProjectionMatrix();
+  controls.update();
+}
+function resize() {
+  const w = host.clientWidth, h = Math.max(host.clientHeight, 1);
+  renderer.setSize(w, h);
+  persp.aspect = w / h; persp.updateProjectionMatrix();
+  const hh = (ortho.top - ortho.bottom) / 2;
+  ortho.left = -hh * w / h; ortho.right = hh * w / h; ortho.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(host);
+renderer.setAnimationLoop(() => {
+  for (const l of viewsGroup.children) l.visible = !hidden.has(l.userData.view);
+  controls.update(); renderer.render(scene, camera);
+});
+
+document.querySelectorAll("[data-cam]").forEach((b) => (b.onclick = () => frame(b.dataset.cam)));
+function toggle(id, key, apply) {
+  $(id).onclick = () => { toggles[key] = !toggles[key]; $(id).classList.toggle("on", toggles[key]); apply(toggles[key]); };
+}
+toggle("tBox", "box", (on) => (boxGroup.visible = on));
+toggle("tGrid", "grid", (on) => (grid.visible = on));
+toggle("tAxes", "axes", (on) => (axes.visible = on));
+toggle("tWire", "wire", (on) => meshGroup.traverse((o) => { if (o.isMesh) o.material.wireframe = on; }));
+$("tOrtho").onclick = () => {
+  const toOrtho = camera === persp;
+  const next = toOrtho ? ortho : persp;
+  next.position.copy(camera.position); next.up.copy(camera.up);
+  camera = next; controls.object = camera;
+  $("tOrtho").classList.toggle("on", toOrtho);
+  resize(); controls.update();
+};
+
+// ---------- mesh loading ----------
+$("meshBtn").onclick = () => { $("meshInput").value = ""; $("meshInput").click(); };
+$("meshClear").onclick = () => { clearGroup(meshGroup); $("meshClear").hidden = true; $("meshInfo").textContent = "Đã gỡ mesh."; };
+$("meshInput").onchange = async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const ext = f.name.split(".").pop().toLowerCase();
+  const url = URL.createObjectURL(f);
+  const mat = () => new THREE.MeshStandardMaterial({ color: 0xb8c0cc, roughness: 0.6, metalness: 0.05,
+    side: THREE.DoubleSide, wireframe: toggles.wire, transparent: true, opacity: 0.85 });
+  try {
+    let obj;
+    if (ext === "obj") {
+      obj = await new OBJLoader().loadAsync(url);
+      obj.traverse((o) => { if (o.isMesh) o.material = mat(); });
+    } else if (ext === "stl") {
+      const geo = await new STLLoader().loadAsync(url); geo.computeVertexNormals();
+      obj = new THREE.Mesh(geo, mat());
+    } else {
+      obj = (await new GLTFLoader().loadAsync(url)).scene;
+      obj.traverse((o) => { if (o.isMesh && toggles.wire) o.material.wireframe = true; });
+    }
+    clearGroup(meshGroup); meshGroup.add(obj);
+    let tris = 0; obj.traverse((o) => { if (o.isMesh) { const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; } });
+    const s = new THREE.Box3().setFromObject(obj).getSize(new THREE.Vector3());
+    $("meshInfo").textContent = `${f.name}: ${Math.round(tris).toLocaleString()} tam giác, kích thước ${fmt(s.x)} × ${fmt(s.y)} × ${fmt(s.z)}`;
+    $("meshClear").hidden = false; $("empty").hidden = true;
+    if (!viewsGroup.children.length) { size = Math.max(s.x, s.y, s.z) || 1; rebuildHelpers(); }
+    frame("iso");
+  } catch (err) {
+    $("meshInfo").textContent = `Không mở được ${f.name}: ${err.message}`;
+  } finally { URL.revokeObjectURL(url); }
+};
+
+applyThemeTo3D();
+renderSlots();
+resize();
+window.__v3dReady = true;
+</script>
+<script>
+// The UI is an ES module that imports three.js from a CDN; say so if it never loads.
+setTimeout(() => {
+  if (!window.__v3dReady) document.getElementById("empty").innerHTML =
+    "Không tải được thư viện 3D (three.js từ cdn.jsdelivr.net). Kiểm tra kết nối mạng rồi tải lại trang.";
+}, 6000);
+</script>
+<noscript>Cần bật JavaScript.</noscript>
+</body>
+</html>
