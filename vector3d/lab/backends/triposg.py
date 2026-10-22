@@ -100,7 +100,7 @@ class TripoSGBackend(Backend):
         rec.config["command"] = cmd
         try:
             p = subprocess.run(cmd, capture_output=True, text=True, timeout=self.timeout)
-            (run_dir / "runner.log").write_text(p.stdout + "\n--- stderr ---\n" + p.stderr)
+            (run_dir / "runner.log").write_text(p.stdout + "\n--- stderr ---\n" + p.stderr, encoding="utf-8")
         except subprocess.TimeoutExpired:
             rec.status, rec.reason = "failed", f"timed out after {self.timeout}s"
             rec.save(run_dir / "record.json")

@@ -67,5 +67,5 @@ def write_report(path, experiment_summary: dict, benchmark_summary: dict | None 
         parts.append("## Environment\n\n```json\n" + json.dumps(audit, indent=1, default=str)[:3000] + "\n```")
     parts += [benchmark_section(benchmark_summary), experiment_section(experiment_summary)]
     text = "\n\n".join(p for p in parts if p) + "\n"
-    Path(path).write_text(text)
+    Path(path).write_text(text, encoding="utf-8")
     return text

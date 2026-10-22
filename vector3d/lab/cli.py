@@ -61,7 +61,7 @@ def main(argv: list[str]) -> int:
         rep = audit(args.python)
         text = json.dumps(rep, indent=1, default=str)
         if args.out:
-            Path(args.out).write_text(text)
+            Path(args.out).write_text(text, encoding="utf-8")
         print(text)
         return 0
     if args.cmd == "dataset":
