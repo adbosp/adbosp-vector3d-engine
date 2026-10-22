@@ -36,8 +36,9 @@ def main(argv: list[str] | None = None) -> int:
     gen.add_argument("--resolution", type=int, default=128)
     gen.add_argument("--smooth", type=int, default=10, help="Taubin smoothing iterations (0 = off)")
     gen.add_argument("-o", "--out", default="out", help="output directory")
-    gen.add_argument("--mode", choices=["auto", "drawing", "photo"], default="auto",
-                     help="auto: photo when no SVG is given")
+    gen.add_argument("--mode", choices=["auto", "ai", "drawing", "photo"], default="auto",
+                     help="auto: ai (TripoSG) when installed, else photo; drawing for SVG")
+    gen.add_argument("--ai-profile", choices=["fast", "balanced", "quality"], default="balanced")
     gen.add_argument("--depth-backend", choices=["auto", "depth-anything", "inflation"], default="auto")
     gen.add_argument("--thickness", type=float, default=0.6, help="photo: depth / width")
     gen.add_argument("--detail", type=float, default=0.7, help="photo: 0 = silhouette only, 1 = AI depth")
@@ -112,7 +113,7 @@ def _generate(args, ap) -> int:
         ap.error("give at least one view, e.g. --front front.png")
     opts = GenerateOptions(resolution=args.resolution, smooth_iterations=args.smooth, hints=load_hints(args.hints),
                            mode=args.mode, depth_backend=args.depth_backend, thickness=args.thickness,
-                           detail=args.detail, back=args.back_side, size_m=args.size)
+                           detail=args.detail, back=args.back_side, size_m=args.size, ai_profile=args.ai_profile)
 
     def show(step: str, status: str, detail: str) -> None:
         if status != "running":

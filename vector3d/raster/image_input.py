@@ -14,6 +14,7 @@ from PIL import Image
 from skimage import filters, measure
 
 from ..core.geometry import Contour, line
+from .lineart import fill_line_art
 from ..svg.parser import ScaleInfo, SvgDocument
 
 MAX_SIDE = 1024  # larger images are downsampled; silhouettes don't need more
@@ -54,7 +55,8 @@ def silhouette_mask(rgba: np.ndarray) -> tuple[np.ndarray, str]:
     min_size = max(16, int(area * 0.0005))
     mask = _drop_small(mask, min_size)
     mask = ~_drop_small(~mask, min_size, keep_border=True)
-    return mask, method
+    mask, line_art = fill_line_art(mask)
+    return mask, method + ("+filled_line_art" if line_art else "")
 
 
 def _drop_small(mask: np.ndarray, min_size: int, keep_border: bool = False) -> np.ndarray:

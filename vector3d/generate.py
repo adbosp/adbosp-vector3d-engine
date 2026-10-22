@@ -1,6 +1,10 @@
 """One-click generation: input views -> validated mesh -> GLB / OBJ / metadata.
 
-Two modes share one progress protocol:
+Three modes share one progress protocol:
+
+* ai: a 3D foundation model (TripoSG, run on the local NVIDIA GPU) generates
+  the shape from the image; the engine prepares the input, places, colours
+  and validates the result. Chosen by auto when TripoSG is installed.
 
 * drawing: orthographic drawings (SVG or flat images). Visual hull from the
   silhouettes, optional agent hints. Geometry is ESTIMATED.
@@ -61,6 +65,16 @@ PHOTO_STEPS: tuple[tuple[str, str], ...] = (
     ("export", "Export GLB / OBJ / metadata"),
 )
 
+AI_STEPS: tuple[tuple[str, str], ...] = (
+    ("load", "Read input image"),
+    ("segment", "Remove background"),
+    ("ai_generate", "Generate 3D shape (TripoSG, GPU)"),
+    ("place", "Place and scale model"),
+    ("color", "Colour from image"),
+    ("validate", "Validate mesh"),
+    ("export", "Export GLB / OBJ / metadata"),
+)
+
 Progress = Callable[[str, str, str], None]  # (step, status: running|done|skipped|error, detail)
 
 
@@ -70,7 +84,9 @@ class GenerateOptions:
     smooth_iterations: int = 10
     tolerance: float = 0.02
     hints: dict | None = None  # see vector3d/reconstruct/hints.py and docs/AI_PLAYBOOK.md
-    mode: str = "auto"         # auto | drawing | photo
+    mode: str = "auto"         # auto | ai | drawing | photo
+    ai_profile: str = "balanced"   # ai mode: fast | balanced | quality
+    seed: int = 42
     # photo mode
     depth_backend: str = "auto"    # auto | depth-anything | inflation
     segmenter: str = "auto"        # auto | rembg | classic
@@ -89,16 +105,24 @@ class GenerateResult:
     images: dict[str, bytes] = field(default_factory=dict)  # PNGs of intermediate maps (photo mode)
 
 
+def ai_available() -> tuple[bool, str]:
+    from .lab.backends import get_backend
+
+    return get_backend("triposg").check()
+
+
 def resolve_mode(inputs: dict[str, tuple[str, bytes]], mode: str = "auto") -> str:
-    if mode in ("drawing", "photo"):
+    if mode in ("ai", "drawing", "photo"):
         return mode
     if mode != "auto":
         raise ValueError(f"unknown mode {mode!r}")
-    return "drawing" if any(is_svg(data) for _, data in inputs.values()) else "photo"
+    if any(is_svg(data) for _, data in inputs.values()):
+        return "drawing"
+    return "ai" if ai_available()[0] else "photo"
 
 
 def plan_steps(mode: str) -> tuple[tuple[str, str], ...]:
-    return PHOTO_STEPS if mode == "photo" else STEPS
+    return {"photo": PHOTO_STEPS, "ai": AI_STEPS}.get(mode, STEPS)
 
 
 def _png(arr: np.ndarray) -> bytes:
@@ -143,7 +167,7 @@ def generate(inputs: dict[str, tuple[str, bytes]], options: GenerateOptions | No
         if opts.hints:
             validate_hints(opts.hints)
         mode = resolve_mode(inputs, opts.mode)
-        return (_generate_photo if mode == "photo" else _generate_drawing)(inputs, opts, run)
+        return {"photo": _generate_photo, "ai": _generate_ai}.get(mode, _generate_drawing)(inputs, opts, run)
     except Exception as exc:
         run.report(run.current or "load", "error", str(exc))
         raise
@@ -222,7 +246,7 @@ def _generate_drawing(inputs, opts: GenerateOptions, run: _Runner) -> GenerateRe
 def _generate_photo(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResult:
     from .ai.depth import DepthAnythingONNX, estimate_depth, normal_map
     from .ai.segment import segment
-    from .reconstruct.relief import ReliefParams, build_heights, relief_field, sample_colors
+    from .reconstruct.relief import ReliefParams, build_heights, heightfield_mesh, relief_field, sample_colors
 
     step, done, timings = run.step, run.done, run.timings
     hints = opts.hints or {}
@@ -269,46 +293,65 @@ def _generate_photo(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResu
     scale = abs(float(front.svg_to_plane[0, 0]))   # plane units per pixel
     done("normalize", f"{len(scene.views)} view(s); {sum(c.ok for c in scene.checks)}/{len(scene.checks)} checks ok")
 
-    step("carve")
-    ext = scene_extent(scene)
-    if 2 in ext:
-        # A side or top view measures the depth: fit the relief's thickness to it.
-        target = (ext[2][1] - ext[2][0]) / scale
-        current = float(relief.front.max() - relief.back.min()) or 1.0
-        relief.front *= target / current
-        relief.back *= target / current
-        depth_note = "depth taken from other views"
-    else:
+    if not others and not hints:
+        # One image: mesh the depth maps directly at image resolution, no voxel grid.
+        step("carve")
+        done("carve", "single image: no other views to carve with", "skipped")
         depth_note = f"depth assumed: thickness {opts.thickness:.2f} x width ({opts.back} back)"
-    zr = (float(relief.back.min()) * scale, float(relief.front.max()) * scale)
-    hull = carve(scene, resolution=opts.resolution, extent_overrides={} if 2 in ext else {2: zr})
-    done("carve", f"grid {'x'.join(map(str, hull.grid.shape))}; {depth_note}")
-
-    step("relief")
-    fld = relief_field(relief, mask, front, hull.grid)
-    hvox = float(hull.grid.h.max())
-    fld = np.where(hull.occupancy, fld, np.minimum(fld, -0.5 * hvox))
-    hull.occupancy = fld > 0
-    done("relief", f"{int(hull.occupancy.sum()):,} voxels inside")
-
-    step("ai_fill")
-    applied: list[str] = []
-    if hints:
-        before = hull.occupancy.copy()
-        applied = apply_hints(hints, hull, scene)
-        fld = np.where(hull.occupancy & ~before, 0.5 * hvox, np.where(~hull.occupancy & before, -0.5 * hvox, fld))
-        done("ai_fill", "; ".join(applied))
-    else:
+        step("relief")
+        hf, stride = heightfield_mesh(relief, mask)
+        # pixel (x right, y up) -> front plane: apply the same affine as the outline
+        T = front.svg_to_plane
+        xy = np.column_stack([hf.vertices[:, 0], -hf.vertices[:, 1], np.ones(len(hf.vertices))]) @ T.T
+        mesh = Mesh(np.column_stack([xy[:, 0], xy[:, 1], hf.vertices[:, 2] * scale]), hf.faces)
+        done("relief", f"height field from depth, 1 vertex per {int(stride)} px")
+        step("ai_fill")
         done("ai_fill", "no hints supplied", "skipped")
+        step("surface")
+        done("surface", f"{len(mesh.faces):,} triangles")
+        hull, applied = None, []
+    else:
+        step("carve")
+        ext = scene_extent(scene)
+        if 2 in ext:
+            # A side or top view measures the depth: fit the relief's thickness to it.
+            target = (ext[2][1] - ext[2][0]) / scale
+            current = float(relief.front.max() - relief.back.min()) or 1.0
+            relief.front *= target / current
+            relief.back *= target / current
+            depth_note = "depth taken from other views"
+        else:
+            depth_note = f"depth assumed: thickness {opts.thickness:.2f} x width ({opts.back} back)"
+        zr = (float(relief.back.min()) * scale, float(relief.front.max()) * scale)
+        hull = carve(scene, resolution=opts.resolution, extent_overrides={} if 2 in ext else {2: zr})
+        done("carve", f"grid {'x'.join(map(str, hull.grid.shape))}; {depth_note}")
 
-    step("surface")
-    mesh = field_to_mesh(fld, hull.grid)
-    done("surface", f"{len(mesh.faces):,} triangles")
+        step("relief")
+        fld = relief_field(relief, mask, front, hull.grid)
+        hvox = float(hull.grid.h.max())
+        fld = np.where(hull.occupancy, fld, np.minimum(fld, -0.5 * hvox))
+        hull.occupancy = fld > 0
+        done("relief", f"{int(hull.occupancy.sum()):,} voxels inside")
+
+        step("ai_fill")
+        applied: list[str] = []
+        if hints:
+            before = hull.occupancy.copy()
+            applied = apply_hints(hints, hull, scene)
+            fld = np.where(hull.occupancy & ~before, 0.5 * hvox, np.where(~hull.occupancy & before, -0.5 * hvox, fld))
+            done("ai_fill", "; ".join(applied))
+        else:
+            done("ai_fill", "no hints supplied", "skipped")
+
+        step("surface")
+        mesh = field_to_mesh(fld, hull.grid)
+        done("surface", f"{len(mesh.faces):,} triangles")
+
 
     step("smooth")
-    mesh = taubin_smooth(mesh, opts.smooth_iterations)
-    done("smooth", f"Taubin, {opts.smooth_iterations} iterations" if opts.smooth_iterations else "off",
-         "done" if opts.smooth_iterations else "skipped")
+    iters = opts.smooth_iterations if hull is not None else min(opts.smooth_iterations, 2)  # keep depth detail
+    mesh = taubin_smooth(mesh, iters)
+    done("smooth", f"Taubin, {iters} iterations" if iters else "off", "done" if iters else "skipped")
 
     step("color")
     mesh.colors = sample_colors(rgb, front, mesh.vertices)
@@ -316,7 +359,8 @@ def _generate_photo(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResu
 
     step("validate")
     checks = validate(mesh)
-    checks["silhouette_iou"] = projection_iou(hull, scene)
+    checks["silhouette_iou"] = projection_iou(hull, scene) if hull is not None else \
+        {"front": front_silhouette_iou(mesh, mask)}
     # Photos carry no physical scale: size the model to the requested largest dimension.
     lo, hi = mesh.vertices.min(axis=0), mesh.vertices.max(axis=0)
     k = opts.size_m / float((hi - lo).max())
@@ -334,7 +378,7 @@ def _generate_photo(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResu
         "scale": {"source": "assumed", "largest_dimension_m": opts.size_m, "confidence": Confidence.ESTIMATED.value},
         "coordinate_system": {"right_handed": True, "up": "+Y", "front": "+Z", "unit": "meter"},
         "geometry_confidence": conf.value,
-        "method": "relief_from_monocular_depth",
+        "method": "relief_from_monocular_depth" if hull is not None else "heightfield_from_monocular_depth",
         "depth_backend": dres.backend,
         "segmentation": seg_method,
         "notes": [
@@ -342,7 +386,7 @@ def _generate_photo(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResu
             + ("mirrored from the front." if opts.back == "symmetric" else "a flattened mirror of the front."),
             "A photo is treated as an orthographic front view; strong perspective distorts the result.",
         ] + ([dres.note] if dres.note else []),
-        "assumptions": hull.assumptions + [depth_note],
+        "assumptions": (hull.assumptions if hull is not None else []) + [depth_note],
         "hints": {"author": hints.get("author"), "applied": applied, "notes": hints.get("notes")} if hints else None,
         "options": {"resolution": opts.resolution, "smooth_iterations": opts.smooth_iterations,
                     "thickness": opts.thickness, "detail": opts.detail, "back": opts.back, "size_m": opts.size_m},
@@ -354,3 +398,116 @@ def _generate_photo(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResu
     done("export", f"GLB {len(glb) / 1024:.0f} KB, OBJ {len(obj) / 1024:.0f} KB")
     metadata["timings_s"] = timings
     return GenerateResult(glb, obj, metadata, timings, images)
+
+
+def front_silhouette_iou(mesh: Mesh, mask: np.ndarray, size: int = 384) -> float:
+    """IoU of the mesh seen from the front against the image mask, each framed by its own bounding box."""
+    from .lab.metrics import iou
+    from .lab.render import render, view_camera
+
+    lo, hi = mesh.vertices.min(axis=0), mesh.vertices.max(axis=0)
+    sil = render(mesh, view_camera("front", tuple(((lo + hi) / 2).tolist()), float((hi - lo).max()) * 0.55, size)).mask
+    sy, sx = np.nonzero(sil)
+    ys, xs = np.nonzero(mask)
+    if not len(sy) or not len(ys):
+        return 0.0
+    sil = sil[sy.min():sy.max() + 1, sx.min():sx.max() + 1]
+    crop = mask[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    target = np.asarray(Image.fromarray(crop.astype(np.uint8) * 255).resize(sil.shape[::-1])) > 127
+    return iou(sil, target)
+
+
+def _generate_ai(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResult:
+    """TripoSG on the local GPU. Fails loudly when it cannot run: never a stand-in mesh."""
+    import tempfile
+    from pathlib import Path
+
+    from .lab.backends import get_backend
+    from .lab.mesh_io import load_mesh
+
+    step, done, timings = run.step, run.done, run.timings
+    step("load")
+    primary = "front" if "front" in inputs else next(iter(inputs))
+    name, data = inputs[primary]
+    if is_svg(data):
+        raise ValueError("AI mode needs a raster image (PNG/JPG); use drawing mode for SVG")
+    rgba = load_image(data)
+    ignored = [v for v in inputs if v != primary]
+    done("load", f"{name}: {rgba.shape[1]}x{rgba.shape[0]} px" +
+         (f"; TripoSG uses one image, ignored: {', '.join(ignored)}" if ignored else ""))
+
+    step("segment")
+    from .ai.segment import segment
+
+    mask, seg_method = segment(rgba)
+    if not mask.any():
+        raise ValueError("no foreground found; use an image with a clear subject")
+    cut = rgba.copy()
+    cut[..., 3] = np.where(mask, 255, 0).astype(np.uint8)
+    cut[~mask, :3] = 255
+    done("segment", f"{seg_method}; subject covers {mask.mean():.0%} of the image")
+
+    step("ai_generate")
+    backend = get_backend("triposg")
+    ok, why = backend.check()
+    if not ok:
+        raise RuntimeError(f"TripoSG is not available: {why}. Install it (docs/LAB.md) or choose photo mode.")
+    run.report("ai_generate", "running", "TripoSG on the GPU, usually 1-2 minutes")
+    run_dir = Path(tempfile.mkdtemp(prefix="v3d_ai_", dir=Path("runs").resolve() if Path("runs").is_dir() else None))
+    src = run_dir / "input.png"
+    Image.fromarray(cut, "RGBA").save(src)
+    rec = backend.generate({"front": src}, quality_profile=opts.ai_profile, out_dir=run_dir, seed=opts.seed)
+    if rec.status != "success":
+        raise RuntimeError(f"TripoSG {rec.status}: {rec.reason}")
+    raw = load_mesh(rec.output_path)
+    done("ai_generate", f"{len(raw.faces):,} triangles in {rec.duration_s:.0f} s, peak VRAM {rec.peak_vram_mb:.0f} MB")
+
+    step("place")
+    # TripoSG already outputs +Y up with the front toward +Z; only scale and centre.
+    lo, hi = raw.vertices.min(axis=0), raw.vertices.max(axis=0)
+    k = opts.size_m / float((hi - lo).max())
+    c = (lo + hi) / 2
+    mesh = Mesh((raw.vertices - c) * k, raw.faces)
+    done("place", f"largest dimension {opts.size_m:g} m (assumed scale)")
+
+    step("color")
+    ys, xs = np.nonzero(mask)
+    v = mesh.vertices
+    vlo, vhi = v.min(axis=0), v.max(axis=0)
+    u = (v[:, 0] - vlo[0]) / max(vhi[0] - vlo[0], 1e-9)
+    w = (vhi[1] - v[:, 1]) / max(vhi[1] - vlo[1], 1e-9)
+    px = np.clip(np.rint(xs.min() + u * (xs.max() - xs.min())), 0, rgba.shape[1] - 1).astype(int)
+    py = np.clip(np.rint(ys.min() + w * (ys.max() - ys.min())), 0, rgba.shape[0] - 1).astype(int)
+    mesh.colors = rgba[py, px, :3] / 255.0
+    done("color", "vertex colours projected from the front image (back side reuses them)")
+
+    step("validate")
+    checks = validate(mesh)
+    checks["silhouette_iou"] = {"front": front_silhouette_iou(mesh, mask)}
+    done("validate", f"watertight: {'yes' if checks['watertight'] else 'no'}; "
+                     f"front silhouette match {checks['silhouette_iou']['front']:.1%}")
+
+    step("export")
+    conf = Confidence.AI_GENERATED
+    metadata = {
+        "generator": "Vector3D Engine",
+        "mode": "ai",
+        "units": "m",
+        "scale": {"source": "assumed", "largest_dimension_m": opts.size_m, "confidence": Confidence.ESTIMATED.value},
+        "coordinate_system": {"right_handed": True, "up": "+Y", "front": "+Z", "unit": "meter"},
+        "geometry_confidence": conf.value,
+        "method": "triposg_image_to_3d",
+        "model": {"name": rec.model, "version": rec.model_version, "license": rec.license,
+                  "profile": rec.quality_profile, "seed": rec.seed, "device": rec.device,
+                  "duration_s": rec.duration_s, "load_s": rec.load_s, "peak_vram_mb": rec.peak_vram_mb,
+                  "raw_output": rec.output_path},
+        "segmentation": seg_method,
+        "notes": ["Shape generated by TripoSG from one image; unseen sides are the model's guess.",
+                  "Colours are projected from the front image, so the back repeats the front."] + rec.warnings,
+        "validation": checks,
+    }
+    glb = to_glb(mesh, extras={"vector3d": {"geometry_confidence": conf.value, "mode": "ai", "model": rec.model}})
+    obj = to_obj(mesh)
+    done("export", f"GLB {len(glb) / 1024:.0f} KB, OBJ {len(obj) / 1024:.0f} KB")
+    metadata["timings_s"] = timings
+    return GenerateResult(glb, obj, metadata, timings, {"mask.png": _png((mask * 255).astype(np.uint8))})

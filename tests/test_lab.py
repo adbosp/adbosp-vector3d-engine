@@ -230,3 +230,34 @@ def test_audit_reports_models():
     assert "triposg" in rep["models"] and "disk_free_gb" in rep
     if not rep["gpus"]:
         assert rep["models"]["triposg"]["verdict"] == "no NVIDIA GPU detected"
+
+
+def test_generate_ai_mode_with_stub_model(tmp_path, monkeypatch):
+    from vector3d.generate import GenerateOptions, generate, resolve_mode
+
+    repo = _fake_triposg(tmp_path / "TripoSG", with_torch=True)
+    monkeypatch.setenv("V3D_TRIPOSG_DIR", str(repo))
+    monkeypatch.setenv("V3D_TRIPOSG_PYTHON", sys.executable)
+    monkeypatch.setenv("PYTHONPATH", str(repo / "fake_site"))
+    monkeypatch.chdir(tmp_path)
+    data = _png(tmp_path / "f.png").read_bytes()
+    assert resolve_mode({"front": ("f.png", data)}) == "ai"
+    steps = []
+    r = generate({"front": ("f.png", data)}, GenerateOptions(mode="auto", size_m=2.0),
+                 progress=lambda k, s, d: steps.append((k, s)))
+    assert r.metadata["mode"] == "ai" and r.metadata["geometry_confidence"] == "ai_generated"
+    assert r.metadata["model"]["peak_vram_mb"] == 5 * 1024
+    assert ("ai_generate", "done") in steps
+    bbox = np.array(r.metadata["validation"]["bbox"])
+    assert abs((bbox[1] - bbox[0]).max() - 2.0) < 1e-6
+    assert r.glb[:4] == b"glTF"
+
+
+def test_ai_mode_unavailable_is_an_error_not_a_fallback(tmp_path, monkeypatch):
+    from vector3d.generate import GenerateOptions, generate, resolve_mode
+
+    monkeypatch.delenv("V3D_TRIPOSG_DIR", raising=False)
+    data = _png(tmp_path / "f.png").read_bytes()
+    assert resolve_mode({"front": ("f.png", data)}) == "photo"
+    with pytest.raises(RuntimeError, match="TripoSG is not available"):
+        generate({"front": ("f.png", data)}, GenerateOptions(mode="ai"))

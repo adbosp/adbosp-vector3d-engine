@@ -2,9 +2,10 @@
 
   GET  /                 single-page interface (static/index.html)
   GET  /api/stages       pipeline stage registry
+  GET  /api/capabilities whether the local AI 3D model (TripoSG) can run
   GET  /api/examples     bundled example SVGs, keyed by view
   POST /api/inspect      {"views": {"front": VIEW, ...}, "tolerance": 0.01}
-  POST /api/generate     {"views": {...}, "options": {"mode": "auto|drawing|photo", "resolution": 128,
+  POST /api/generate     {"views": {...}, "options": {"mode": "auto|ai|drawing|photo", "resolution": 128,
                           "smooth_iterations": 10, "hints": {...}, "thickness": 0.6, "detail": 0.7,
                           "back": "symmetric|flat", "size_m": 1.0, "depth_backend": "auto"}}
                          -> {"job": id}; the job runs in a background thread
@@ -136,7 +137,10 @@ def start_job(payload: dict) -> Job:
         detail=float(clamp(float(opts.get("detail", 0.7)), 0.0, 1.0)),
         back=str(opts.get("back", "symmetric")),
         size_m=float(clamp(float(opts.get("size_m", 1.0)), 1e-3, 1e4)),
+        ai_profile=str(opts.get("ai_profile", "balanced")),
     )
+    if options.ai_profile not in ("fast", "balanced", "quality"):
+        raise ValueError("ai_profile must be fast, balanced or quality")
     if options.back not in ("symmetric", "flat"):
         raise ValueError("back must be symmetric or flat")
     if options.hints:
@@ -184,6 +188,11 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8")
         elif path == "/api/stages":
             self._json(200, [asdict(s) for s in STAGES])
+        elif path == "/api/capabilities":
+            from ..generate import ai_available
+
+            ok, why = ai_available()
+            self._json(200, {"ai": ok, "ai_model": "VAST-AI/TripoSG", "ai_reason": why})
         elif path == "/api/examples":
             self._json(200, examples())
         elif path.startswith("/api/jobs/"):

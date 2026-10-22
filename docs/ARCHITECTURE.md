@@ -138,3 +138,8 @@ Giới hạn: visual hull là giới hạn trên của hình dạng thật, nên
 8. **validate/export**: như chế độ drawing; model được co về `size_m` (cạnh dài nhất), metadata ghi `AI_GENERATED`, backend depth và các giả định.
 
 Giới hạn: một ảnh không có thông tin về mặt sau, nên mặt sau luôn là giả định. Phối cảnh mạnh làm méo hình vì ảnh được coi như hình chiếu thẳng. Bước tiếp theo nên thử: sinh thêm view bằng multi-view diffusion (Zero123++, SV3D) rồi đưa qua visual hull, hoặc dùng model ảnh→3D (TripoSR, TRELLIS) khi có GPU, gắn vào cùng giao thức `PHOTO_STEPS`.
+
+## 11. AI mode and single-image meshing (v0.5)
+- `mode="ai"`: TripoSG generates the shape on the local NVIDIA GPU (`vector3d/lab/backends/triposg.py`). `auto` picks it for raster input whenever `TripoSGBackend.check()` passes (env vars or `C:\ai3d`). If it cannot run, the job fails with the reason; it never falls back silently. The mesh is scaled to `size_m`, coloured by front projection and labelled `AI_GENERATED`.
+- Photo mode with one image: the mesh is built straight from the front/back height maps at image resolution (`relief.heightfield_mesh`, one vertex per pixel up to 384 px), so depth detail survives; voxels are only used when other views carve the shape. The unseen back is a smooth shell, never a mirror of the face.
+- Line drawings: strokes are filled into the region they enclose (`raster/lineart.py`, and open SVG strokes in `hull._view_mask`), recorded as an ESTIMATED assumption.

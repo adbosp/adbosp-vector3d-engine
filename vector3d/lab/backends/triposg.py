@@ -22,6 +22,9 @@ from ..profiles import TRIPOSG_PROFILES, get_profile
 from .base import Backend, GenerationRecord, now, preserve_inputs
 
 RUNNER = Path(__file__).with_name("triposg_runner.py")
+# docs/LAB.md install location, used when the environment variables are not set
+DEFAULT_REPO = Path(r"C:\ai3d\TripoSG")
+DEFAULT_PYTHON = Path(r"C:\ai3d\triposg-env\Scripts\python.exe")
 
 
 class TripoSGBackend(Backend):
@@ -32,8 +35,10 @@ class TripoSGBackend(Backend):
 
     def __init__(self, repo: str | None = None, python: str | None = None, weights: str | None = None,
                  download: bool = False, timeout: int = 1800):
-        self.repo = Path(repo or os.environ.get("V3D_TRIPOSG_DIR", "")) if (repo or os.environ.get("V3D_TRIPOSG_DIR")) else None
-        self.python = python or os.environ.get("V3D_TRIPOSG_PYTHON") or sys.executable
+        r = repo or os.environ.get("V3D_TRIPOSG_DIR") or (str(DEFAULT_REPO) if DEFAULT_REPO.is_dir() else None)
+        self.repo = Path(r) if r else None
+        self.python = python or os.environ.get("V3D_TRIPOSG_PYTHON") or \
+            (str(DEFAULT_PYTHON) if DEFAULT_PYTHON.is_file() else sys.executable)
         w = weights or os.environ.get("V3D_TRIPOSG_WEIGHTS")
         self.weights = Path(w) if w else (self.repo / "pretrained_weights" / "TripoSG" if self.repo else None)
         self.download = download

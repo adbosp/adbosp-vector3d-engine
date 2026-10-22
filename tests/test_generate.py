@@ -239,3 +239,32 @@ def test_side_photo_sets_depth():
                  GenerateOptions(resolution=64, depth_backend="inflation", segmenter="classic", mode="photo"))
     (x0, y0, z0), (x1, y1, z1) = r.metadata["validation"]["bbox"]
     assert (z1 - z0) / (y1 - y0) == pytest.approx(0.4, abs=0.06)
+
+
+def test_raster_line_art_is_filled():
+    import io
+
+    from PIL import Image, ImageDraw
+
+    from vector3d.raster.image_input import load_image, silhouette_mask
+
+    img = Image.new("RGB", (200, 200), "white")
+    ImageDraw.Draw(img).ellipse((40, 30, 160, 170), outline="black", width=3)
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    mask, method = silhouette_mask(load_image(buf.getvalue()))
+    assert method.endswith("+filled_line_art")
+    assert mask[100, 100] and mask.sum() > 0.8 * np.pi * 60 * 70
+
+
+def test_svg_open_profile_strokes_become_a_solid():
+    front = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">'
+             '<path d="M70 250 L70 200 C40 190 30 150 35 110 C40 40 160 40 165 110 C170 150 160 190 130 200 L130 250" '
+             'fill="none" stroke="black"/><circle cx="80" cy="110" r="8" fill="none" stroke="black"/></svg>')
+    right = front.replace("<circle", "<ellipse rx='4' ry='4'").replace("cx=\"80\" cy=\"110\" r=\"8\"", "cx=\"150\" cy=\"120\"")
+    r = generate({"front": ("f.svg", front.encode()), "right": ("r.svg", right.encode())}, GenerateOptions(mode="drawing"))
+    assert any("line drawing" in a for a in r.metadata["assumptions"])
+    assert r.metadata["validation"]["watertight"]
+    # Without filling, only the small eye circle would survive carving.
+    lo, hi = np.array(r.metadata["validation"]["bbox"])
+    assert (hi - lo)[1] > 150

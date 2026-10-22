@@ -70,7 +70,7 @@ select { padding: 5px 6px; border: 1px solid var(--border); border-radius: 6px; 
 .maps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
 .maps a { display: block; text-decoration: none; color: var(--muted); font-size: 11px; text-align: center; }
 .maps img { width: 100%; aspect-ratio: 1; object-fit: contain; background: #000; border-radius: 6px; border: 1px solid var(--border); display: block; margin-bottom: 2px; }
-.photo-only.off { display: none; }
+.photo-only.off, .ai-only.off { display: none; }
 input[type=range] { width: 100%; accent-color: var(--accent); }
 .downloads a { font-size: 12px; text-decoration: none; color: var(--accent); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; }
 .hint { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
@@ -145,15 +145,17 @@ ul.warn { padding-left: 18px; margin: 6px 0; color: var(--warn); font-size: 12px
       <button class="btn primary gen" id="genBtn">Generate</button>
       <div class="opts">
         <span>Chế độ</span>
-        <select id="mode"><option value="auto" selected>Tự động</option><option value="photo">Ảnh chụp (AI depth)</option><option value="drawing">Bản vẽ hình chiếu</option></select>
+        <select id="mode"><option value="auto" selected>Tự động</option><option value="ai">AI 3D: TripoSG (GPU)</option><option value="photo">Ảnh chụp (AI depth, CPU)</option><option value="drawing">Bản vẽ hình chiếu</option></select>
+        <span class="ai-only">Chất lượng AI</span>
+        <select class="ai-only" id="aiProfile"><option value="fast">Nhanh</option><option value="balanced" selected>Cân bằng</option><option value="quality">Cao</option></select>
         <span class="photo-only">Độ dày</span>
         <span class="photo-only"><input type="range" id="thickness" min="0.1" max="1.5" step="0.05" value="0.6" title="Chiều sâu so với chiều rộng"></span>
         <span class="photo-only">Chi tiết depth</span>
         <span class="photo-only"><input type="range" id="detail" min="0" max="1" step="0.05" value="0.7" title="0 = chỉ theo silhouette, 1 = theo depth AI"></span>
         <span class="photo-only">Mặt sau</span>
         <select class="photo-only" id="back"><option value="symmetric">Đối xứng mặt trước</option><option value="flat">Phẳng (phù điêu)</option></select>
-        <span class="photo-only">Kích thước</span>
-        <span class="photo-only row" style="gap:6px"><input type="number" id="sizeM" value="1" min="0.01" step="0.1"> m (cạnh dài nhất)</span>
+        <span class="photo-only size">Kích thước</span>
+        <span class="photo-only size row" style="gap:6px"><input type="number" id="sizeM" value="1" min="0.01" step="0.1"> m (cạnh dài nhất)</span>
         <span>Chất lượng</span>
         <select id="quality"><option value="64">Nhanh</option><option value="128" selected>Chuẩn</option><option value="192">Cao</option></select>
         <span>Làm mượt</span>
@@ -345,12 +347,25 @@ const STEP_LABEL = {
   smooth: "Làm mượt", validate: "Kiểm tra mesh", export: "Xuất GLB / OBJ",
   segment: "Tách nền (AI)", depth: "Ước lượng chiều sâu (AI)", normals: "Tạo normal map",
   relief: "Dựng khối từ depth", color: "Tô màu từ ảnh",
+  ai_generate: "Sinh hình khối 3D (TripoSG, GPU)", place: "Đặt vị trí và tỉ lệ",
 };
+let AI = { ai: false, ai_reason: "" };
+fetch("/api/capabilities").then((r) => r.json()).then((c) => {
+  AI = c;
+  const opt = document.querySelector('#mode option[value="ai"]');
+  if (!c.ai) { opt.disabled = true; opt.textContent += " (chưa cài)"; opt.title = c.ai_reason; }
+  document.querySelector('#mode option[value="auto"]').textContent = c.ai ? "Tự động (AI TripoSG)" : "Tự động";
+  syncModeUI();
+}).catch(() => {});
 const MAP_LABEL = { mask: "Mask", depth: "Depth", normal: "Normal" };
 function syncModeUI() {
   const svgOnly = Object.values(files).length && Object.values(files).every((f) => f.name.toLowerCase().endsWith(".svg"));
-  const photo = $("mode").value === "photo" || ($("mode").value === "auto" && !svgOnly);
+  const m = $("mode").value;
+  const ai = m === "ai" || (m === "auto" && !svgOnly && AI.ai);
+  const photo = m === "photo" || (m === "auto" && !svgOnly && !AI.ai);
   document.querySelectorAll(".photo-only").forEach((el) => el.classList.toggle("off", !photo));
+  document.querySelectorAll(".ai-only").forEach((el) => el.classList.toggle("off", !ai));
+  document.querySelectorAll(".photo-only.size").forEach((el) => el.classList.toggle("off", !(photo || ai)));
 }
 $("mode").onchange = syncModeUI;
 let hints = null;
@@ -375,7 +390,7 @@ $("genBtn").onclick = async () => {
     const { job } = await api("/api/generate", { views: viewPayload(), options: {
       mode: $("mode").value, resolution: +$("quality").value, smooth_iterations: +$("smooth").value, hints,
       thickness: +$("thickness").value, detail: +$("detail").value, back: $("back").value,
-      size_m: +$("sizeM").value || 1 } });
+      size_m: +$("sizeM").value || 1, ai_profile: $("aiProfile").value } });
     let snap;
     for (;;) {
       snap = await api(`/api/jobs/${job}`);
@@ -386,10 +401,11 @@ $("genBtn").onclick = async () => {
     if (snap.status === "error") throw new Error(snap.error);
     await inspected;
     await loadMesh(snap.files.glb, "model.glb", "glb");
-    if (snap.metadata.mode === "photo") matchViewsToMesh();
+    if (snap.metadata.mode === "photo" || snap.metadata.mode === "ai") matchViewsToMesh();
     const v = snap.metadata.validation;
     $("meshInfo").textContent = `Model đã tạo: ${v.triangles.toLocaleString()} tam giác, ${v.watertight ? "kín nước" : "CHƯA kín"}, độ tin cậy: ${snap.metadata.geometry_confidence}` +
-      (snap.metadata.mode === "photo" ? ` (AI: ${snap.metadata.depth_backend})` : snap.metadata.units === "m" ? "" : " (đơn vị bản vẽ, chưa có thang đo)");
+      (snap.metadata.mode === "ai" ? ` (AI: TripoSG, ${Math.round(snap.metadata.model.duration_s)} s, VRAM ${Math.round(snap.metadata.model.peak_vram_mb)} MB)` :
+       snap.metadata.mode === "photo" ? ` (AI: ${snap.metadata.depth_backend})` : snap.metadata.units === "m" ? "" : " (đơn vị bản vẽ, chưa có thang đo)");
     $("maps").innerHTML = Object.entries(snap.images || {}).map(([k, url]) =>
       `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${k}">${MAP_LABEL[k] || k}</a>`).join("");
     $("downloads").innerHTML = `<a href="${snap.files.glb}" download="model.glb">Tải GLB</a>

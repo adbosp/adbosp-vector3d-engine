@@ -13,6 +13,7 @@ import numpy as np
 from skimage.draw import polygon2mask
 
 from ..core.geometry import Contour
+from ..raster.lineart import fill_line_art
 from ..normalize.normalizer import AXIS_NAMES, NormalizedScene, NormalizedView
 from ..report import scene_extent
 
@@ -56,7 +57,7 @@ def silhouette_polygons(nv: NormalizedView, samples: int = 24) -> tuple[list[np.
     return fills, holes, False
 
 
-def _view_mask(nv: NormalizedView, grid: Grid) -> tuple[np.ndarray, int, int]:
+def _view_mask(nv: NormalizedView, grid: Grid) -> tuple[np.ndarray, int, int, bool]:
     cam = nv.camera
     (wu, su), (wv, sv) = cam.axis_of(0), cam.axis_of(1)
     shape = (grid.shape[wu], grid.shape[wv])
@@ -73,7 +74,39 @@ def _view_mask(nv: NormalizedView, grid: Grid) -> tuple[np.ndarray, int, int]:
         mask = mask ^ m if evenodd else mask | m
     for p in holes:
         mask &= ~polygon2mask(shape, to_index(p))
-    return mask, wu, wv
+    line_art = False
+    if not evenodd:
+        # SVG line art: open strokes outline the object, so fill what they enclose.
+        strokes = _stroke_mask(nv, shape, to_index)
+        filled, is_art = fill_line_art(strokes | mask, gap_px=2)
+        if is_art and filled.sum() > 1.5 * mask.sum():
+            for p in holes:
+                filled &= ~polygon2mask(shape, to_index(p))
+            mask, line_art = filled, True
+    return mask, wu, wv, line_art
+
+
+def _stroke_mask(nv: NormalizedView, shape, to_index, samples: int = 24) -> np.ndarray:
+    """All solid contours, open or closed, drawn as 1-voxel lines.
+
+    A long open stroke (a profile drawn as one curve, open at the neck or
+    base) is closed with a straight segment between its ends.
+    """
+    out = np.zeros(shape, dtype=bool)
+    for c in nv.contours:
+        if c.semantic.get("line_style") == "dashed":
+            continue
+        pts = to_index(c.sample(samples))
+        span = np.ptp(pts, axis=0).max() if len(pts) > 1 else 0.0
+        if c.closed or span > 0.3 * max(shape):
+            pts = np.vstack([pts, pts[:1]])
+        for a, b in zip(pts[:-1], pts[1:]):
+            n = int(np.ceil(np.abs(b - a).max() * 2)) + 1
+            t = np.linspace(0, 1, n)[:, None]
+            q = np.rint(a + (b - a) * t).astype(int)
+            ok = (q[:, 0] >= 0) & (q[:, 0] < shape[0]) & (q[:, 1] >= 0) & (q[:, 1] < shape[1])
+            out[q[ok, 0], q[ok, 1]] = True
+    return out
 
 
 def carve(scene: NormalizedScene, resolution: int = 128, pad_voxels: int = 2,
@@ -113,8 +146,10 @@ def carve(scene: NormalizedScene, resolution: int = 128, pad_voxels: int = 2,
     occ = np.ones(shape, dtype=bool)
     masks = {}
     for v, nv in scene.views.items():
-        mask, wu, wv = _view_mask(nv, grid)
+        mask, wu, wv, line_art = _view_mask(nv, grid)
         masks[v.value] = mask
+        if line_art:
+            assumptions.append(f"{v.value}: line drawing; silhouette = region enclosed by its strokes (ESTIMATED)")
         if not mask.any():
             assumptions.append(f"{v.value}: no closed silhouette; view ignored for carving")
             continue

@@ -19,6 +19,7 @@ from scipy import ndimage
 from ..ai.depth import inflation
 from ..normalize.normalizer import NormalizedView
 from .hull import Grid
+from .surface import Mesh
 
 BACK_RATIO = {"symmetric": 1.0, "flat": 0.35}
 
@@ -48,13 +49,73 @@ def build_heights(mask: np.ndarray, depth: np.ndarray, params: ReliefParams) -> 
     sigma = max(1.0, 0.004 * max(mask.shape))
     m = mask.astype(np.float32)
     depth = ndimage.gaussian_filter(depth * m, sigma) / np.maximum(ndimage.gaussian_filter(m, sigma), 1e-6)
-    shape = infl * (1 - params.detail + params.detail * depth)
-    peak = shape.max() or 1.0
-    front = half * shape / peak
-    back = -front * BACK_RATIO[params.back]
+    infl = infl / (infl.max() or 1.0)
+    # AI depth sets the front surface directly (faces, folds); inflation only rounds it. A narrow
+    # rim falloff closes the solid at the outline without flattening the interior detail.
+    shape = (1 - params.detail) * infl + params.detail * depth
+    rim = max(2.0, 0.04 * width)
+    falloff = np.sqrt(np.clip(ndimage.distance_transform_edt(mask) / rim, 0, 1))
+    front = half * shape * falloff
+    # The back is unseen: a smooth rounded shell, never a mirror of the front's features.
+    back = -half * BACK_RATIO[params.back] * infl * falloff
     front[~mask] = 0
     back[~mask] = 0
     return Relief(front.astype(np.float32), back.astype(np.float32), half)
+
+
+def heightfield_mesh(relief: Relief, mask: np.ndarray, max_side: int = 384) -> tuple[Mesh, float]:
+    """Closed mesh straight from the front/back height maps at image resolution.
+
+    One vertex per pixel on each side; quads where four neighbouring pixels are
+    inside the mask; side walls stitch front to back along the outline.
+    Returns the mesh in pixel units (x right, y up, z toward the viewer) and
+    the pixel stride used.
+    """
+    k = max(1, int(np.ceil(max(mask.shape) / max_side)))
+    m = mask[::k, ::k]
+    f, b = relief.front[::k, ::k], relief.back[::k, ::k]
+    h, w = m.shape
+    idx = -np.ones((h, w), dtype=np.int64)
+    ys, xs = np.nonzero(m)
+    n = len(ys)
+    idx[ys, xs] = np.arange(n)
+    px, py = xs * k, ys * k
+    verts = np.concatenate([np.column_stack([px, -py, f[ys, xs]]), np.column_stack([px, -py, b[ys, xs]])]).astype(float)
+    a, bb, c, d = idx[:-1, :-1], idx[:-1, 1:], idx[1:, :-1], idx[1:, 1:]
+    full = (a >= 0) & (bb >= 0) & (c >= 0) & (d >= 0)
+    a, bb, c, d = a[full], bb[full], c[full], d[full]
+    # Image rows grow downward and y = -row, so (a, c, b) is counter-clockwise seen from +Z.
+    front_tris = np.concatenate([np.column_stack([a, c, bb]), np.column_stack([bb, c, d])])
+    back_tris = front_tris[:, ::-1] + n
+    e = np.concatenate([front_tris[:, [0, 1]], front_tris[:, [1, 2]], front_tris[:, [2, 0]]])
+    key = np.sort(e, axis=1)
+    _, inv, counts = np.unique(key, axis=0, return_inverse=True, return_counts=True)
+    border = e[counts[inv.ravel()] == 1]          # directed outline edges of the front sheet
+    u, v = border[:, 0], border[:, 1]
+    walls = np.concatenate([np.column_stack([v, u, u + n]), np.column_stack([v, u + n, v + n])])
+    faces = np.concatenate([front_tris, back_tris, walls])
+    used = np.zeros(2 * n, bool)
+    used[faces.ravel()] = True
+    remap = np.cumsum(used) - 1
+    mesh = Mesh(verts[used], remap[faces])
+    near = ndimage.distance_transform_edt(m)[ys, xs] <= 3
+    _relax(mesh, np.concatenate([near, near])[used], iterations=12)
+    return mesh, float(k)
+
+
+def _relax(mesh: Mesh, movable: np.ndarray, iterations: int, lam: float = 0.5) -> None:
+    """Laplacian smoothing of the selected vertices only: removes the pixel staircase along the outline."""
+    f = mesh.faces
+    e = np.concatenate([f[:, [0, 1]], f[:, [1, 2]], f[:, [2, 0]]])
+    e = np.concatenate([e, e[:, ::-1]])
+    deg = np.bincount(e[:, 0], minlength=len(mesh.vertices)).astype(float)[:, None]
+    v = mesh.vertices
+    for _ in range(iterations):
+        acc = np.zeros_like(v)
+        np.add.at(acc, e[:, 0], v[e[:, 1]])
+        step = acc / np.maximum(deg, 1) - v
+        v = v + lam * step * movable[:, None]
+    mesh.vertices = v
 
 
 def z_extent(relief: Relief, scale: float) -> tuple[float, float]:
