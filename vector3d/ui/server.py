@@ -3,12 +3,22 @@
   GET  /                 single-page interface (static/index.html)
   GET  /api/stages       pipeline stage registry
   GET  /api/examples     bundled example SVGs, keyed by view
-  POST /api/inspect      {"views": {"front": "<svg ...>", ...}, "tolerance": 0.01}
+  POST /api/inspect      {"views": {"front": VIEW, ...}, "tolerance": 0.01}
+  POST /api/generate     {"views": {...}, "options": {"resolution": 128, "smooth_iterations": 10, "hints": {...}}}
+                         -> {"job": id}; the job runs in a background thread
+  GET  /api/jobs/<id>    step-by-step progress, then metadata
+  GET  /api/jobs/<id>/model.glb | model.obj | metadata.json
+
+VIEW is SVG text, or {"name": "front.png", "data": "<base64>"} for any file (SVG, PNG, JPG).
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import json
 import threading
+import time
+import uuid
 import webbrowser
 from dataclasses import asdict
 from http import HTTPStatus
@@ -16,31 +26,116 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from xml.etree.ElementTree import ParseError
 
+from ..generate import STEPS, GenerateOptions, generate, load_view
 from ..normalize.normalizer import normalize_views
 from ..normalize.views import ViewName
 from ..pipeline import STAGES
+from ..reconstruct.hints import validate_hints
 from ..report import geometry, summary
-from ..svg.parser import parse_svg
 
 STATIC = Path(__file__).resolve().parent / "static"
 EXAMPLES = Path(__file__).resolve().parents[2] / "examples"
-MAX_BODY = 20 * 1024 * 1024
+MAX_BODY = 60 * 1024 * 1024
+MAX_JOBS = 20
 
 
-def inspect(payload: dict) -> dict:
+def decode_views(payload: dict) -> dict[str, tuple[str, bytes]]:
     views = payload.get("views") or {}
     if not isinstance(views, dict) or not views:
         raise ValueError("no views supplied")
+    out = {}
+    for name, item in views.items():
+        view = ViewName(str(name).lower()).value
+        if isinstance(item, str):
+            out[view] = (f"{view}.svg", item.encode("utf-8"))
+        else:
+            try:
+                out[view] = (str(item.get("name") or view), base64.b64decode(item["data"], validate=True))
+            except (KeyError, TypeError, binascii.Error) as exc:
+                raise ValueError(f"{view}: expected SVG text or {{name, data(base64)}}") from exc
+    return out
+
+
+def _load_all(files: dict[str, tuple[str, bytes]]):
     docs = {}
-    for name, text in views.items():
-        view = ViewName(str(name).lower())
+    for view, (name, data) in files.items():
         try:
-            docs[view] = parse_svg(text, is_text=True)
+            docs[view] = load_view(view, name, data)
         except ParseError as exc:
-            raise ValueError(f"{view.value}: invalid SVG ({exc})") from exc
-        docs[view].source = f"{view.value}.svg"
+            raise ValueError(f"{view}: invalid SVG ({exc})") from exc
+        except OSError as exc:  # PIL: not an image it can read
+            raise ValueError(f"{view}: unreadable image ({exc})") from exc
+    return docs
+
+
+def inspect(payload: dict) -> dict:
+    docs = _load_all(decode_views(payload))
     scene = normalize_views(docs, tolerance=float(payload.get("tolerance", 0.01)))
     return {"summary": summary(scene), "geometry": geometry(scene)}
+
+
+class Job:
+    def __init__(self, files: dict[str, tuple[str, bytes]], options: GenerateOptions):
+        self.id = uuid.uuid4().hex[:12]
+        self.created = time.time()
+        self.status = "queued"
+        self.error: str | None = None
+        self.steps = [{"key": k, "title": t, "status": "pending", "detail": ""} for k, t in STEPS]
+        self.result = None
+        self._files, self._options = files, options
+        self._lock = threading.Lock()
+
+    def _progress(self, key: str, status: str, detail: str) -> None:
+        with self._lock:
+            for s in self.steps:
+                if s["key"] == key:
+                    s["status"], s["detail"] = status, detail
+
+    def run(self) -> None:
+        self.status = "running"
+        try:
+            self.result = generate(self._files, self._options, self._progress)
+            self.status = "done"
+        except Exception as exc:
+            self.error = str(exc) or type(exc).__name__
+            self.status = "error"
+        finally:
+            self._files = {}
+
+    def snapshot(self) -> dict:
+        with self._lock:
+            out = {"id": self.id, "status": self.status, "error": self.error,
+                   "steps": [dict(s) for s in self.steps]}
+        if self.result is not None:
+            out["metadata"] = self.result.metadata
+            out["files"] = {"glb": f"/api/jobs/{self.id}/model.glb", "obj": f"/api/jobs/{self.id}/model.obj",
+                            "metadata": f"/api/jobs/{self.id}/metadata.json"}
+        return out
+
+
+JOBS: dict[str, Job] = {}
+_jobs_lock = threading.Lock()
+
+
+def start_job(payload: dict) -> Job:
+    files = decode_views(payload)
+    _load_all(files)  # fail fast on unreadable inputs, before a job exists
+    opts = payload.get("options") or {}
+    options = GenerateOptions(
+        resolution=int(min(max(int(opts.get("resolution", 128)), 16), 384)),
+        smooth_iterations=int(min(max(int(opts.get("smooth_iterations", 10)), 0), 50)),
+        hints=opts.get("hints") or None,
+    )
+    if options.hints:
+        validate_hints(options.hints)
+    job = Job(files, options)
+    with _jobs_lock:
+        if len(JOBS) >= MAX_JOBS:
+            oldest = min(JOBS.values(), key=lambda j: j.created)
+            JOBS.pop(oldest.id, None)
+        JOBS[job.id] = job
+    threading.Thread(target=job.run, daemon=True).start()
+    return job
 
 
 def examples() -> dict[str, str]:
@@ -78,11 +173,32 @@ class Handler(BaseHTTPRequestHandler):
             self._json(200, [asdict(s) for s in STAGES])
         elif path == "/api/examples":
             self._json(200, examples())
+        elif path.startswith("/api/jobs/"):
+            self._job_get(path[len("/api/jobs/"):])
+        else:
+            self._json(404, {"error": "not found"})
+
+    def _job_get(self, rest: str) -> None:
+        job_id, _, name = rest.partition("/")
+        job = JOBS.get(job_id)
+        if job is None:
+            self._json(404, {"error": "unknown job"})
+        elif not name:
+            self._json(200, job.snapshot())
+        elif job.result is None:
+            self._json(409, {"error": f"job is {job.status}"})
+        elif name == "model.glb":
+            self._send(200, job.result.glb, "model/gltf-binary")
+        elif name == "model.obj":
+            self._send(200, job.result.obj.encode("utf-8"), "text/plain; charset=utf-8")
+        elif name == "metadata.json":
+            self._json(200, job.result.metadata)
         else:
             self._json(404, {"error": "not found"})
 
     def do_POST(self) -> None:
-        if self.path.split("?", 1)[0] != "/api/inspect":
+        path = self.path.split("?", 1)[0]
+        if path not in ("/api/inspect", "/api/generate"):
             self._json(404, {"error": "not found"})
             return
         length = int(self.headers.get("Content-Length") or 0)
@@ -91,7 +207,10 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             payload = json.loads(self.rfile.read(length))
-            self._json(200, inspect(payload))
+            if path == "/api/inspect":
+                self._json(200, inspect(payload))
+            else:
+                self._json(202, {"job": start_job(payload).id})
         except (ValueError, KeyError) as exc:
             self._json(400, {"error": str(exc)})
         except Exception as exc:  # report, don't kill the server

@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "author": "claude",
+  "revolve": {"view": "front", "axis": "y", "center": 0.0},
+  "notes": "Front silhouette is mirror-symmetric about its vertical centre line (0.999) and the object is a vase, so it is a solid of revolution about +Y. Depth is not observed; revolving fixes it to the profile diameter."
+}

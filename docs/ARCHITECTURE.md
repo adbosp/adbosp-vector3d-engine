@@ -1,6 +1,6 @@
 # Vector3D Engine — Kiến trúc
 
-> Trạng thái: v0.1. Đã triển khai giai đoạn 1–2 (SVG Parser, Coordinate Normalization). Các giai đoạn còn lại mới ở mức thiết kế.
+> Trạng thái: v0.2. Đã triển khai giai đoạn 1–2 (SVG Parser, Coordinate Normalization), 6 (Coarse Surface bằng visual hull), 10 (kiểm tra mesh) và 12 (xuất GLB/OBJ/metadata). Ảnh PNG/JPG được tách silhouette. AI cắm vào qua `hints.json` do Claude hoặc Codex viết (`docs/AI_PLAYBOOK.md`).
 
 ## 1. Nguyên tắc
 
@@ -19,13 +19,13 @@
 | 3 | AI Semantic Geometry Understanding | `vector3d.semantics` | Có | Thiết kế |
 | 4 | Cross-view Correspondence Solver | `vector3d.correspond` | Không | Thiết kế |
 | 5 | Confidence-aware 3D Reconstruction | `vector3d.reconstruct` | Không | Thiết kế |
-| 6 | Coarse 3D Surface Reconstruction | `vector3d.surface.coarse` | Không | Thiết kế |
+| 6 | Coarse 3D Surface Reconstruction | `vector3d.reconstruct.hull` | Không | ✅ visual hull |
 | 7 | AI SVG Topology Blueprint | `vector3d.topology.blueprint` | Có | Thiết kế |
 | 8 | Topology Graph Compiler | `vector3d.topology.compiler` | Không | Thiết kế |
 | 9 | 3D Surface Fitting Solver | `vector3d.surface.fit` | Không | Thiết kế |
-| 10 | Geometry + Topology Validation | `vector3d.validate` | Không | Thiết kế |
+| 10 | Geometry + Topology Validation | `vector3d.reconstruct.surface` | Không | ✅ hình học (topology: chưa) |
 | 11 | Iterative Refinement | `vector3d.refine` | Có (điều phối) | Thiết kế |
-| 12 | Export OBJ / GLB / Metadata | `vector3d.export` | Không | Thiết kế |
+| 12 | Export OBJ / GLB / Metadata | `vector3d.export.writers` | Không | ✅ |
 
 Danh sách này nằm trong `vector3d/pipeline.py` (`STAGES`), là nguồn duy nhất để lớp API/MCP liệt kê công cụ.
 
@@ -108,3 +108,18 @@ Nếu các nguồn mâu thuẫn, dùng nguồn ưu tiên cao hơn và ghi cảnh
 2. Quy ước chiếu: hệ thống có cần đọc bản vẽ kỹ thuật kiểu first-angle/third-angle với nhiều view trong một file SVG không, hay mỗi view một file?
 3. Ngôn ngữ/đóng gói: giữ Python + numpy cho lõi (đề xuất), hay cần thêm lõi C++/Rust cho hiệu năng?
 4. Repo GitHub nào để đẩy code lên?
+
+## 9. Generate (v0.2)
+
+`vector3d/generate.py` chạy các bước sau và báo tiến độ từng bước, dùng chung cho CLI, web (`POST /api/generate`, theo dõi bằng `GET /api/jobs/<id>`) và agent:
+
+1. **load**: đọc SVG bằng parser. Với PNG/JPG thì tách nền (theo alpha, hoặc theo màu viền + ngưỡng Otsu), lấy silhouette rồi trace thành contour đóng (`vector3d/raster`). Pixel không mang thang đo.
+2. **normalize**: như giai đoạn 2.
+3. **semantics**: chưa làm, báo `skipped`.
+4. **carve**: visual hull. Mỗi silhouette được đùn theo trục nhìn rồi lấy giao. Lưới voxel có bước riêng cho từng trục để các mặt bao rơi đúng biên voxel. Khi chỉ có một hướng nhìn, chiều sâu được giả định bằng extent nhỏ hơn và ghi vào `assumptions`.
+5. **ai_fill**: áp dụng `hints.json` (extent, revolve, symmetry, primitives), nhãn AI_GENERATED.
+6. **surface**: marching cubes. **smooth**: Taubin (giữ thể tích).
+7. **validate**: kín nước, cạnh non-manifold, Euler, thể tích, mức khớp silhouette (IoU) với từng view.
+8. **export**: GLB (trục khớp glTF, `extras` ghi độ tin cậy), OBJ, metadata JSON.
+
+Giới hạn: visual hull là giới hạn trên của hình dạng thật, nên các hốc lõm bị khuất ở mọi view sẽ không được dựng. Các giai đoạn 4, 7–9 và 11 sẽ thay dần phần này.

@@ -2,7 +2,21 @@
 
 Engine dựng hình học 3D từ các hình chiếu trực giao SVG (Front/Back/Left/Right/Top/Bottom). Ưu tiên toán học; AI chỉ lấp phần thiếu.
 
-Xem kiến trúc: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Xem kiến trúc: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Hướng dẫn cho AI agent (Claude, Codex): [AGENTS.md](AGENTS.md) và [docs/AI_PLAYBOOK.md](docs/AI_PLAYBOOK.md).
+
+## Generate: ảnh → model 3D
+
+Trong giao diện web (`python -m vector3d ui`): thả ảnh (SVG, PNG hoặc JPG; một ảnh Front là đủ, càng nhiều view càng chính xác), bấm **Generate**, theo dõi từng bước, xem model 3D và tải về GLB, OBJ hoặc metadata.
+
+Từ dòng lệnh:
+```bash
+python -m vector3d generate --front examples/box_front.svg --right examples/box_right.svg --top examples/box_top.svg -o out/
+python -m vector3d generate --front examples/vase_front.png --hints examples/vase_hints.json -o out/vase
+```
+
+Các bước: đọc ảnh → chuẩn hóa tọa độ → (AI ngữ nghĩa: chưa làm) → dựng khối từ silhouette (visual hull) → bổ sung phần khuất theo `hints.json` → marching cubes → làm mượt Taubin → kiểm tra (kín nước, khớp silhouette) → xuất file.
+
+Phần "AI" do Claude hoặc Codex đảm nhận: agent chạy `python -m vector3d describe ...` để lấy số liệu, viết `hints.json` (tròn xoay, chiều sâu, đối xứng, khoét lỗ...), rồi engine tự dựng theo đó. Chi tiết xem [docs/AI_PLAYBOOK.md](docs/AI_PLAYBOOK.md).
 
 ```bash
 pip install -e .[dev]
