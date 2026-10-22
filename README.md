@@ -41,6 +41,13 @@ pytest
 python -m vector3d inspect --front examples/box_front.svg --right examples/box_right.svg --top examples/box_top.svg
 ```
 
+## AI 3D Lab (model 3D thật + đo đạc)
+Chạy model image-to-3D mã nguồn mở (bắt đầu với TripoSG, MIT) trong môi trường riêng, ghi lại seed, thời gian, VRAM đỉnh, rồi đo và tinh chỉnh bằng hình học. Xem [docs/LAB.md](docs/LAB.md), [research/model_matrix.md](research/model_matrix.md) và [research/benchmark_report.md](research/benchmark_report.md).
+```bash
+python -m vector3d lab audit                       # kiểm tra GPU/VRAM/CUDA trước khi cài
+python -m vector3d lab generate --image anh.png -o runs/1 --download
+```
+
 ## Giao diện web
 
 ```bash

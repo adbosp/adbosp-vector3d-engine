@@ -4,6 +4,7 @@
   python -m vector3d generate --front photo.jpg [--right r.png ...] [--mode auto|drawing|photo] [--hints h.json] [-o out/]
   python -m vector3d describe --front f.png [...]        JSON facts for AI agents
   python -m vector3d ui [--port 8765]
+  python -m vector3d lab <audit|dataset|generate|render|experiment|benchmark|report>   AI 3D lab
 """
 from __future__ import annotations
 
@@ -17,6 +18,10 @@ from .report import summary as _summary
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if argv[:1] == ["lab"]:
+        from .lab.cli import main as lab_main
+        return lab_main(argv[1:])
     ap = argparse.ArgumentParser(prog="vector3d")
     sub = ap.add_subparsers(dest="cmd", required=True)
     insp = sub.add_parser("inspect", help="parse and normalize orthographic SVG views")
@@ -46,6 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     ui.add_argument("--host", default="127.0.0.1")
     ui.add_argument("--port", type=int, default=8765)
     ui.add_argument("--no-browser", action="store_true")
+    sub.add_parser("lab", help="AI 3D lab: audit, dataset, generate, render, experiment, benchmark, report")
     args = ap.parse_args(argv)
 
     if args.cmd == "ui":

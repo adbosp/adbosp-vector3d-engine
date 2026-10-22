@@ -13,6 +13,7 @@ python -m vector3d describe  --front F [--right R --top T ...]           # dữ 
 python -m vector3d generate  --front F [...] [--hints H.json] -o out/    # GLB + OBJ + metadata.json
 python -m vector3d inspect   --front F [...] [--json]                    # chỉ phân tích, không dựng mesh
 python -m vector3d ui                                                    # giao diện web, nút Generate
+python -m vector3d lab audit|dataset|generate|render|experiment|benchmark|report   # lab AI 3D (docs/LAB.md)
 ```
 
 ## Bản đồ code
@@ -21,6 +22,7 @@ python -m vector3d ui                                                    # giao 
 - `vector3d/reconstruct/`: `hull.py` (visual hull), `hints.py` (áp dụng quyết định của AI), `relief.py` (khối từ depth ảnh chụp), `surface.py` (marching cubes, Taubin, kiểm tra mesh).
 - `vector3d/ai/`: `depth.py` (Depth Anything V2 ONNX, Poisson inflation, normal map), `segment.py` (rembg hoặc tách theo màu).
 - `vector3d/export/`: OBJ, GLB. `vector3d/generate.py`: pipeline Generate từng bước. `vector3d/agent.py`: lệnh `describe`.
+- `vector3d/lab/`: lab AI 3D: backend model thật (TripoSG), renderer, metric, quality gate, tinh chỉnh silhouette, benchmark. `research/`: model matrix và báo cáo benchmark.
 - `vector3d/ui/`: server HTTP + trang web. `docs/ARCHITECTURE.md`: kiến trúc và quy ước.
 
 ## Quy tắc bất biến
@@ -28,5 +30,5 @@ python -m vector3d ui                                                    # giao 
 - Mọi dữ liệu mang nhãn `VERIFIED` / `ESTIMATED` / `AI_GENERATED`. Không nâng nhãn.
 - World: tay phải, mét, +Y lên, +Z về phía người nhìn Front. Left/Right là **bên của vật thể** (Right: camera ở −X).
 - Pixel và đơn vị SVG không phải kích thước thật khi chưa có thang đo.
-- Bước chưa làm phải báo `skipped` kèm lý do, không giả kết quả.
+- Bước chưa làm phải báo `skipped` kèm lý do, không giả kết quả. Backend không chạy được thì trả `blocked`, không bao giờ trả mesh thay thế.
 - Code mới đi kèm test; giữ phong cách hiện có (dataclass, hàm thuần, docstring ngắn).
