@@ -1,6 +1,6 @@
 # Vector3D Engine — Kiến trúc
 
-> Trạng thái: v0.2. Đã triển khai giai đoạn 1–2 (SVG Parser, Coordinate Normalization), 6 (Coarse Surface bằng visual hull), 10 (kiểm tra mesh) và 12 (xuất GLB/OBJ/metadata). Ảnh PNG/JPG được tách silhouette. AI cắm vào qua `hints.json` do Claude hoặc Codex viết (`docs/AI_PLAYBOOK.md`).
+> Trạng thái: v0.3 (thêm chế độ Ảnh chụp, mục 10). Đã triển khai giai đoạn 1–2 (SVG Parser, Coordinate Normalization), 6 (Coarse Surface bằng visual hull), 10 (kiểm tra mesh) và 12 (xuất GLB/OBJ/metadata). Ảnh PNG/JPG được tách silhouette. AI cắm vào qua `hints.json` do Claude hoặc Codex viết (`docs/AI_PLAYBOOK.md`).
 
 ## 1. Nguyên tắc
 
@@ -123,3 +123,18 @@ Nếu các nguồn mâu thuẫn, dùng nguồn ưu tiên cao hơn và ghi cảnh
 8. **export**: GLB (trục khớp glTF, `extras` ghi độ tin cậy), OBJ, metadata JSON.
 
 Giới hạn: visual hull là giới hạn trên của hình dạng thật, nên các hốc lõm bị khuất ở mọi view sẽ không được dựng. Các giai đoạn 4, 7–9 và 11 sẽ thay dần phần này.
+
+## 10. Chế độ Ảnh chụp (v0.3)
+
+Đầu vào là ảnh bất kỳ. `generate` chọn chế độ `photo` khi không có SVG (hoặc khi đặt `mode="photo"`). Các bước (`PHOTO_STEPS`):
+
+1. **segment** (`vector3d/ai/segment.py`): rembg/U²-Net nếu có, nếu không thì tách theo màu nền; ảnh có alpha dùng alpha.
+2. **depth** (`vector3d/ai/depth.py`): Depth Anything V2 Small dạng ONNX qua onnxruntime (CPU; tự dùng CUDA/DirectML nếu có). Kết quả là inverse depth tương đối, được chuẩn hóa theo phân vị 2–98% trong mask. Dự phòng khi không có model: Poisson inflation (∇²u = −1, u = 0 trên biên, h = √u; với hình tròn cho ra đúng bán cầu).
+3. **normals**: bề mặt trước F = T · I · (1 − α + α · D̃), với I là inflation, D̃ là depth đã làm mờ nhẹ, α = `detail`, T = `thickness` · rộng / 2. Mặt sau B = −F · r (r = 1 khi đối xứng, 0.35 khi phẳng). Normal map tính từ ∇F.
+4. **carve**: visual hull của các view còn lại. Nếu có view nhìn thấy trục Z thì độ dày được co giãn để khớp view đó.
+5. **relief** (`vector3d/reconstruct/relief.py`): trường khoảng cách có dấu min(sd_silhouette, F − z, z − B) trên lưới hull, giao với hull của các view khác.
+6. **surface**: marching cubes ở mức 0 của trường (chính xác dưới mức voxel), sau đó Taubin.
+7. **color**: chiếu ngược từng đỉnh lên ảnh theo trục Z để lấy màu, xuất `COLOR_0` trong GLB và `v x y z r g b` trong OBJ.
+8. **validate/export**: như chế độ drawing; model được co về `size_m` (cạnh dài nhất), metadata ghi `AI_GENERATED`, backend depth và các giả định.
+
+Giới hạn: một ảnh không có thông tin về mặt sau, nên mặt sau luôn là giả định. Phối cảnh mạnh làm méo hình vì ảnh được coi như hình chiếu thẳng. Bước tiếp theo nên thử: sinh thêm view bằng multi-view diffusion (Zero123++, SV3D) rồi đưa qua visual hull, hoặc dùng model ảnh→3D (TripoSR, TRELLIS) khi có GPU, gắn vào cùng giao thức `PHOTO_STEPS`.

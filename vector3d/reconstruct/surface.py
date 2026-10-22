@@ -13,6 +13,7 @@ from .hull import Grid
 class Mesh:
     vertices: np.ndarray  # (N, 3) float
     faces: np.ndarray     # (M, 3) int, counter-clockwise seen from outside
+    colors: np.ndarray | None = None  # (N, 3) float in [0, 1]
 
     def normals(self) -> np.ndarray:
         v, f = self.vertices, self.faces
@@ -40,6 +41,19 @@ def occupancy_to_mesh(occ: np.ndarray, grid: Grid) -> Mesh:
     return mesh
 
 
+def field_to_mesh(field: np.ndarray, grid: Grid) -> Mesh:
+    """Signed field (positive inside) -> mesh at the zero level, with sub-voxel accuracy."""
+    if not (field > 0).any():
+        raise ValueError("reconstructed volume is empty")
+    vol = np.pad(field, 1, constant_values=-float(grid.h.max()))
+    verts, faces, _, _ = measure.marching_cubes(vol, level=0.0)
+    verts = grid.lo + (verts - 1 + 0.5) * grid.h
+    mesh = Mesh(verts, faces.astype(np.int64))
+    if mesh.volume() < 0:
+        mesh.faces = mesh.faces[:, ::-1].copy()
+    return mesh
+
+
 def _neighbors(n: int, faces: np.ndarray):
     e = np.concatenate([faces[:, [0, 1]], faces[:, [1, 2]], faces[:, [2, 0]]])
     e = np.unique(np.sort(np.concatenate([e, e[:, ::-1]]), axis=1), axis=0)
@@ -60,7 +74,7 @@ def taubin_smooth(mesh: Mesh, iterations: int = 10, lam: float = 0.5, mu: float 
             np.add.at(acc, e[:, 0], v[e[:, 1]])
             np.add.at(acc, e[:, 1], v[e[:, 0]])
             v = v + factor * (acc / deg - v)
-    return Mesh(v, mesh.faces)
+    return Mesh(v, mesh.faces, mesh.colors)
 
 
 def validate(mesh: Mesh) -> dict:

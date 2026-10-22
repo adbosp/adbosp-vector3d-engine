@@ -1,12 +1,13 @@
 [project]
 name = "vector3d-engine"
-version = "0.2.0"
-description = "Orthographic SVG views to verified 3D geometry"
+version = "0.3.0"
+description = "Photos and orthographic drawings to 3D meshes, math first and AI where needed"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.24", "scikit-image>=0.21", "Pillow>=10"]
+dependencies = ["numpy>=1.24", "scipy>=1.10", "scikit-image>=0.21", "Pillow>=10", "onnxruntime>=1.17"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7"]
+dev = ["pytest>=7", "onnx>=1.15"]
+ai = ["rembg>=2.0.50"]
 
 [project.scripts]
 vector3d = "vector3d.__main__:main"

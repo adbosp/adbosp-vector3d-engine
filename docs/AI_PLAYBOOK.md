@@ -1,5 +1,7 @@
 # AI Playbook: vận hành Vector3D Engine bằng Claude / Codex
 
+> Hai chế độ: **drawing** (bản vẽ hình chiếu, mục 1–8) và **photo** (ảnh chụp bất kỳ, mục 9).
+
 Tài liệu này dành cho AI agent (Claude Code, Codex, hoặc agent khác) làm việc trong repo. Đọc hết trước khi dựng model.
 
 ## 1. Vai trò của agent
@@ -131,5 +133,22 @@ Dựng lại điểm 3D: lấy X từ front/top, Y từ front/side, Z từ side/
 python -m vector3d generate --front examples/vase_front.png --hints examples/vase_hints.json -o out/vase
 ```
 
-## 9. Bước tiếp theo của pipeline
+## 9. Chế độ Ảnh chụp (photo)
+
+Áp dụng khi đầu vào là ảnh chụp thật, không phải bản vẽ hình chiếu. Chế độ `--mode auto` tự chọn `photo` khi không có file SVG nào.
+
+Engine tự chạy tách nền → depth AI (Depth Anything V2) → normal map → khối kín → tô màu. Agent chỉ chọn **tham số**, không sửa depth:
+
+| Tham số | Khi nào chỉnh | Gợi ý |
+|---|---|---|
+| `--thickness` (độ sâu / chiều rộng) | Mọi trường hợp chỉ có 1 ảnh | Tròn/trụ ≈ 0.9–1.0; thú bông, nhân vật ≈ 0.6; ghế ≈ 0.9; điện thoại ≈ 0.1; huy hiệu ≈ 0.15 |
+| `--back-side` | Vật phẳng lưng (phù điêu, huy hiệu, ốp tường) | `flat`; còn lại `symmetric` |
+| `--detail` | Depth nhiễu hoặc vật bóng loáng | 0.3–0.5; vật nhiều khối nổi rõ: 0.8–1.0 |
+| `--size` | Người dùng biết kích thước thật | cạnh dài nhất, mét |
+| ảnh `--right` / `--top` | Có ảnh nhìn ngang | Engine tự lấy chiều sâu từ ảnh đó, `--thickness` bị bỏ qua |
+| `hints.json` | Vật tròn xoay | `revolve` vẫn áp dụng được sau bước relief |
+
+Quy trình cho agent: chạy `generate` với tham số mặc định → xem `out/depth.png`, `out/normal.png` và `metadata.json` (`depth_backend`, `validation`) → chỉnh tham số theo bảng trên → chạy lại tối đa 3 lần → báo cáo kèm lý do chọn tham số. Nếu `depth_backend` là `inflation` thì AI depth không chạy được (thường do thiếu mạng ở lần tải đầu); phải báo điều này cho người dùng.
+
+## 10. Bước tiếp theo của pipeline
 Visual hull là giới hạn trên của hình dạng thật: chỗ lõm bị khuất ở mọi view sẽ không được dựng lại. Các giai đoạn Correspondence, Topology và Surface Fitting (xem `docs/ARCHITECTURE.md`) sẽ thay dần phần này. Khi chúng xong, playbook sẽ có thêm các loại hint mới.

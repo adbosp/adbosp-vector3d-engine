@@ -4,10 +4,12 @@
   GET  /api/stages       pipeline stage registry
   GET  /api/examples     bundled example SVGs, keyed by view
   POST /api/inspect      {"views": {"front": VIEW, ...}, "tolerance": 0.01}
-  POST /api/generate     {"views": {...}, "options": {"resolution": 128, "smooth_iterations": 10, "hints": {...}}}
+  POST /api/generate     {"views": {...}, "options": {"mode": "auto|drawing|photo", "resolution": 128,
+                          "smooth_iterations": 10, "hints": {...}, "thickness": 0.6, "detail": 0.7,
+                          "back": "symmetric|flat", "size_m": 1.0, "depth_backend": "auto"}}
                          -> {"job": id}; the job runs in a background thread
   GET  /api/jobs/<id>    step-by-step progress, then metadata
-  GET  /api/jobs/<id>/model.glb | model.obj | metadata.json
+  GET  /api/jobs/<id>/model.glb | model.obj | metadata.json | mask.png | depth.png | normal.png
 
 VIEW is SVG text, or {"name": "front.png", "data": "<base64>"} for any file (SVG, PNG, JPG).
 """
@@ -26,7 +28,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from xml.etree.ElementTree import ParseError
 
-from ..generate import STEPS, GenerateOptions, generate, load_view
+from ..generate import GenerateOptions, generate, load_view, plan_steps, resolve_mode
 from ..normalize.normalizer import normalize_views
 from ..normalize.views import ViewName
 from ..pipeline import STAGES
@@ -80,7 +82,8 @@ class Job:
         self.created = time.time()
         self.status = "queued"
         self.error: str | None = None
-        self.steps = [{"key": k, "title": t, "status": "pending", "detail": ""} for k, t in STEPS]
+        self.mode = resolve_mode(files, options.mode)
+        self.steps = [{"key": k, "title": t, "status": "pending", "detail": ""} for k, t in plan_steps(self.mode)]
         self.result = None
         self._files, self._options = files, options
         self._lock = threading.Lock()
@@ -104,12 +107,13 @@ class Job:
 
     def snapshot(self) -> dict:
         with self._lock:
-            out = {"id": self.id, "status": self.status, "error": self.error,
+            out = {"id": self.id, "status": self.status, "error": self.error, "mode": self.mode,
                    "steps": [dict(s) for s in self.steps]}
         if self.result is not None:
             out["metadata"] = self.result.metadata
             out["files"] = {"glb": f"/api/jobs/{self.id}/model.glb", "obj": f"/api/jobs/{self.id}/model.obj",
                             "metadata": f"/api/jobs/{self.id}/metadata.json"}
+            out["images"] = {k.removesuffix(".png"): f"/api/jobs/{self.id}/{k}" for k in self.result.images}
         return out
 
 
@@ -121,11 +125,20 @@ def start_job(payload: dict) -> Job:
     files = decode_views(payload)
     _load_all(files)  # fail fast on unreadable inputs, before a job exists
     opts = payload.get("options") or {}
+    clamp = lambda v, lo, hi: min(max(v, lo), hi)  # noqa: E731
     options = GenerateOptions(
-        resolution=int(min(max(int(opts.get("resolution", 128)), 16), 384)),
-        smooth_iterations=int(min(max(int(opts.get("smooth_iterations", 10)), 0), 50)),
+        resolution=int(clamp(int(opts.get("resolution", 128)), 16, 384)),
+        smooth_iterations=int(clamp(int(opts.get("smooth_iterations", 10)), 0, 50)),
         hints=opts.get("hints") or None,
+        mode=str(opts.get("mode", "auto")),
+        depth_backend=str(opts.get("depth_backend", "auto")),
+        thickness=float(clamp(float(opts.get("thickness", 0.6)), 0.05, 3.0)),
+        detail=float(clamp(float(opts.get("detail", 0.7)), 0.0, 1.0)),
+        back=str(opts.get("back", "symmetric")),
+        size_m=float(clamp(float(opts.get("size_m", 1.0)), 1e-3, 1e4)),
     )
+    if options.back not in ("symmetric", "flat"):
+        raise ValueError("back must be symmetric or flat")
     if options.hints:
         validate_hints(options.hints)
     job = Job(files, options)
@@ -193,6 +206,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, job.result.obj.encode("utf-8"), "text/plain; charset=utf-8")
         elif name == "metadata.json":
             self._json(200, job.result.metadata)
+        elif name in job.result.images:
+            self._send(200, job.result.images[name], "image/png")
         else:
             self._json(404, {"error": "not found"})
 

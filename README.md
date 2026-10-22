@@ -4,6 +4,23 @@ Engine dựng hình học 3D từ các hình chiếu trực giao SVG (Front/Back
 
 Xem kiến trúc: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Hướng dẫn cho AI agent (Claude, Codex): [AGENTS.md](AGENTS.md) và [docs/AI_PLAYBOOK.md](docs/AI_PLAYBOOK.md).
 
+## Ảnh chụp bất kỳ → model 3D (AI)
+
+Thả một ảnh JPG/PNG bất kỳ (vật thể rõ, ít bị che) vào ô Front rồi bấm **Generate**. Chế độ "Tự động" sẽ chọn **Ảnh chụp** và chạy:
+
+1. **Tách nền**: dùng rembg (U²-Net) nếu đã cài `pip install -e .[ai]`, nếu không thì tách theo màu nền.
+2. **Ước lượng chiều sâu bằng AI**: Depth Anything V2 Small (ONNX, chạy trên CPU; lần đầu tự tải khoảng 100 MB về `~/.cache/vector3d`). Nếu không tải được, engine dùng phương án "thổi phồng" silhouette bằng phương trình Poisson và ghi rõ trong metadata.
+3. **Normal map** sinh từ bề mặt depth. Ảnh mask, depth và normal hiện ngay trên giao diện và được lưu kèm.
+4. **Dựng khối kín**: mặt trước theo depth, mặt sau đối xứng hoặc phẳng (phù điêu). Nếu có thêm ảnh Right/Top thì chúng dùng để gọt và đặt đúng chiều sâu.
+5. Marching cubes trên trường khoảng cách (mặt mượt, chính xác dưới mức voxel) → làm mượt → **tô màu từ ảnh** (vertex color trong GLB) → kiểm tra → xuất file.
+
+```bash
+python -m vector3d generate --front my_photo.jpg -o out/photo                        # tự nhận chế độ Ảnh chụp
+python -m vector3d generate --front toy.png --right toy_side.png --back-side flat --size 0.3 -o out/toy
+```
+
+Kết quả mang nhãn `AI_GENERATED`: mặt sau và chiều sâu tuyệt đối là ước lượng. Ảnh chụp thẳng chính diện, nền trơn cho kết quả tốt nhất.
+
 ## Generate: ảnh → model 3D
 
 Trong giao diện web (`python -m vector3d ui`): thả ảnh (SVG, PNG hoặc JPG; một ảnh Front là đủ, càng nhiều view càng chính xác), bấm **Generate**, theo dõi từng bước, xem model 3D và tải về GLB, OBJ hoặc metadata.

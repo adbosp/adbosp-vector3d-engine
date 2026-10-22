@@ -85,8 +85,12 @@ def mask_contours(mask: np.ndarray, tolerance: float = 0.75) -> list[np.ndarray]
 
 
 def raster_document(data: bytes, source: str = "<image>", view_hint: str | None = None) -> SvgDocument:
-    rgba = load_image(data)
-    mask, method = silhouette_mask(rgba)
+    mask, method = silhouette_mask(load_image(data))
+    return mask_document(mask, method, source, view_hint)
+
+
+def mask_document(mask: np.ndarray, method: str, source: str = "<image>", view_hint: str | None = None) -> SvgDocument:
+    """Wrap a foreground mask as an SvgDocument (pixel units, y down, unknown scale)."""
     warnings = []
     contours = []
     for poly in mask_contours(mask):

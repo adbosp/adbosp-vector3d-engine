@@ -1,7 +1,7 @@
 """CLI.
 
   python -m vector3d inspect --front f.svg --right r.svg [--top t.svg] [--json]
-  python -m vector3d generate --front f.png [--right r.svg ...] [--hints hints.json] [-o out/]
+  python -m vector3d generate --front photo.jpg [--right r.png ...] [--mode auto|drawing|photo] [--hints h.json] [-o out/]
   python -m vector3d describe --front f.png [...]        JSON facts for AI agents
   python -m vector3d ui [--port 8765]
 """
@@ -31,6 +31,13 @@ def main(argv: list[str] | None = None) -> int:
     gen.add_argument("--resolution", type=int, default=128)
     gen.add_argument("--smooth", type=int, default=10, help="Taubin smoothing iterations (0 = off)")
     gen.add_argument("-o", "--out", default="out", help="output directory")
+    gen.add_argument("--mode", choices=["auto", "drawing", "photo"], default="auto",
+                     help="auto: photo when no SVG is given")
+    gen.add_argument("--depth-backend", choices=["auto", "depth-anything", "inflation"], default="auto")
+    gen.add_argument("--thickness", type=float, default=0.6, help="photo: depth / width")
+    gen.add_argument("--detail", type=float, default=0.7, help="photo: 0 = silhouette only, 1 = AI depth")
+    gen.add_argument("--back-side", choices=["symmetric", "flat"], default="symmetric", help="photo: unseen back side")
+    gen.add_argument("--size", type=float, default=1.0, help="photo: largest dimension in metres")
     desc = sub.add_parser("describe", help="print JSON facts about the views for AI agents")
     for v in ViewName:
         desc.add_argument(f"--{v.value}", metavar="FILE", help="SVG, PNG or JPG")
@@ -97,7 +104,9 @@ def _generate(args, ap) -> int:
             inputs[v.value] = (Path(path).name, Path(path).read_bytes())
     if not inputs:
         ap.error("give at least one view, e.g. --front front.png")
-    opts = GenerateOptions(resolution=args.resolution, smooth_iterations=args.smooth, hints=load_hints(args.hints))
+    opts = GenerateOptions(resolution=args.resolution, smooth_iterations=args.smooth, hints=load_hints(args.hints),
+                           mode=args.mode, depth_backend=args.depth_backend, thickness=args.thickness,
+                           detail=args.detail, back=args.back_side, size_m=args.size)
 
     def show(step: str, status: str, detail: str) -> None:
         if status != "running":
@@ -109,7 +118,9 @@ def _generate(args, ap) -> int:
     (out / "model.glb").write_bytes(result.glb)
     (out / "model.obj").write_text(result.obj, encoding="utf-8")
     (out / "metadata.json").write_text(json.dumps(result.metadata, indent=2), encoding="utf-8")
-    print(f"wrote {out / 'model.glb'}, {out / 'model.obj'}, {out / 'metadata.json'}")
+    for name, png in result.images.items():
+        (out / name).write_bytes(png)
+    print(f"wrote model.glb, model.obj, metadata.json{''.join(', ' + n for n in result.images)} to {out}")
     return 0
 
 

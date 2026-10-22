@@ -67,6 +67,11 @@ select { padding: 5px 6px; border: 1px solid var(--border); border-radius: 6px; 
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 .downloads { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.maps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+.maps a { display: block; text-decoration: none; color: var(--muted); font-size: 11px; text-align: center; }
+.maps img { width: 100%; aspect-ratio: 1; object-fit: contain; background: #000; border-radius: 6px; border: 1px solid var(--border); display: block; margin-bottom: 2px; }
+.photo-only.off { display: none; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
 .downloads a { font-size: 12px; text-decoration: none; color: var(--accent); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; }
 .hint { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -134,11 +139,21 @@ ul.warn { padding-left: 18px; margin: 6px 0; color: var(--warn); font-size: 12px
     <section>
       <h2>Ảnh đầu vào</h2>
       <div id="slots"></div>
-      <p class="hint">SVG, PNG hoặc JPG, nền trơn. Một ảnh Front là đủ để chạy; càng nhiều view model càng chính xác. Kéo nhiều file cùng lúc: tên file chứa front/back/left/right/top/bottom sẽ tự vào đúng ô.</p>
+      <p class="hint">Ảnh chụp bất kỳ (JPG, PNG, WebP) hoặc bản vẽ SVG. Một ảnh là đủ: AI tự tách nền, ước lượng chiều sâu và normal map. Thêm ảnh Right/Top để gọt model chính xác hơn. Kéo nhiều file cùng lúc: tên file chứa front/back/left/right/top/bottom sẽ tự vào đúng ô.</p>
     </section>
     <section>
       <button class="btn primary gen" id="genBtn">Generate</button>
       <div class="opts">
+        <span>Chế độ</span>
+        <select id="mode"><option value="auto" selected>Tự động</option><option value="photo">Ảnh chụp (AI depth)</option><option value="drawing">Bản vẽ hình chiếu</option></select>
+        <span class="photo-only">Độ dày</span>
+        <span class="photo-only"><input type="range" id="thickness" min="0.1" max="1.5" step="0.05" value="0.6" title="Chiều sâu so với chiều rộng"></span>
+        <span class="photo-only">Chi tiết depth</span>
+        <span class="photo-only"><input type="range" id="detail" min="0" max="1" step="0.05" value="0.7" title="0 = chỉ theo silhouette, 1 = theo depth AI"></span>
+        <span class="photo-only">Mặt sau</span>
+        <select class="photo-only" id="back"><option value="symmetric">Đối xứng mặt trước</option><option value="flat">Phẳng (phù điêu)</option></select>
+        <span class="photo-only">Kích thước</span>
+        <span class="photo-only row" style="gap:6px"><input type="number" id="sizeM" value="1" min="0.01" step="0.1"> m (cạnh dài nhất)</span>
         <span>Chất lượng</span>
         <select id="quality"><option value="64">Nhanh</option><option value="128" selected>Chuẩn</option><option value="192">Cao</option></select>
         <span>Làm mượt</span>
@@ -147,6 +162,7 @@ ul.warn { padding-left: 18px; margin: 6px 0; color: var(--warn); font-size: 12px
         <span class="row"><button class="btn" id="hintsBtn" style="padding:4px 9px;font-size:12px">Chọn hints.json</button><span class="hint" id="hintsName" style="margin:0">không dùng</span></span>
       </div>
       <ul class="steps" id="steps"></ul>
+      <div class="maps" id="maps"></div>
       <div class="downloads" id="downloads"></div>
       <input type="file" id="hintsInput" accept=".json,application/json" hidden>
     </section>
@@ -275,7 +291,7 @@ async function storeFile(view, blob, name) {
 }
 async function setFile(view, file) {
   await storeFile(view, file, file.name);
-  renderSlots();
+  renderSlots(); syncModeUI();
 }
 async function autoAssign(list) {
   let unmatched = [];
@@ -286,7 +302,7 @@ async function autoAssign(list) {
   }
   // A single unnamed image goes to Front, the one view every run needs.
   if (unmatched.length === 1 && !files.front) await storeFile("front", unmatched[0], unmatched[0].name);
-  renderSlots();
+  renderSlots(); syncModeUI();
 }
 $("svgInput").onchange = async (e) => { if (e.target.files[0] && pendingView) await setFile(pendingView, e.target.files[0]); };
 document.body.ondragover = (e) => e.preventDefault();
@@ -304,7 +320,7 @@ $("exampleBtn").onclick = async () => {
   if (!Object.keys(ex).length) { showError("Không tìm thấy thư mục examples."); return; }
   for (const k of Object.keys(files)) dropFile(k);
   for (const [v, text] of Object.entries(ex)) await storeFile(v, new Blob([text], { type: "image/svg+xml" }), `box_${v}.svg`);
-  renderSlots(); run();
+  renderSlots(); syncModeUI(); run();
 };
 $("runBtn").onclick = run;
 async function run() {
@@ -325,9 +341,18 @@ function viewPayload() {
 // ---------- generate ----------
 const STEP_LABEL = {
   load: "Đọc ảnh đầu vào", normalize: "Chuẩn hóa tọa độ", semantics: "Hiểu ngữ nghĩa (AI)",
-  carve: "Dựng khối từ silhouette", ai_fill: "Bổ sung phần khuất (AI / hints)", surface: "Tạo bề mặt",
+  carve: "Dựng khối / gọt theo các view", ai_fill: "Bổ sung phần khuất (hints)", surface: "Tạo bề mặt",
   smooth: "Làm mượt", validate: "Kiểm tra mesh", export: "Xuất GLB / OBJ",
+  segment: "Tách nền (AI)", depth: "Ước lượng chiều sâu (AI)", normals: "Tạo normal map",
+  relief: "Dựng khối từ depth", color: "Tô màu từ ảnh",
 };
+const MAP_LABEL = { mask: "Mask", depth: "Depth", normal: "Normal" };
+function syncModeUI() {
+  const svgOnly = Object.values(files).length && Object.values(files).every((f) => f.name.toLowerCase().endsWith(".svg"));
+  const photo = $("mode").value === "photo" || ($("mode").value === "auto" && !svgOnly);
+  document.querySelectorAll(".photo-only").forEach((el) => el.classList.toggle("off", !photo));
+}
+$("mode").onchange = syncModeUI;
 let hints = null;
 $("hintsBtn").onclick = () => { $("hintsInput").value = ""; $("hintsInput").click(); };
 $("hintsInput").onchange = async (e) => {
@@ -344,11 +369,13 @@ $("genBtn").onclick = async () => {
   if (!files.front && !Object.keys(files).length) { showError("Thả ít nhất một ảnh (Front) vào ô bên trái."); return; }
   const btn = $("genBtn");
   btn.disabled = true; btn.textContent = "Đang tạo model…";
-  $("downloads").innerHTML = "";
-  run(); // 2D views and cross-view checks, in parallel with the job
+  $("downloads").innerHTML = ""; $("maps").innerHTML = "";
+  const inspected = run(); // 2D views and cross-view checks, in parallel with the job
   try {
     const { job } = await api("/api/generate", { views: viewPayload(), options: {
-      resolution: +$("quality").value, smooth_iterations: +$("smooth").value, hints } });
+      mode: $("mode").value, resolution: +$("quality").value, smooth_iterations: +$("smooth").value, hints,
+      thickness: +$("thickness").value, detail: +$("detail").value, back: $("back").value,
+      size_m: +$("sizeM").value || 1 } });
     let snap;
     for (;;) {
       snap = await api(`/api/jobs/${job}`);
@@ -357,10 +384,14 @@ $("genBtn").onclick = async () => {
       await new Promise((r) => setTimeout(r, 300));
     }
     if (snap.status === "error") throw new Error(snap.error);
+    await inspected;
     await loadMesh(snap.files.glb, "model.glb", "glb");
+    if (snap.metadata.mode === "photo") matchViewsToMesh();
     const v = snap.metadata.validation;
     $("meshInfo").textContent = `Model đã tạo: ${v.triangles.toLocaleString()} tam giác, ${v.watertight ? "kín nước" : "CHƯA kín"}, độ tin cậy: ${snap.metadata.geometry_confidence}` +
-      (snap.metadata.units === "m" ? "" : " (đơn vị bản vẽ, chưa có thang đo)");
+      (snap.metadata.mode === "photo" ? ` (AI: ${snap.metadata.depth_backend})` : snap.metadata.units === "m" ? "" : " (đơn vị bản vẽ, chưa có thang đo)");
+    $("maps").innerHTML = Object.entries(snap.images || {}).map(([k, url]) =>
+      `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${k}">${MAP_LABEL[k] || k}</a>`).join("");
     $("downloads").innerHTML = `<a href="${snap.files.glb}" download="model.glb">Tải GLB</a>
       <a href="${snap.files.obj}" download="model.obj">Tải OBJ</a>
       <a href="${snap.files.metadata}" download="metadata.json">Metadata</a>`;
@@ -480,6 +511,7 @@ function clearGroup(g) {
 }
 function build3D() {
   clearGroup(viewsGroup); clearGroup(boxGroup);
+  viewsGroup.scale.setScalar(1); boxGroup.scale.setScalar(1);
   const bb = new THREE.Box3();
   for (const [v, g] of Object.entries(result.geometry)) {
     const col = new THREE.Color(color(v));
@@ -509,6 +541,18 @@ function build3D() {
     grid.position.y = bb.min.y - 1e-4 * size;
     frame("iso", bb);
   }
+}
+// Photo models are resized to metres while the 2D views stay in pixels: scale the outlines onto the mesh.
+function matchViewsToMesh() {
+  if (!viewsGroup.children.length || !meshGroup.children.length) return;
+  viewsGroup.scale.setScalar(1); boxGroup.scale.setScalar(1);
+  const vs = new THREE.Box3().setFromObject(viewsGroup).getSize(new THREE.Vector3());
+  const ms = new THREE.Box3().setFromObject(meshGroup).getSize(new THREE.Vector3());
+  const k = Math.max(ms.x, ms.y) / (Math.max(vs.x, vs.y) || 1);
+  viewsGroup.scale.setScalar(k); boxGroup.scale.setScalar(k);
+  size = Math.max(ms.x, ms.y, ms.z) || 1; rebuildHelpers();
+  grid.position.y = new THREE.Box3().setFromObject(meshGroup).min.y;
+  frame("iso");
 }
 function sceneBox() {
   const bb = new THREE.Box3();
@@ -586,7 +630,7 @@ async function loadMesh(url, name, ext) {
     obj = new THREE.Mesh(geo, mat());
   } else {
     obj = (await new GLTFLoader().loadAsync(url)).scene;
-    obj.traverse((o) => { if (o.isMesh && toggles.wire) o.material.wireframe = true; });
+    obj.traverse((o) => { if (o.isMesh) { o.material.side = THREE.DoubleSide; o.material.wireframe = toggles.wire; } });
   }
   clearGroup(meshGroup); meshGroup.add(obj);
   let tris = 0; obj.traverse((o) => { if (o.isMesh) { const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; } });
@@ -598,7 +642,7 @@ async function loadMesh(url, name, ext) {
 }
 
 applyThemeTo3D();
-renderSlots();
+renderSlots(); syncModeUI();
 resize();
 window.__v3dReady = true;
 </script>
