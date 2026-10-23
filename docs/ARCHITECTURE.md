@@ -128,7 +128,7 @@ Giới hạn: visual hull là giới hạn trên của hình dạng thật, nên
 
 Đầu vào là ảnh bất kỳ. `generate` chọn chế độ `photo` khi không có SVG (hoặc khi đặt `mode="photo"`). Các bước (`PHOTO_STEPS`):
 
-1. **segment** (`vector3d/ai/segment.py`): rembg/U²-Net nếu có, nếu không thì tách theo màu nền; ảnh có alpha dùng alpha.
+1. **segment** (`vector3d/ai/segment.py`): ảnh có alpha dùng alpha; bản vẽ nét đi `classic` (màu nền + Otsu, tô vùng kín); ảnh chụp thử BiRefNet (MIT) rồi IS-Net (Apache-2.0) qua rembg khi có GPU CUDA; chỉ có CPU thì `auto` dùng IS-Net (BiRefNet trên CPU mất ~20 s và ~7 GB RAM mỗi ảnh, vẫn gọi được đích danh); cuối cùng mới `classic`. Model luôn được gọi đích danh: model mặc định của rembg (BRIA RMBG) chỉ cho dùng phi thương mại nên không bao giờ được nạp. Đổi model mặc định bằng biến `V3D_SEGMENTER`. TripoSG nhận alpha mềm từ `matte()`. So sánh các model: `python -m vector3d lab segbench`.
 2. **depth** (`vector3d/ai/depth.py`): Depth Anything V2 Small dạng ONNX qua onnxruntime (CPU; tự dùng CUDA/DirectML nếu có). Kết quả là inverse depth tương đối, được chuẩn hóa theo phân vị 2–98% trong mask. Dự phòng khi không có model: Poisson inflation (∇²u = −1, u = 0 trên biên, h = √u; với hình tròn cho ra đúng bán cầu).
 3. **normals**: bề mặt trước F = T · I · (1 − α + α · D̃), với I là inflation, D̃ là depth đã làm mờ nhẹ, α = `detail`, T = `thickness` · rộng / 2. Mặt sau B = −F · r (r = 1 khi đối xứng, 0.35 khi phẳng). Normal map tính từ ∇F.
 4. **carve**: visual hull của các view còn lại. Nếu có view nhìn thấy trục Z thì độ dày được co giãn để khớp view đó.

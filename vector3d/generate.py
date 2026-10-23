@@ -93,7 +93,7 @@ class GenerateOptions:
     seed: int = 42
     # photo mode
     depth_backend: str = "auto"    # auto | depth-anything | inflation
-    segmenter: str = "auto"        # auto | rembg | classic
+    segmenter: str = "auto"        # auto | birefnet | birefnet-lite | isnet | u2net | classic
     thickness: float = 0.6         # front-to-back depth / silhouette width
     detail: float = 0.7            # how strongly AI depth shapes the front surface
     back: str = "symmetric"        # symmetric | flat
@@ -441,14 +441,13 @@ def _generate_ai(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResult:
          (f"; TripoSG sees this image, {', '.join(ignored)} fit the result" if ignored else ""))
 
     step("segment")
-    from .ai.segment import segment
+    from .ai.segment import cutout
 
-    mask, seg_method = segment(rgba)
+    mask, alpha, seg_method = cutout(rgba, opts.segmenter)
     if not mask.any():
         raise ValueError("no foreground found; use an image with a clear subject")
     cut = rgba.copy()
-    cut[..., 3] = np.where(mask, 255, 0).astype(np.uint8)
-    cut[~mask, :3] = 255
+    cut[..., 3] = np.where(mask, np.maximum(alpha, 1), alpha)  # soft edges from the matting model
     done("segment", f"{seg_method}; subject covers {mask.mean():.0%} of the image")
 
     step("ai_generate")

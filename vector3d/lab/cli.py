@@ -6,6 +6,7 @@
   render      MESH -o DIR                            gates + front/back/left/right + turntable
   experiment  --data DIR -o DIR [--seeds 0,1,2]      silhouette refinement on a simulated baseline
   benchmark   --data DIR -o DIR [--backend triposg]  real backend: A raw vs B refined
+  segbench    --data DIR -o DIR [--methods classic,isnet,birefnet] [--images DIR]   background removal
   report      --experiment DIR [--benchmark DIR] [--audit F] -o report.md
 """
 from __future__ import annotations
@@ -48,6 +49,11 @@ def main(argv: list[str]) -> int:
     b.add_argument("--profile", default="balanced")
     b.add_argument("--seed", type=int, default=42)
     b.add_argument("--download", action="store_true")
+    sb = sub.add_parser("segbench")
+    sb.add_argument("--data", required=True)
+    sb.add_argument("-o", "--out", required=True)
+    sb.add_argument("--methods", default="classic,u2net,isnet,birefnet-lite,birefnet")
+    sb.add_argument("--images", help="folder of real photos: cut-outs only, no ground truth")
     rp = sub.add_parser("report")
     rp.add_argument("--experiment", required=True)
     rp.add_argument("--benchmark")
@@ -113,6 +119,15 @@ def main(argv: list[str]) -> int:
         ok = sum(r["record"]["status"] == "success" for r in s["rows"])
         print(f"{ok}/{len(s['rows'])} objects generated, summary in {Path(args.out) / 'summary.json'}")
         return 0 if ok else 2
+    if args.cmd == "segbench":
+        from .segbench import run_segbench
+
+        s = run_segbench(args.data, args.out, tuple(args.methods.split(",")), images=args.images)
+        for r in s["rows"]:
+            print(f"{r['method']:14s} " + (f"IoU {r['mean_iou']:.4f} (min {r['min_iou']:.4f}) "
+                                          f"alpha err {r['mean_alpha_error']:.4f} {r['seconds_per_image']:.2f} s/img"
+                                          if r["status"] == "ok" else f"FAILED {r['reason']}") + f"  [{r['licence']}]")
+        return 0
     if args.cmd == "report":
         from .report import write_report
 

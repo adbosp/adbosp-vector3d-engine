@@ -57,14 +57,15 @@ class TripoSGBackend(Backend):
 
     def _prepare(self, src: Path, run_dir: Path) -> tuple[Path, str]:
         """RGBA cut-out with a real alpha channel, so TripoSG skips RMBG-1.4."""
-        from ...ai.segment import segment
+        from ...ai.segment import matte
 
         rgba = np.asarray(Image.open(src).convert("RGBA"))
-        mask, method = segment(rgba)
+        alpha, method = matte(rgba)
+        mask = alpha > 127
         if not mask.any():
             raise ValueError("segmentation found no foreground")
         out = rgba.copy()
-        out[..., 3] = np.where(mask, 255, 0).astype(np.uint8)
+        out[..., 3] = alpha
         path = run_dir / "input_rgba.png"
         Image.fromarray(out, "RGBA").save(path)
         Image.fromarray((mask * 255).astype(np.uint8)).save(run_dir / "mask.png")

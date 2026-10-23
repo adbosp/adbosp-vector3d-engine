@@ -39,6 +39,8 @@ def main(argv: list[str] | None = None) -> int:
     gen.add_argument("--mode", choices=["auto", "ai", "drawing", "photo"], default="auto",
                      help="auto: ai (TripoSG) when installed, else photo; drawing for SVG")
     gen.add_argument("--ai-profile", choices=["fast", "balanced", "quality"], default="balanced")
+    gen.add_argument("--segmenter", choices=["auto", "classic", "birefnet", "birefnet-lite", "isnet", "u2net"],
+                     default="auto", help="background removal (MIT/Apache models only; auto: BiRefNet on GPU, IS-Net on CPU)")
     gen.add_argument("--depth-backend", choices=["auto", "depth-anything", "inflation"], default="auto")
     gen.add_argument("--thickness", type=float, default=0.6, help="photo: depth / width")
     gen.add_argument("--detail", type=float, default=0.7, help="photo: 0 = silhouette only, 1 = AI depth")
@@ -113,7 +115,8 @@ def _generate(args, ap) -> int:
         ap.error("give at least one view, e.g. --front front.png")
     opts = GenerateOptions(resolution=args.resolution, smooth_iterations=args.smooth, hints=load_hints(args.hints),
                            mode=args.mode, depth_backend=args.depth_backend, thickness=args.thickness,
-                           detail=args.detail, back=args.back_side, size_m=args.size, ai_profile=args.ai_profile)
+                           detail=args.detail, back=args.back_side, size_m=args.size, ai_profile=args.ai_profile,
+                           segmenter=args.segmenter)
 
     def show(step: str, status: str, detail: str) -> None:
         if status != "running":

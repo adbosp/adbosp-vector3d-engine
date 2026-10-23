@@ -20,7 +20,7 @@ python -m vector3d lab audit|dataset|generate|render|experiment|benchmark|report
 - `vector3d/svg/`: SVG parser (viewBox, đơn vị, transform, path/arc). `vector3d/raster/`: ảnh → silhouette → contour.
 - `vector3d/normalize/`: camera 6 view, chuẩn hóa tọa độ, thang đo, kiểm tra giữa các view.
 - `vector3d/reconstruct/`: `hull.py` (visual hull), `hints.py` (áp dụng quyết định của AI), `relief.py` (khối từ depth ảnh chụp), `surface.py` (marching cubes, Taubin, kiểm tra mesh).
-- `vector3d/ai/`: `depth.py` (Depth Anything V2 ONNX, Poisson inflation, normal map), `segment.py` (rembg hoặc tách theo màu).
+- `vector3d/ai/`: `depth.py` (Depth Anything V2 ONNX, Poisson inflation, normal map), `segment.py` (BiRefNet/IS-Net qua rembg, gọi model đích danh, hoặc tách theo màu).
 - `vector3d/export/`: OBJ, GLB. `vector3d/generate.py`: pipeline Generate từng bước. `vector3d/agent.py`: lệnh `describe`.
 - `vector3d/lab/`: lab AI 3D: backend model thật (TripoSG), renderer, metric, quality gate, tinh chỉnh silhouette, benchmark. `research/`: model matrix và báo cáo benchmark.
 - `vector3d/ui/`: server HTTP + trang web. `docs/ARCHITECTURE.md`: kiến trúc và quy ước.

@@ -42,6 +42,9 @@ MAX_BODY = 60 * 1024 * 1024
 MAX_JOBS = 20
 
 
+SEGMENTERS = ("auto", "classic", "birefnet", "birefnet-lite", "isnet", "u2net")
+
+
 def decode_views(payload: dict) -> dict[str, tuple[str, bytes]]:
     views = payload.get("views") or {}
     if not isinstance(views, dict) or not views:
@@ -138,7 +141,10 @@ def start_job(payload: dict) -> Job:
         back=str(opts.get("back", "symmetric")),
         size_m=float(clamp(float(opts.get("size_m", 1.0)), 1e-3, 1e4)),
         ai_profile=str(opts.get("ai_profile", "balanced")),
+        segmenter=str(opts.get("segmenter", "auto")),
     )
+    if options.segmenter not in SEGMENTERS:
+        raise ValueError(f"segmenter must be one of {', '.join(SEGMENTERS)}")
     if options.ai_profile not in ("fast", "balanced", "quality"):
         raise ValueError("ai_profile must be fast, balanced or quality")
     if options.back not in ("symmetric", "flat"):

@@ -8,7 +8,7 @@ Xem kiến trúc: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Hướng dẫn c
 
 Thả một ảnh JPG/PNG bất kỳ (vật thể rõ, ít bị che) vào ô Front rồi bấm **Generate**. Chế độ "Tự động" sẽ chọn **Ảnh chụp** và chạy:
 
-1. **Tách nền**: dùng rembg (U²-Net) nếu đã cài `pip install -e .[ai]`, nếu không thì tách theo màu nền.
+1. **Tách nền**: BiRefNet (MIT) hoặc IS-Net (Apache-2.0) qua rembg nếu đã cài `pip install -e .[ai]` (máy có NVIDIA: `pip install rembg[gpu]`), nếu không thì tách theo màu nền. Không dùng BRIA RMBG vì giấy phép phi thương mại.
 2. **Ước lượng chiều sâu bằng AI**: Depth Anything V2 Small (ONNX, chạy trên CPU; lần đầu tự tải khoảng 100 MB về `~/.cache/vector3d`). Nếu không tải được, engine dùng phương án "thổi phồng" silhouette bằng phương trình Poisson và ghi rõ trong metadata.
 3. **Normal map** sinh từ bề mặt depth. Ảnh mask, depth và normal hiện ngay trên giao diện và được lưu kèm.
 4. **Dựng khối kín**: mặt trước theo depth, mặt sau đối xứng hoặc phẳng (phù điêu). Nếu có thêm ảnh Right/Top thì chúng dùng để gọt và đặt đúng chiều sâu.

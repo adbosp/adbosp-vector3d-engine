@@ -11,6 +11,7 @@ python -m vector3d lab generate --image photo.png -o runs/one --profile balanced
 python -m vector3d lab render model.glb -o runs/check   # quality gates + front/back/left/right + turntable
 python -m vector3d lab benchmark --data bench/data -o bench/triposg [--download]
 python -m vector3d lab report --experiment bench/exp001 --benchmark bench/triposg --audit audit.json -o research/benchmark_report.md
+python -m vector3d lab segbench --data bench/data -o bench/seg [--methods classic,isnet,birefnet] [--images photos/]
 ```
 
 ## Module map (`vector3d/lab/`)
@@ -26,12 +27,14 @@ python -m vector3d lab report --experiment bench/exp001 --benchmark bench/tripos
 | `refine.py` | render-and-compare silhouette refinement (first Phase D experiment) |
 | `gates.py` | acceptance gates, including Blender round-trip when Blender is on PATH |
 | `dataset.py`, `experiments.py`, `benchmark.py`, `report.py` | benchmark set, experiments, A-vs-B benchmark, report |
+| `segbench.py` | background-removal benchmark: dataset views over plain, gradient, noise and clutter backgrounds; IoU, alpha error, time per image |
 
 ## Rules the code enforces
 - A backend that cannot run returns `status: blocked` with the reason. It never returns a stand-in mesh.
 - TripoSG refuses to run without CUDA instead of falling back to the CPU silently.
 - Reference images are copied into the run folder with their SHA-256 hash and never modified.
 - The raw model mesh (`raw_triposg.glb`) is kept; placed and refined meshes are separate files.
+- Background removal uses only MIT or Apache-2.0 models (BiRefNet, IS-Net, U²-Net), always named explicitly; rembg's default BRIA RMBG (non-commercial) is never loaded. TripoSG gets the soft alpha, so it skips its own RMBG-1.4 step.
 - Labels: model output `AI_GENERATED`, refined output `ESTIMATED`, simulated baselines `SIMULATED_BASELINE`.
 
 ## Installing TripoSG on Windows 11 (RTX 3060)

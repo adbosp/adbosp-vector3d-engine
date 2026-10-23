@@ -57,3 +57,10 @@ def test_http_roundtrip(server):
     with pytest.raises(urllib.error.HTTPError) as err:
         _post(server + "/api/inspect", {"views": {}})
     assert err.value.code == 400
+
+
+def test_generate_rejects_unlicensed_segmenter():
+    from vector3d.ui.server import start_job
+
+    with pytest.raises(ValueError, match="segmenter"):
+        start_job({"views": examples(), "options": {"segmenter": "bria-rmbg"}})
