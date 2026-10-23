@@ -13,7 +13,10 @@ the base weights stay frozen and untouched on disk.
 
 Usage (called by vector3d.lab.finetune):
   python triposg_finetune.py --repo DIR --weights DIR --data DIR --out DIR --result result.json
-      [--steps 1500 --rank 16 --lr 1e-4 --accum 4 --gt-half auto --vram-fraction 0.9 --seed 0]
+      [--steps 1500 --rank 16 --lr 1e-4 --accum 4 --gt-half auto --vram-fraction 0.9 --seed 0 --save-every 100]
+Latents and image tokens are cached in the data dir (latent_cache_*.pt) and a
+checkpoint is written every --save-every steps: rerunning the same command
+after an interruption resumes instead of starting over.
   python triposg_finetune.py --repo DIR --tiny ...   # random tiny model on CPU: checks the mechanics only
 
 Data dir: one folder per sample with cond.png (RGBA, front view) and
@@ -42,6 +45,7 @@ def main() -> int:
     ap.add_argument("--gt-half", default="auto", help="half extent of GT meshes in model space, or 'auto'")
     ap.add_argument("--vram-fraction", type=float, default=0.9)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--save-every", type=int, default=100, help="checkpoint interval in steps (resumable)")
     ap.add_argument("--tiny", action="store_true", help="random tiny model on CPU, for tests")
     a = ap.parse_args()
 
@@ -85,18 +89,27 @@ def main() -> int:
         gt_half = measure_gt_half(a, samples) if a.gt_half == "auto" else float(a.gt_half)
         res["gt_half"] = gt_half
 
-        # --- cache latents (mean, std) and image embeddings ------------------------------------
-        cache = []
+        # --- cache latents (mean, std) and image embeddings, kept on disk and resumable -------------
+        tag = "tiny" if a.tiny else "full"
+        cache_path = os.path.join(a.data, f"latent_cache_{tag}_h{gt_half:.4f}.pt")
+        store = torch.load(cache_path, weights_only=False) if os.path.isfile(cache_path) else {}
+        res["cache_reused"] = sum(s in store for s in samples)
         with torch.no_grad():
-            for s in samples:
+            for i, s in enumerate(samples):
+                if s in store:
+                    continue
                 d = os.path.join(a.data, s)
                 z = np.load(os.path.join(d, "surface.npz"))
                 pts, nrm = normalise(z["points"], gt_half), z["normals"]
-                k = rng.choice(len(pts), min(len(pts), 20480), replace=False)
+                k = np.random.default_rng([a.seed, i]).choice(len(pts), min(len(pts), 20480), replace=False)
                 surf = torch.from_numpy(np.concatenate([pts[k], nrm[k]], 1)).float()[None].to(dev, dtype)
                 dist = vae.encode(surf).latent_dist
                 cond = embed(os.path.join(d, "cond.png"))
-                cache.append((dist.mean.cpu(), dist.std.cpu(), cond.cpu()))
+                store[s] = (dist.mean.cpu(), dist.std.cpu(), cond.cpu())
+                if len(store) % 25 == 0:
+                    torch.save(store, cache_path)
+        torch.save(store, cache_path)
+        cache = [store[s] for s in samples]
         res["cache_s"] = time.perf_counter() - t0 - res["load_s"]
         del vae
         if dev.type == "cuda":
@@ -120,8 +133,24 @@ def main() -> int:
         sched = torch.optim.lr_scheduler.LambdaLR(
             opt, lambda i: min(1.0, (i + 1) / warm) * 0.5 * (1 + math.cos(math.pi * min(i, a.steps) / a.steps)))
 
-        log, t1 = [], time.perf_counter()
-        for step in range(a.steps):
+        from peft import get_peft_model_state_dict, set_peft_model_state_dict
+
+        os.makedirs(a.out, exist_ok=True)
+        ckpt = os.path.join(a.out, "checkpoint.pt")
+        log, t1, start = [], time.perf_counter(), 0
+        if os.path.isfile(ckpt):                 # resume an interrupted run with the same settings
+            ck = torch.load(ckpt, weights_only=False)
+            if ck["steps"] == a.steps and ck["rank"] == a.rank:
+                set_peft_model_state_dict(dit, ck["lora"])
+                for p in params:
+                    p.data = p.data.float()
+                opt.load_state_dict(ck["opt"])
+                sched.load_state_dict(ck["sched"])
+                start, log = ck["step"], ck["log"]
+                rng.bit_generator.state = ck["rng"]
+                torch.set_rng_state(ck["torch_rng"])
+                res["resumed_from_step"] = start
+        for step in range(start, a.steps):
             opt.zero_grad(set_to_none=True)
             total = 0.0
             for _ in range(a.accum):
@@ -137,7 +166,7 @@ def main() -> int:
                     out = dit(xs.to(dtype), (s * 1000).to(dtype), encoder_hidden_states=c).sample
                 loss = torch.nn.functional.mse_loss(out.float(), x0 - noise) / a.accum
                 loss.backward()
-                total += float(loss)
+                total += loss.item()
             torch.nn.utils.clip_grad_norm_(params, 1.0)
             opt.step()
             sched.step()
@@ -147,13 +176,18 @@ def main() -> int:
                     row["peak_vram_mb"] = torch.cuda.max_memory_allocated() / 2**20
                 log.append(row)
                 print(json.dumps(row), flush=True)
+            if (step + 1) % a.save_every == 0 and step + 1 < a.steps:
+                torch.save({"lora": get_peft_model_state_dict(dit), "opt": opt.state_dict(),
+                            "sched": sched.state_dict(), "step": step + 1, "log": log, "steps": a.steps,
+                            "rank": a.rank, "rng": rng.bit_generator.state, "torch_rng": torch.get_rng_state()}, ckpt)
         res["train_s"] = time.perf_counter() - t1
         res["log"] = log
         if dev.type == "cuda":
             res["peak_vram_mb"] = torch.cuda.max_memory_allocated() / 2**20
             res["peak_vram_reserved_mb"] = torch.cuda.max_memory_reserved() / 2**20
-        os.makedirs(a.out, exist_ok=True)
         dit.save_pretrained(a.out)
+        if os.path.isfile(ckpt):
+            os.remove(ckpt)
         res["lora_dir"] = a.out
         res["status"] = "success"
         return _finish(a, res, 0)
