@@ -11,6 +11,7 @@ python -m vector3d lab generate --image photo.png -o runs/one --profile balanced
 python -m vector3d lab render model.glb -o runs/check   # quality gates + front/back/left/right + turntable
 python -m vector3d lab benchmark --data bench/data -o bench/triposg [--download]
 python -m vector3d lab report --experiment bench/exp001 --benchmark bench/triposg --audit audit.json -o research/benchmark_report.md
+python -m vector3d lab imagine --data bench/data -o bench/imagine   # imagination loop v0 vs visual hull, CPU
 python -m vector3d lab segbench --data bench/data -o bench/seg [--methods classic,isnet,birefnet] [--images photos/]
 ```
 
@@ -27,6 +28,7 @@ python -m vector3d lab segbench --data bench/data -o bench/seg [--methods classi
 | `refine.py` | render-and-compare silhouette refinement (first Phase D experiment) |
 | `gates.py` | acceptance gates, including Blender round-trip when Blender is on PATH |
 | `dataset.py`, `experiments.py`, `benchmark.py`, `report.py` | benchmark set, experiments, A-vs-B benchmark, report |
+| `imagine.py` | imagination loop v0: silhouettes kept exact, unseen cross-sections chosen by shading per part ([research/imagination_engine.md](../research/imagination_engine.md)) |
 | `segbench.py` | background-removal benchmark: dataset views over plain, gradient, noise and clutter backgrounds; IoU, alpha error, time per image |
 
 ## Rules the code enforces

@@ -1,0 +1,823 @@
+{
+ "benchmark": "imagination loop v0 on synthetic_v1",
+ "inputs": "four reference views (front/back/left/right): RGBA shading + silhouettes; light unknown",
+ "params": {
+  "exponents": [
+   1.4,
+   2.0,
+   2.5,
+   3.0,
+   4.0,
+   6.0,
+   10.0,
+   16.0,
+   25.0,
+   60.0
+  ],
+  "resolution": null,
+  "final_resolution": null,
+  "smooth_cost": 0.02,
+  "search_sigma": 0.8,
+  "prior_cost": 0.01,
+  "by_part": true,
+  "final_smooth": 6,
+  "rounds": 2
+ },
+ "rows": [
+  {
+   "object": "crate",
+   "category": "hard_surface",
+   "hull": {
+    "ref_iou": {
+     "front": 1.0,
+     "back": 0.9999509515401216,
+     "left": 1.0,
+     "right": 1.0
+    },
+    "ref_iou_mean": 0.9999877378850304,
+    "heldout_iou": {
+     "az45_el20": 0.9912274872067521,
+     "az135_el20": 0.9912274872067521,
+     "az225_el-15": 0.9906868451688009,
+     "top": 0.9988242210464433
+    },
+    "heldout_iou_mean": 0.9929915101571871,
+    "chamfer_l1": 0.006619746068636246,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.8754495887829116,
+    "fscore@0.02": 0.9209224746857778,
+    "fscore@0.05": 1.0,
+    "normal_consistency": 0.99718536147759,
+    "non_manifold_edges": 0,
+    "watertight": true,
+    "seconds": 1.4764850449992082
+   },
+   "imagined": {
+    "ref_iou": {
+     "front": 1.0,
+     "back": 1.0,
+     "left": 1.0,
+     "right": 1.0
+    },
+    "ref_iou_mean": 1.0,
+    "heldout_iou": {
+     "az45_el20": 0.9824443848834092,
+     "az135_el20": 0.9824443848834092,
+     "az225_el-15": 0.9811451067062642,
+     "top": 0.9958799293702177
+    },
+    "heldout_iou_mean": 0.985478451460825,
+    "chamfer_l1": 0.006803404389887811,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.8680173612511162,
+    "fscore@0.02": 0.9201744287771348,
+    "fscore@0.05": 1.0,
+    "normal_consistency": 0.9989088846768555,
+    "non_manifold_edges": 0,
+    "watertight": true,
+    "seconds": 13.68476260999978
+   },
+   "parts": [
+    {
+     "part": 0,
+     "rows": [
+      65,
+      190
+     ],
+     "exponent": 16.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    }
+   ],
+   "history": [
+    {
+     "round": 0,
+     "exponents_used": [
+      16.0
+     ],
+     "median_exponent": 16.0,
+     "thin_rows": 0,
+     "cost": 255.2341566261503
+    },
+    {
+     "round": 1,
+     "exponents_used": [
+      16.0
+     ],
+     "median_exponent": 16.0,
+     "thin_rows": 0,
+     "cost": 255.2341566261503
+    }
+   ]
+  },
+  {
+   "object": "chair",
+   "category": "curved_furniture",
+   "hull": {
+    "ref_iou": {
+     "front": 1.0,
+     "back": 1.0,
+     "left": 1.0,
+     "right": 1.0
+    },
+    "ref_iou_mean": 1.0,
+    "heldout_iou": {
+     "az45_el20": 0.9282517028867986,
+     "az135_el20": 0.9110061478482531,
+     "az225_el-15": 0.9241976634886532,
+     "top": 0.979784589892295
+    },
+    "heldout_iou_mean": 0.935810026029,
+    "chamfer_l1": 0.008067180363433221,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.7884806872939387,
+    "fscore@0.02": 0.8674215152301087,
+    "fscore@0.05": 1.0,
+    "normal_consistency": 0.9877371631235613,
+    "non_manifold_edges": 0,
+    "watertight": true,
+    "seconds": 0.9206052870003987
+   },
+   "imagined": {
+    "ref_iou": {
+     "front": 0.9997552219321149,
+     "back": 0.9997552219321149,
+     "left": 1.0,
+     "right": 1.0
+    },
+    "ref_iou_mean": 0.9998776109660574,
+    "heldout_iou": {
+     "az45_el20": 0.9539110005527915,
+     "az135_el20": 0.9500882683357407,
+     "az225_el-15": 0.9509832065451413,
+     "top": 0.9939485627836612
+    },
+    "heldout_iou_mean": 0.9622327595543336,
+    "chamfer_l1": 0.007016210338129963,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.8480363017332861,
+    "fscore@0.02": 0.9076012780256707,
+    "fscore@0.05": 1.0,
+    "normal_consistency": 0.9953415117461606,
+    "non_manifold_edges": 0,
+    "watertight": true,
+    "seconds": 9.324525295999592
+   },
+   "parts": [
+    {
+     "part": 0,
+     "rows": [
+      34,
+      124
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 1,
+     "rows": [
+      125,
+      137
+     ],
+     "exponent": 60.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 2,
+     "rows": [
+      138,
+      138
+     ],
+     "exponent": 1.4,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 3,
+     "rows": [
+      139,
+      221
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    }
+   ],
+   "history": [
+    {
+     "round": 0,
+     "exponents_used": [
+      1.4,
+      2.0,
+      25.0
+     ],
+     "median_exponent": 2.0,
+     "thin_rows": 0,
+     "cost": 370.3752635719675
+    },
+    {
+     "round": 1,
+     "exponents_used": [
+      1.4,
+      2.0,
+      60.0
+     ],
+     "median_exponent": 2.0,
+     "thin_rows": 0,
+     "cost": 366.18727488756394
+    }
+   ]
+  },
+  {
+   "object": "mug",
+   "category": "concavity_asymmetric",
+   "hull": {
+    "ref_iou": {
+     "front": 1.0,
+     "back": 1.0,
+     "left": 1.0,
+     "right": 1.0
+    },
+    "ref_iou_mean": 1.0,
+    "heldout_iou": {
+     "az45_el20": 0.7072569986783611,
+     "az135_el20": 0.7074372221554728,
+     "az225_el-15": 0.7034286762009534,
+     "top": 0.6003605769230769
+    },
+    "heldout_iou_mean": 0.679620868489466,
+    "chamfer_l1": 0.04099717936315789,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.28889778470058847,
+    "fscore@0.02": 0.40386997214484677,
+    "fscore@0.05": 0.681857621288921,
+    "normal_consistency": 0.9890472270358395,
+    "non_manifold_edges": 0,
+    "watertight": true,
+    "seconds": 1.4710880220000035
+   },
+   "imagined": {
+    "ref_iou": {
+     "front": 1.0,
+     "back": 1.0,
+     "left": 1.0,
+     "right": 1.0
+    },
+    "ref_iou_mean": 1.0,
+    "heldout_iou": {
+     "az45_el20": 0.9376600512163893,
+     "az135_el20": 0.9374699951992319,
+     "az225_el-15": 0.9423844602658545,
+     "top": 0.671435429668747
+    },
+    "heldout_iou_mean": 0.8722374840875556,
+    "chamfer_l1": 0.021189601594646383,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.5868120769881557,
+    "fscore@0.02": 0.6613725299764671,
+    "fscore@0.05": 0.9072124080203519,
+    "normal_consistency": 0.9920528944844761,
+    "non_manifold_edges": 0,
+    "watertight": true,
+    "seconds": 15.543527025000003
+   },
+   "parts": [
+    {
+     "part": 0,
+     "rows": [
+      53,
+      77
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 1,
+     "rows": [
+      78,
+      78
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 2,
+     "rows": [
+      79,
+      95
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": true,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 3,
+     "rows": [
+      96,
+      149
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": true,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 4,
+     "rows": [
+      150,
+      150
+     ],
+     "exponent": 3.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 5,
+     "rows": [
+      151,
+      167
+     ],
+     "exponent": 2.5,
+     "thin_minor_runs": true,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 6,
+     "rows": [
+      168,
+      169
+     ],
+     "exponent": 2.5,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 7,
+     "rows": [
+      170,
+      202
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": true,
+     "label": "ESTIMATED"
+    }
+   ],
+   "history": [
+    {
+     "round": 0,
+     "exponents_used": [
+      2.0,
+      2.5,
+      3.0
+     ],
+     "median_exponent": 2.0,
+     "thin_rows": 121,
+     "cost": 732.5044577976666
+    },
+    {
+     "round": 1,
+     "exponents_used": [
+      2.0,
+      2.5,
+      3.0
+     ],
+     "median_exponent": 2.0,
+     "thin_rows": 121,
+     "cost": 732.5988434979463
+    }
+   ]
+  },
+  {
+   "object": "character",
+   "category": "stylized_character",
+   "hull": {
+    "ref_iou": {
+     "front": 0.9964325824139526,
+     "back": 0.9993393671136949,
+     "left": 1.0,
+     "right": 1.0
+    },
+    "ref_iou_mean": 0.9989429873819119,
+    "heldout_iou": {
+     "az45_el20": 0.7033527696793003,
+     "az135_el20": 0.6957745011202001,
+     "az225_el-15": 0.7045069119687548,
+     "top": 0.5429347826086957
+    },
+    "heldout_iou_mean": 0.6616422413442378,
+    "chamfer_l1": 0.01605464401285184,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.48908681954137584,
+    "fscore@0.02": 0.7071448011914657,
+    "fscore@0.05": 0.9488854229627101,
+    "normal_consistency": 0.9739141537976685,
+    "non_manifold_edges": 0,
+    "watertight": true,
+    "seconds": 1.284561315999781
+   },
+   "imagined": {
+    "ref_iou": {
+     "front": 0.9999339367113695,
+     "back": 0.9999339367113695,
+     "left": 0.9996470795835539,
+     "right": 0.9996470795835539
+    },
+    "ref_iou_mean": 0.9997905081474617,
+    "heldout_iou": {
+     "az45_el20": 0.8331048236320578,
+     "az135_el20": 0.8318617321059553,
+     "az225_el-15": 0.8417520969245107,
+     "top": 0.5862581796549673
+    },
+    "heldout_iou_mean": 0.7732442080793728,
+    "chamfer_l1": 0.010387438616146731,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.7276460604406848,
+    "fscore@0.02": 0.8553996742955188,
+    "fscore@0.05": 0.966087675765095,
+    "normal_consistency": 0.9914543895969888,
+    "non_manifold_edges": 0,
+    "watertight": true,
+    "seconds": 12.305349152999952
+   },
+   "parts": [
+    {
+     "part": 0,
+     "rows": [
+      14,
+      14
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 1,
+     "rows": [
+      15,
+      15
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 2,
+     "rows": [
+      16,
+      16
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 3,
+     "rows": [
+      17,
+      77
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": true,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 4,
+     "rows": [
+      78,
+      88
+     ],
+     "exponent": 2.5,
+     "thin_minor_runs": true,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 5,
+     "rows": [
+      89,
+      119
+     ],
+     "exponent": 4.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 6,
+     "rows": [
+      120,
+      147
+     ],
+     "exponent": 2.5,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 7,
+     "rows": [
+      148,
+      185
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 8,
+     "rows": [
+      186,
+      239
+     ],
+     "exponent": 2.5,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 9,
+     "rows": [
+      240,
+      240
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 10,
+     "rows": [
+      241,
+      241
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    }
+   ],
+   "history": [
+    {
+     "round": 0,
+     "exponents_used": [
+      2.0,
+      2.5,
+      3.0,
+      4.0
+     ],
+     "median_exponent": 2.5,
+     "thin_rows": 61,
+     "cost": 325.30765017746495
+    },
+    {
+     "round": 1,
+     "exponents_used": [
+      2.0,
+      2.5,
+      4.0
+     ],
+     "median_exponent": 2.5,
+     "thin_rows": 72,
+     "cost": 322.6338463350697
+    }
+   ]
+  },
+  {
+   "object": "lamp",
+   "category": "thin_structure",
+   "hull": {
+    "ref_iou": {
+     "front": 1.0,
+     "back": 1.0,
+     "left": 1.0,
+     "right": 1.0
+    },
+    "ref_iou_mean": 1.0,
+    "heldout_iou": {
+     "az45_el20": 0.7601030733454842,
+     "az135_el20": 0.7601030733454842,
+     "az225_el-15": 0.7472987574284171,
+     "top": 0.7957396449704142
+    },
+    "heldout_iou_mean": 0.7658111372724499,
+    "chamfer_l1": 0.018629206136437617,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.48444817506959487,
+    "fscore@0.02": 0.6548857672658467,
+    "fscore@0.05": 0.9145521995649809,
+    "normal_consistency": 0.9705574222293406,
+    "non_manifold_edges": 0,
+    "watertight": true,
+    "seconds": 0.9534812450001482
+   },
+   "imagined": {
+    "ref_iou": {
+     "front": 1.0,
+     "back": 1.0,
+     "left": 1.0,
+     "right": 1.0
+    },
+    "ref_iou_mean": 1.0,
+    "heldout_iou": {
+     "az45_el20": 0.971923828125,
+     "az135_el20": 0.9717656631407648,
+     "az225_el-15": 0.969914166887886,
+     "top": 0.9863176680547293
+    },
+    "heldout_iou_mean": 0.9749803315520951,
+    "chamfer_l1": 0.01053030916598925,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.7345534287458456,
+    "fscore@0.02": 0.8947285180882841,
+    "fscore@0.05": 0.9429998017446471,
+    "normal_consistency": 0.9907937662367395,
+    "non_manifold_edges": 0,
+    "watertight": true,
+    "seconds": 10.045819971000128
+   },
+   "parts": [
+    {
+     "part": 0,
+     "rows": [
+      21,
+      84
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 1,
+     "rows": [
+      85,
+      219
+     ],
+     "exponent": 1.4,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 2,
+     "rows": [
+      220,
+      220
+     ],
+     "exponent": 1.4,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 3,
+     "rows": [
+      221,
+      221
+     ],
+     "exponent": 1.4,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 4,
+     "rows": [
+      222,
+      234
+     ],
+     "exponent": 2.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    }
+   ],
+   "history": [
+    {
+     "round": 0,
+     "exponents_used": [
+      1.4,
+      2.0
+     ],
+     "median_exponent": 1.4,
+     "thin_rows": 0,
+     "cost": 402.63750592476595
+    },
+    {
+     "round": 1,
+     "exponents_used": [
+      1.4,
+      2.0
+     ],
+     "median_exponent": 1.4,
+     "thin_rows": 0,
+     "cost": 402.63751799399625
+    }
+   ]
+  },
+  {
+   "object": "bracket",
+   "category": "asymmetric_hard_surface",
+   "hull": {
+    "ref_iou": {
+     "front": 1.0,
+     "back": 1.0,
+     "left": 1.0,
+     "right": 1.0
+    },
+    "ref_iou_mean": 1.0,
+    "heldout_iou": {
+     "az45_el20": 0.9772943880697427,
+     "az135_el20": 0.9766009852216748,
+     "az225_el-15": 0.9749722238465587,
+     "top": 0.9402011416145691
+    },
+    "heldout_iou_mean": 0.9672671846881363,
+    "chamfer_l1": 0.00552125796709768,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.9556868133305432,
+    "fscore@0.02": 0.9783656173344235,
+    "fscore@0.05": 0.9954200266217947,
+    "normal_consistency": 0.9942611614672188,
+    "non_manifold_edges": 0,
+    "watertight": true,
+    "seconds": 1.2336865629995373
+   },
+   "imagined": {
+    "ref_iou": {
+     "front": 0.999735274652548,
+     "back": 0.999735274652548,
+     "left": 0.9999211418657834,
+     "right": 0.9999211418657834
+    },
+    "ref_iou_mean": 0.9998282082591656,
+    "heldout_iou": {
+     "az45_el20": 0.9720212525435225,
+     "az135_el20": 0.9692950273748377,
+     "az225_el-15": 0.9689767030374521,
+     "top": 0.939018580276322
+    },
+    "heldout_iou_mean": 0.9623278908080335,
+    "chamfer_l1": 0.005623356421859861,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.953875340706573,
+    "fscore@0.02": 0.9794561995916282,
+    "fscore@0.05": 0.9956437226937177,
+    "normal_consistency": 0.9973860018795165,
+    "non_manifold_edges": 0,
+    "watertight": true,
+    "seconds": 9.991012222999416
+   },
+   "parts": [
+    {
+     "part": 0,
+     "rows": [
+      59,
+      168
+     ],
+     "exponent": 10.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    },
+    {
+     "part": 1,
+     "rows": [
+      169,
+      196
+     ],
+     "exponent": 16.0,
+     "thin_minor_runs": false,
+     "label": "ESTIMATED"
+    }
+   ],
+   "history": [
+    {
+     "round": 0,
+     "exponents_used": [
+      10.0,
+      16.0
+     ],
+     "median_exponent": 10.0,
+     "thin_rows": 0,
+     "cost": 222.96183718491477
+    },
+    {
+     "round": 1,
+     "exponents_used": [
+      10.0,
+      16.0
+     ],
+     "median_exponent": 10.0,
+     "thin_rows": 0,
+     "cost": 222.77602420270205
+    }
+   ]
+  }
+ ]
+}

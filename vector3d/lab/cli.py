@@ -7,6 +7,7 @@
   experiment  --data DIR -o DIR [--seeds 0,1,2]      silhouette refinement on a simulated baseline
   benchmark   --data DIR -o DIR [--backend triposg]  real backend: A raw vs B refined
   segbench    --data DIR -o DIR [--methods classic,isnet,birefnet] [--images DIR]   background removal
+  imagine     --data DIR -o DIR [--objects a,b]     imagination loop v0 vs visual hull (CPU)
   report      --experiment DIR [--benchmark DIR] [--audit F] -o report.md
 """
 from __future__ import annotations
@@ -54,6 +55,10 @@ def main(argv: list[str]) -> int:
     sb.add_argument("-o", "--out", required=True)
     sb.add_argument("--methods", default="classic,u2net,isnet,birefnet-lite,birefnet")
     sb.add_argument("--images", help="folder of real photos: cut-outs only, no ground truth")
+    im = sub.add_parser("imagine")
+    im.add_argument("--data", required=True)
+    im.add_argument("-o", "--out", required=True)
+    im.add_argument("--objects", help="comma-separated subset")
     rp = sub.add_parser("report")
     rp.add_argument("--experiment", required=True)
     rp.add_argument("--benchmark")
@@ -127,6 +132,16 @@ def main(argv: list[str]) -> int:
             print(f"{r['method']:14s} " + (f"IoU {r['mean_iou']:.4f} (min {r['min_iou']:.4f}) "
                                           f"alpha err {r['mean_alpha_error']:.4f} {r['seconds_per_image']:.2f} s/img"
                                           if r["status"] == "ok" else f"FAILED {r['reason']}") + f"  [{r['licence']}]")
+        return 0
+    if args.cmd == "imagine":
+        from .imagine import run_benchmark
+
+        s = run_benchmark(args.data, args.out, names=args.objects.split(",") if args.objects else None)
+        for r in s["rows"]:
+            for tag in ("hull", "imagined"):
+                e = r[tag]
+                print(f"{r['object']:10s} {tag:9s} chamfer {e['chamfer_l1']:.4f} F@0.02 {e['fscore@0.02']:.3f} "
+                      f"held-out IoU {e['heldout_iou_mean']:.3f} {e['seconds']:.0f} s")
         return 0
     if args.cmd == "report":
         from .report import write_report
