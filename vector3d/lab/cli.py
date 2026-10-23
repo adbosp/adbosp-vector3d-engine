@@ -5,7 +5,9 @@
   generate    --image F [--backend triposg] [--profile balanced] [--seed 42] [--download] -o DIR
   render      MESH -o DIR                            gates + front/back/left/right + turntable
   experiment  --data DIR -o DIR [--seeds 0,1,2]      silhouette refinement on a simulated baseline
-  benchmark   --data DIR -o DIR [--backend triposg]  real backend: A raw vs B refined
+  benchmark   --data DIR -o DIR [--backend triposg] [--lora DIR]  real backend: A raw vs B refined
+  finetune-data -o DIR [--count 600]                 procedural training set for TripoSG (CPU)
+  finetune    --data DIR -o DIR [--steps 1500 --rank 16]  LoRA fine-tune of TripoSG (GPU, TripoSG env)
   segbench    --data DIR -o DIR [--methods classic,isnet,birefnet] [--images DIR]   background removal
   imagine     --data DIR -o DIR [--objects a,b]     imagination loop v0 vs visual hull (CPU)
   report      --experiment DIR [--benchmark DIR] [--audit F] -o report.md
@@ -50,6 +52,17 @@ def main(argv: list[str]) -> int:
     b.add_argument("--profile", default="balanced")
     b.add_argument("--seed", type=int, default=42)
     b.add_argument("--download", action="store_true")
+    b.add_argument("--lora", help="TripoSG LoRA adapter dir (lab finetune output/lora)")
+    fd = sub.add_parser("finetune-data")
+    fd.add_argument("-o", "--out", required=True)
+    fd.add_argument("--count", type=int, default=600)
+    fd.add_argument("--seed", type=int, default=0)
+    ft = sub.add_parser("finetune")
+    ft.add_argument("--data", required=True)
+    ft.add_argument("-o", "--out", required=True)
+    ft.add_argument("--steps", type=int, default=1500)
+    ft.add_argument("--rank", type=int, default=16)
+    ft.add_argument("--lr", type=float, default=1e-4)
     sb = sub.add_parser("segbench")
     sb.add_argument("--data", required=True)
     sb.add_argument("-o", "--out", required=True)
@@ -120,10 +133,25 @@ def main(argv: list[str]) -> int:
         from .benchmark import run_benchmark
 
         s = run_benchmark(args.data, args.out, args.backend, args.profile, args.seed,
-                          backend_kwargs={"download": True} if args.download else None)
+                          backend_kwargs={k: v for k, v in (("download", args.download or None),
+                                                            ("lora", args.lora)) if v})
         ok = sum(r["record"]["status"] == "success" for r in s["rows"])
         print(f"{ok}/{len(s['rows'])} objects generated, summary in {Path(args.out) / 'summary.json'}")
         return 0 if ok else 2
+    if args.cmd == "finetune-data":
+        from .finetune import build_dataset
+
+        m = build_dataset(args.out, args.count, args.seed)
+        print(f"{sum(r['status'] in ('ok', 'exists') for r in m['samples'])} samples in {args.out} "
+              f"({m['seconds']:.0f} s)")
+        return 0
+    if args.cmd == "finetune":
+        from .finetune import train
+
+        r = train(args.data, args.out, args.steps, args.rank, args.lr)
+        print(json.dumps({k: r.get(k) for k in ("status", "reason", "samples", "trainable_params", "gt_half",
+                                                "train_s", "peak_vram_mb", "lora_dir")}, indent=1))
+        return 0 if r.get("status") == "success" else 2
     if args.cmd == "segbench":
         from .segbench import run_segbench
 

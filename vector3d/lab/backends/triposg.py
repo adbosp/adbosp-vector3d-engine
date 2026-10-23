@@ -34,7 +34,7 @@ class TripoSGBackend(Backend):
     multiview = False
 
     def __init__(self, repo: str | None = None, python: str | None = None, weights: str | None = None,
-                 download: bool = False, timeout: int = 1800):
+                 download: bool = False, timeout: int = 1800, lora: str | None = None):
         r = repo or os.environ.get("V3D_TRIPOSG_DIR") or (str(DEFAULT_REPO) if DEFAULT_REPO.is_dir() else None)
         self.repo = Path(r) if r else None
         self.python = python or os.environ.get("V3D_TRIPOSG_PYTHON") or \
@@ -42,6 +42,7 @@ class TripoSGBackend(Backend):
         w = weights or os.environ.get("V3D_TRIPOSG_WEIGHTS")
         self.weights = Path(w) if w else (self.repo / "pretrained_weights" / "TripoSG" if self.repo else None)
         self.download = download
+        self.lora = lora                     # adapter from lab finetune; None = the released weights
         self.timeout = timeout
 
     def check(self) -> tuple[bool, str]:
@@ -103,6 +104,8 @@ class TripoSGBackend(Backend):
                "--vram-fraction", str(prof.vram_fraction), "--dtype", prof.dtype]
         if self.download:
             cmd.append("--download")
+        if self.lora:
+            cmd += ["--lora", str(self.lora)]
         rec.config["command"] = cmd
         try:
             # progress bars and model logs are not in the console code page on Windows
@@ -119,6 +122,8 @@ class TripoSGBackend(Backend):
         rec.peak_vram_mb, rec.peak_vram_reserved_mb = r.get("peak_vram_mb"), r.get("peak_vram_reserved_mb")
         rec.device = r.get("gpu")
         rec.model_version = f"weights:{r['weights_fingerprint']}" if r.get("weights_fingerprint") else "unknown"
+        if r.get("lora_fingerprint"):
+            rec.model_version += f"+lora:{r['lora_fingerprint']}"
         rec.config["runtime"] = {k: r.get(k) for k in ("python", "torch", "torch_cuda", "platform", "gpu_total_mb",
                                                       "raw_faces", "faces", "vertices", "vram_after_load_mb")}
         if r.get("status") == "success" and out.is_file():

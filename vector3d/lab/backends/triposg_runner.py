@@ -3,7 +3,7 @@
 Usage (called by TripoSGBackend):
   python triposg_runner.py --repo DIR --weights DIR --image RGBA.png --out mesh.glb
       --result result.json [--seed 42 --steps 50 --guidance 7.0 --faces -1
-      --vram-fraction 0.9 --download]
+      --vram-fraction 0.9 --download --lora ADAPTER_DIR]
 
 The image must already carry a valid alpha channel: TripoSG's prepare_image
 then uses that alpha and never calls RMBG-1.4, so its licence is not
@@ -31,6 +31,7 @@ def main() -> int:
     ap.add_argument("--vram-fraction", type=float, default=0.9)
     ap.add_argument("--dtype", default="float16")
     ap.add_argument("--download", action="store_true")
+    ap.add_argument("--lora", help="LoRA adapter dir from triposg_finetune.py, merged into the transformer")
     a = ap.parse_args()
 
     res = {"status": "failed", "python": sys.version.split()[0], "platform": platform.platform()}
@@ -64,7 +65,13 @@ def main() -> int:
 
         t0 = time.perf_counter()
         dtype = getattr(torch, a.dtype)
-        pipe = TripoSGPipeline.from_pretrained(a.weights).to(dev, dtype)
+        pipe = TripoSGPipeline.from_pretrained(a.weights)
+        if a.lora:
+            from peft import PeftModel
+            pipe.transformer = PeftModel.from_pretrained(pipe.transformer, a.lora).merge_and_unload()
+            res["lora"] = a.lora
+            res["lora_fingerprint"] = _fingerprint(a.lora)
+        pipe = pipe.to(dev, dtype)
         torch.cuda.synchronize()
         res["load_s"] = time.perf_counter() - t0
         res["vram_after_load_mb"] = torch.cuda.memory_allocated() / 2**20

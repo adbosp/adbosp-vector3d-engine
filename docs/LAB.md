@@ -31,6 +31,15 @@ python -m vector3d lab segbench --data bench/data -o bench/seg [--methods classi
 | `imagine.py` | imagination loop v0: silhouettes kept exact, unseen cross-sections chosen by shading per part ([research/imagination_engine.md](../research/imagination_engine.md)) |
 | `segbench.py` | background-removal benchmark: dataset views over plain, gradient, noise and clutter backgrounds; IoU, alpha error, time per image |
 
+## Fine-tuning TripoSG (LoRA)
+TripoSG ships inference code only; `backends/triposg_finetune.py` rebuilds the rectified-flow training objective from the released VAE encoder, DINOv2 conditioner and transformer, and trains LoRA adapters on the attention projections (base weights frozen). Training data comes from `finetune.py`: procedural objects with exact geometry, weighted towards the boxy hard-surface shapes TripoSG flattens from one image.
+```bash
+python -m vector3d lab finetune-data -o bench/ft_data --count 600          # CPU, ~1 s per sample
+python -m vector3d lab finetune --data bench/ft_data -o bench/ft_run         # GPU, TripoSG env (needs peft)
+python -m vector3d lab benchmark --data bench/data -o bench/triposg_lora --lora bench/ft_run/lora
+```
+The first `finetune` run probes the base model on 4 training images to learn the size of its model space (`base_probe.json`), so ground truth is scaled the way TripoSG expects. The run writes `train_result.json` (loss curve, peak VRAM, time) next to the adapter. Compare `bench/triposg` (released weights) with `bench/triposg_lora` on the same synthetic_v1 inputs; synthetic_v1 objects are hand-written and never produced by the training generators.
+
 ## Rules the code enforces
 - A backend that cannot run returns `status: blocked` with the reason. It never returns a stand-in mesh.
 - TripoSG refuses to run without CUDA instead of falling back to the CPU silently.
