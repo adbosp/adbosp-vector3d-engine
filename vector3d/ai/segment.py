@@ -53,6 +53,11 @@ def _session(key: str):
     from rembg import new_session
 
     if key not in _SESSIONS:
+        if has_cuda() and hasattr(ort, "preload_dlls"):
+            try:
+                ort.preload_dlls()          # CUDA/cuDNN from the nvidia-* pip wheels (onnxruntime-gpu[cuda,cudnn])
+            except Exception:  # noqa: BLE001 - system CUDA may still work; the session reports its provider
+                pass
         opts = ort.SessionOptions()
         opts.enable_cpu_mem_arena = False   # the arena grows by GBs per call with BiRefNet on CPU
         opts.enable_mem_pattern = False
