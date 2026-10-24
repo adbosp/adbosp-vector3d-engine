@@ -11,7 +11,8 @@
   finetune    --data DIR -o DIR [--steps 1500 --rank 16]  LoRA fine-tune of TripoSG (GPU, TripoSG env)
   segbench    --data DIR -o DIR [--methods classic,isnet,birefnet] [--images DIR]   background removal
   imagine     --data DIR -o DIR [--objects a,b]     imagination loop v0 vs visual hull (CPU)
-  teacher     --data HUMAN_V1 -o DIR [--size 2048] [--people a,b]   Omni teacher v0 (hand close-ups) + scores
+  teacher     --data HUMAN_V1 -o DIR [--size 2048] [--people a,b] [--isolation contour|discs] [--reuse-body DIR]
+              Omni teacher (hand close-ups) + scores
   report      --experiment DIR [--benchmark DIR] [--audit F] -o report.md
 """
 from __future__ import annotations
@@ -87,6 +88,9 @@ def main(argv: list[str]) -> int:
     te.add_argument("--profile", default="quality")
     te.add_argument("--seed", type=int, default=42)
     te.add_argument("--score-only", action="store_true", help="rescore existing outputs, no generation")
+    te.add_argument("--isolation", choices=("contour", "discs"), default="contour",
+                    help="hand isolation in the crop (discs = v0)")
+    te.add_argument("--reuse-body", help="earlier teacher bench dir whose body_placed.glb is reused")
     rp = sub.add_parser("report")
     rp.add_argument("--experiment", required=True)
     rp.add_argument("--benchmark")
@@ -201,7 +205,8 @@ def main(argv: list[str]) -> int:
         if not args.score_only:
             b = teacher.run_human_v1(args.data, out, teacher.triposg_generate(args.profile, args.seed),
                                      teacher.rtmw_keypoints(out / "anatomy"), args.size,
-                                     args.people.split(",") if args.people else None)
+                                     args.people.split(",") if args.people else None,
+                                     isolation=args.isolation, reuse_body=args.reuse_body)
             print(json.dumps({k: v["status"] for k, v in b["people"].items()}, indent=1))
         s = teacher.score(args.data, out)
         (out / "teacher_scores.json").write_text(json.dumps(s, indent=1, default=str))

@@ -3,8 +3,10 @@
   front image + front camera
     -> whole-body generation, placed with align.place_front_only           (body, ESTIMATED)
     -> hand boxes from the 2D whole-body keypoints (RTMW, COCO-WholeBody)   (AI_GENERATED)
-    -> per hand: crop (hand isolated by a disc around its keypoints), generate, place the part with the
-       crop camera, depth matched to the body's surface in the same pixels  (ESTIMATED)
+    -> per hand: crop, isolate the hand, generate, place the part with the crop camera, depth matched to
+       the body's surface in the same pixels                                 (ESTIMATED)
+       isolation "contour" (default): the image's own silhouette inside the dilated keypoint hull, cut at
+       the wrist line; "discs" (v0, kept for reproducibility): discs around the keypoints plus their hull
     -> merge: body faces under the hand region and within the part's depth band are removed, the part is
        added. The result is a triangle soup, not watertight (reported, not hidden).
 
@@ -42,10 +44,13 @@ class HandBox:
     side_px: float       # square crop side, full-image pixels
     points: np.ndarray   # (k, 2) confident hand keypoints, full-image pixels
     radius_px: float     # isolation disc radius around each keypoint
+    wrist: tuple[float, float] | None = None      # hand keypoint 0, when confident
+    knuckle: tuple[float, float] | None = None    # hand keypoint 9 (middle finger MCP), when confident
 
     def to_dict(self) -> dict:
         return {"side": self.side, "cx": self.cx, "cy": self.cy, "side_px": self.side_px,
-                "keypoints_used": int(len(self.points)), "radius_px": self.radius_px}
+                "keypoints_used": int(len(self.points)), "radius_px": self.radius_px,
+                "wrist": self.wrist, "knuckle": self.knuckle}
 
 
 def hand_box(xy, score, side: str, min_score: float = 0.3, min_points: int = 6, pad: float = 0.35,
@@ -60,7 +65,8 @@ def hand_box(xy, score, side: str, min_score: float = 0.3, min_points: int = 6, 
     extent = float(max((hi - lo).max(), 1.0))
     side_px = max(extent * (1 + 2 * pad), min_side_px)
     c = (lo + hi) / 2
-    return HandBox(side, float(c[0]), float(c[1]), side_px, pts, extent * 0.18)
+    at = lambda i: tuple(map(float, xy[idx[i]])) if score[idx[i]] >= min_score else None  # noqa: E731
+    return HandBox(side, float(c[0]), float(c[1]), side_px, pts, extent * 0.18, at(0), at(9))
 
 
 def crop_camera(cam: OrthoCamera, box: HandBox, size: int) -> OrthoCamera:
@@ -73,8 +79,8 @@ def crop_camera(cam: OrthoCamera, box: HandBox, size: int) -> OrthoCamera:
                    half_size=box.side_px * pix / 2, size=int(size))
 
 
-def region_mask(box: HandBox, shape: tuple[int, int]) -> np.ndarray:
-    """Full-image mask of the hand region: union of discs around the keypoints and their convex hull."""
+def disc_mask(box: HandBox, shape: tuple[int, int]) -> np.ndarray:
+    """v0 isolation: union of discs around the keypoints and their convex hull (full-image pixels)."""
     img = Image.new("L", (shape[1], shape[0]), 0)
     d = ImageDraw.Draw(img)
     r = box.radius_px
@@ -91,12 +97,65 @@ def region_mask(box: HandBox, shape: tuple[int, int]) -> np.ndarray:
     return np.asarray(img) > 0
 
 
-def crop_image(rgba: Image.Image, box: HandBox, size: int, isolate: bool = True) -> Image.Image:
-    """The crop, resized to size x size; isolate=True keeps only the hand region's pixels."""
+def wrist_halfplane(box: HandBox, shape: tuple[int, int], behind: float = 0.15) -> np.ndarray | None:
+    """Pixels on the fingers' side of the line through the wrist, perpendicular to wrist -> middle knuckle,
+    moved back by `behind` of that length so the wrist itself stays. None without both keypoints."""
+    if box.wrist is None or box.knuckle is None:
+        return None
+    w, k = np.asarray(box.wrist), np.asarray(box.knuckle)
+    axis = k - w
+    n = float(np.linalg.norm(axis))
+    if n < 1.0:
+        return None
+    yy, xx = np.mgrid[0:shape[0], 0:shape[1]]
+    s = ((xx + 0.5 - w[0]) * axis[0] + (yy + 0.5 - w[1]) * axis[1]) / n
+    return s >= -behind * n
+
+
+def region_mask(box: HandBox, shape: tuple[int, int], alpha: np.ndarray | None = None,
+                mode: str = "contour") -> np.ndarray:
+    """Full-image mask of the hand region.
+    contour: alpha > 127 inside the keypoint hull dilated by radius_px, on the fingers' side of the wrist
+    line, keeping only the connected pieces that hold a keypoint. Falls back to the discs (and says so via
+    isolation_info) when no alpha is given. discs: disc_mask (v0)."""
+    if mode == "discs" or alpha is None:
+        return disc_mask(box, shape)
+    if mode != "contour":
+        raise ValueError(f"unknown isolation mode {mode!r}")
+    from scipy import ndimage
+
+    hull = disc_mask(replace(box, radius_px=0.0), shape)
+    if not hull.any():
+        hull = disc_mask(box, shape)
+    near = ndimage.distance_transform_edt(~hull) <= box.radius_px
+    m = near & (np.asarray(alpha) > 127)
+    cut = wrist_halfplane(box, shape)
+    if cut is not None:
+        m &= cut
+    lab, n = ndimage.label(m)
+    if n > 1:
+        x = np.clip(box.points[:, 0].astype(int), 0, shape[1] - 1)
+        y = np.clip(box.points[:, 1].astype(int), 0, shape[0] - 1)
+        hit = set(lab[y, x].tolist()) - {0}
+        if hit:
+            m = np.isin(lab, list(hit))
+    return m
+
+
+def isolation_info(box: HandBox, mode: str, alpha_given: bool) -> dict:
+    if mode == "discs" or not alpha_given:
+        return {"isolation": "discs", "reason": "requested" if mode == "discs" else "no alpha channel"}
+    return {"isolation": "contour", "wrist_cut": box.wrist is not None and box.knuckle is not None}
+
+
+def crop_image(rgba: Image.Image, box: HandBox, size: int, isolate: bool = True, region: np.ndarray | None = None
+               ) -> Image.Image:
+    """The crop, resized to size x size; isolate=True keeps only the region's pixels (default: discs)."""
     im = rgba.convert("RGBA")
     if isolate:
         a = np.asarray(im).copy()
-        a[..., 3] = np.where(region_mask(box, a.shape[:2]), a[..., 3], 0)
+        keep = region if region is not None else disc_mask(box, a.shape[:2])
+        a[..., 3] = np.where(keep, a[..., 3], 0)
         im = Image.fromarray(a, "RGBA")
     h = box.side_px / 2
     crop = im.crop((round(box.cx - h), round(box.cy - h), round(box.cx + h), round(box.cy + h)))
@@ -163,9 +222,10 @@ Generate = Callable[[Path, Path], Path]   # (input png, output dir) -> raw mesh 
 
 
 def run(front_png, front_cam: OrthoCamera, keypoints: dict, generate: Generate, out_dir,
-        crop_size: int = 1024, load=None) -> dict:
+        crop_size: int = 1024, load=None, isolation: str = "contour", body: Mesh | None = None) -> dict:
     """One person: body + both hands. keypoints = {"xy": (133,2), "score": (133,)} in front_png pixels.
-    Writes a new run folder with teacher_placed.glb and teacher.json; returns the report."""
+    body: an already placed whole-body mesh from the same image (reused so that one change is measured
+    at a time); None generates it. Writes a new run folder with teacher_placed.glb and teacher.json."""
     from ..export.writers import to_glb
     from .mesh_io import load_mesh
 
@@ -176,11 +236,15 @@ def run(front_png, front_cam: OrthoCamera, keypoints: dict, generate: Generate, 
     if img.size != (front_cam.size, front_cam.size):
         raise ValueError(f"image {img.size} does not match the front camera size {front_cam.size}")
     rep = {"run_dir": str(out), "inputs": ["front image", "front camera", "2D keypoints of the front image"],
-           "uses_ground_truth": False, "steps": {}}
+           "uses_ground_truth": False, "isolation": isolation, "steps": {}}
     t0 = time.perf_counter()
-    body_raw = load(generate(Path(front_png), out / "body"))
-    body, binfo = place_front_only(body_raw, np.asarray(img)[..., 3] > 127, front_cam)
-    rep["steps"]["body"] = {**binfo, "seconds": time.perf_counter() - t0}
+    alpha = np.asarray(img)[..., 3]
+    if body is None:
+        body_raw = load(generate(Path(front_png), out / "body"))
+        body, binfo = place_front_only(body_raw, alpha > 127, front_cam)
+        rep["steps"]["body"] = {**binfo, "seconds": time.perf_counter() - t0}
+    else:
+        rep["steps"]["body"] = {"status": "reused", "reason": "placed body from an earlier run of the same image"}
     parts = []
     for side in ("l", "r"):
         box = hand_box(keypoints["xy"], keypoints["score"], side)
@@ -188,22 +252,23 @@ def run(front_png, front_cam: OrthoCamera, keypoints: dict, generate: Generate, 
             rep["steps"][f"hand_{side}"] = {"status": "skipped", "reason": "too few confident hand keypoints"}
             continue
         t1 = time.perf_counter()
-        crop = crop_image(img, box, crop_size)
+        region = region_mask(box, alpha.shape, alpha, isolation)
+        crop = crop_image(img, box, crop_size, region=region)
         crop.save(out / f"hand_{side}.png")
         ccam = crop_camera(front_cam, box, crop_size)
-        region = region_mask(box, (img.size[1], img.size[0]))
         part, pinfo = place_part(load(generate(out / f"hand_{side}.png", out / f"hand_{side}")), crop, ccam,
                                  body, front_cam, region)
         parts.append((part, region))
         rep["steps"][f"hand_{side}"] = {"status": "success", "box": box.to_dict(), "crop_camera": ccam.to_dict(),
-                                        **pinfo, "seconds": time.perf_counter() - t1}
+                                        **isolation_info(box, isolation, True), **pinfo, "seconds": time.perf_counter() - t1}
     (out / "body_placed.glb").write_bytes(to_glb(body, "omni_body", {"label": "ESTIMATED",
                                                                       "pipeline": "front_only body"}))
     merged, minfo = merge(body, parts, front_cam)
     rep["steps"]["merge"] = minfo
     rep["seconds"] = time.perf_counter() - t0
     (out / "teacher_placed.glb").write_bytes(to_glb(merged, "omni_teacher", {"label": "ESTIMATED",
-                                                                             "pipeline": "omni teacher v0"}))
+                                                                             "pipeline": "omni teacher",
+                                                                             "isolation": isolation}))
     (out / "teacher.json").write_text(json.dumps(rep, indent=1, default=str))
     return rep
 
@@ -255,23 +320,29 @@ def score(data_dir, bench_dir) -> dict:
 
 
 def run_human_v1(data_dir, bench_dir, generate: Generate, keypoints_for: Callable[[Path], dict],
-                 size: int = 2048, names=None, load=None) -> dict:
+                 size: int = 2048, names=None, load=None, isolation: str = "contour", reuse_body=None) -> dict:
     """Teacher on every human_v1 person from a size x size front render (human_v1.render_front).
     keypoints_for(image) -> {"xy", "score"} from that image only (the RTMW anatomy step on the PC).
-    Copies body_placed.glb / teacher_placed.glb into bench_dir/<person>/ for human_v1.hand_scores."""
+    Copies body_placed.glb / teacher_placed.glb into bench_dir/<person>/ for human_v1.hand_scores.
+    reuse_body: an earlier bench_dir; its <person>/body_placed.glb is reused instead of generating the body."""
     import shutil
 
     from .human_v1 import render_front
 
     data_dir, bench_dir = Path(data_dir), Path(bench_dir)
-    out = {"size": size, "people": {}}
+    from .mesh_io import load_mesh
+
+    out = {"size": size, "isolation": isolation, "reuse_body": str(reuse_body) if reuse_body else None,
+           "people": {}}
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir() and (p / "gt.glb").is_file()):
         if names and d.name not in names:
             continue
         png, cam = render_front(d, size)
         dest = bench_dir / d.name
         try:
-            rep = run(png, cam, keypoints_for(png), generate, dest / "teacher_runs", load=load)
+            body = load_mesh(Path(reuse_body) / d.name / "body_placed.glb") if reuse_body else None
+            rep = run(png, cam, keypoints_for(png), generate, dest / "teacher_runs", load=load,
+                      isolation=isolation, body=body)
         except Exception as e:  # recorded per person; the batch goes on
             out["people"][d.name] = {"status": "failed", "reason": f"{type(e).__name__}: {e}"}
             continue

@@ -4,11 +4,12 @@ import json
 import numpy as np
 import pytest
 from PIL import Image
+from scipy import ndimage
 from scipy.spatial import cKDTree
 
 from vector3d.lab import dataset as ds
 from vector3d.lab import teacher
-from vector3d.lab.render import frame, render, shade, view_camera
+from vector3d.lab.render import frame, render, shade, silhouette, view_camera
 from vector3d.reconstruct.surface import Mesh
 
 HAND_AT = np.array([0.32, 0.05, 0.12])
@@ -64,6 +65,8 @@ def keypoints_for(hand, cam):
         idx.append(int(dist.argmax()))
         dist = np.minimum(dist, np.linalg.norm(proj - proj[idx[-1]], axis=1))
     pts = proj[idx]
+    pts[0] = cam.project((HAND_AT - [0, 0.045, 0])[None])[0, :2]     # wrist: bottom of the palm
+    pts[9] = cam.project((HAND_AT + [0, 0.04, 0])[None])[0, :2]      # middle knuckle: top of the palm
     xy[91:112], score[91:112] = pts, 0.9
     return {"xy": xy, "score": score}
 
@@ -92,8 +95,9 @@ def test_run_places_hand_without_gt(scene, tmp_path):
     Image.fromarray(shade(body, render(body, cam)), "RGBA").save(png)
     calls = []
     kp = keypoints_for(hand, cam)
+    alpha = np.asarray(Image.open(png))[..., 3]
     seen = visible_in(body, cam, teacher.region_mask(teacher.hand_box(kp["xy"], kp["score"], "l"),
-                                                     (cam.size, cam.size)))
+                                                     (cam.size, cam.size), alpha))
 
     def generate(image, out):
         calls.append(image.name)
@@ -120,6 +124,25 @@ def test_run_places_hand_without_gt(scene, tmp_path):
     d = cKDTree(part).query(seen.vertices)[0]            # GT of what the crop shows -> placed part
     assert np.median(d) < 0.002 and d.max() < 0.006
     assert rep["steps"]["merge"]["body_faces_removed"] > 0
+
+
+def test_contour_isolation_follows_the_silhouette_and_cuts_the_arm(scene):
+    """v0 discs vs contour against the true hand pixels: contour must be closer and must not keep the arm."""
+    body, hand, cam = scene
+    box = teacher.hand_box(**keypoints_for(hand, cam), side="l")
+    alpha = np.asarray(Image.fromarray(shade(body, render(body, cam)), "RGBA"))[..., 3]
+    shape = alpha.shape
+    true_hand = silhouette(hand, cam) & (alpha > 127)
+    discs = teacher.region_mask(box, shape, alpha, "discs")
+    contour = teacher.region_mask(box, shape, alpha, "contour")
+    near = ndimage.binary_dilation(true_hand, iterations=3)          # rasterisation differences at the edge
+    assert (true_hand & ~contour).sum() < 0.01 * true_hand.sum()     # keeps the hand
+    assert (contour & ~near).sum() < 0.5 * (discs & ~near).sum()     # far less non-hand than v0
+    wrist = HAND_AT - [0, 0.055, 0]
+    arm = cam.project((wrist + 0.4 * (np.array([0.17, 0.2, 0.0]) - wrist))[None])[0, :2].astype(int)
+    assert alpha[arm[1], arm[0]] > 127 and not contour[arm[1], arm[0]]   # the arm, away from the wrist
+    assert not (contour & ~(alpha > 127)).any()                               # never outside the image alpha
+    assert teacher.isolation_info(box, "contour", True)["wrist_cut"] is True
 
 
 def test_merge_cuts_only_inside_region_and_depth_band(scene):
@@ -161,6 +184,18 @@ def test_run_human_v1_and_scores(scene, tmp_path):
     assert res["people"]["person_00"]["status"] == "success"
     for proto in ("teacher_front_only", "body_front_only_hires"):
         assert len(human_v1.placed_mesh(tmp_path / "bench" / "person_00", d, proto).faces) > 0
+
+    calls = []
+
+    def hands_only(image, out):
+        calls.append(image.name)
+        return generate(image, out)
+
+    res = teacher.run_human_v1(tmp_path / "data", tmp_path / "bench_c", hands_only, lambda p: kp, size=1024,
+                               load=load, isolation="contour", reuse_body=tmp_path / "bench")
+    rep = json.loads(next((tmp_path / "bench_c" / "person_00" / "teacher_runs").glob("*/teacher.json")).read_text())
+    assert calls == ["hand_l.png"] and rep["steps"]["body"]["status"] == "reused"
+    assert rep["steps"]["hand_l"]["isolation"] == "contour" and res["reuse_body"]
 
     def broken(image, out):
         raise RuntimeError("TripoSG blocked: no GPU")
