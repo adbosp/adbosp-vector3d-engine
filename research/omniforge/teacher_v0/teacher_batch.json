@@ -1,0 +1,65 @@
+{
+ "size": 2048,
+ "people": {
+  "person_00": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher\\person_00\\teacher_runs\\run_20261024_124932_a357d1",
+   "seconds": 189.06012580000242
+  },
+  "person_01": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher\\person_01\\teacher_runs\\run_20261024_125333_f6c51e",
+   "seconds": 187.2161758000002
+  },
+  "person_02": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher\\person_02\\teacher_runs\\run_20261024_125733_283b85",
+   "seconds": 191.98912580000615
+  },
+  "person_03": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher\\person_03\\teacher_runs\\run_20261024_130138_c8eb26",
+   "seconds": 183.98233150000306
+  },
+  "person_04": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher\\person_04\\teacher_runs\\run_20261024_130535_51d8e0",
+   "seconds": 207.17957130000286
+  },
+  "person_05": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher\\person_05\\teacher_runs\\run_20261024_130956_7e5eb9",
+   "seconds": 206.26871910000045
+  },
+  "person_06": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher\\person_06\\teacher_runs\\run_20261024_131415_985b9c",
+   "seconds": 203.47903799999767
+  },
+  "person_07": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher\\person_07\\teacher_runs\\run_20261024_131831_bbe706",
+   "seconds": 184.25374929999816
+  },
+  "person_08": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher\\person_08\\teacher_runs\\run_20261024_132227_05bec6",
+   "seconds": 189.6767170000021
+  },
+  "person_09": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher\\person_09\\teacher_runs\\run_20261024_132628_4d473f",
+   "seconds": 186.39994399999705
+  },
+  "person_10": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher\\person_10\\teacher_runs\\run_20261024_133026_ce0f63",
+   "seconds": 197.80656810000073
+  },
+  "person_11": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher\\person_11\\teacher_runs\\run_20261024_133436_1b95eb",
+   "seconds": 175.65794710000046
+  }
+ }
+}
