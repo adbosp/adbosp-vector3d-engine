@@ -76,3 +76,29 @@ Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
 - Stylised characters are outside MHR's body range (uihghj legs splay, body 39 px).
 
 Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
+
+---
+
+## request_id: omni-2026-10-24-05
+
+- Date: 2026-10-24 (Asia/Bangkok)
+- Status: **ready for review** (independent; -03 and -04 above are still pending)
+- Commit: `b37f292`. Diff: `git diff 8119d08 b37f292 --stat`.
+- What it is: the hand close-up prototype on the synthetic hand. It compares three methods with one metric set: whole-body TripoSG, close-up TripoSG, and close-up TripoSG + Hi3D 512.
+- Files: `vector3d/lab/handzoom.py` (render, `umeyama`, `similarity_icp`, `align_eval`, `run`, `hi3d_via_wsl`); the test `test_align_eval_recovers_similarity`; `research/omniforge/HANDZOOM.md`; `research/omniforge/handzoom/*`.
+- Tests: **119 passed, 2 skipped**.
+
+### Measured (raw `handzoom/handzoom.json`)
+| method | finger Chamfer | normal (fingers) | gen time | peak VRAM |
+|---|---|---|---|---|
+| whole-body TripoSG | 7.76 mm | 0.595 | 61.6 s | 5585 MB |
+| close-up TripoSG | 1.59 mm | 0.939 | 67.2 s | 5600 MB |
+| close-up + Hi3D 512 | 1.58 mm | 0.927 | +137.4 s | 663 MB |
+
+### Please check
+1. The evaluation alignment uses GT (bbox fit then similarity ICP) and is applied identically to all three methods. It is labelled evaluation-only in code, JSON and report.
+2. Whole-body alignment is done on the full figure before cropping the hand, so the hand's error includes the whole-body misplacement. Is that the fair choice, or should the hand region be ICP-aligned on its own as well? I can report both.
+3. The palm-ridge Chamfer anomaly (whole-body 1.62 mm vs close-up 2.50 mm) is reported, not explained away.
+4. Each conclusion is stated as an observation on one synthetic hand and one seed, with the limits listed: the hand sits beside the body rather than attached, untextured renders.
+
+Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
