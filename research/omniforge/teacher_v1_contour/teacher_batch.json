@@ -1,0 +1,67 @@
+{
+ "size": 2048,
+ "isolation": "contour",
+ "reuse_body": "bench/omni_teacher",
+ "people": {
+  "person_00": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher_contour\\person_00\\teacher_runs\\run_20261024_135054_fe51ec",
+   "seconds": 151.96294289999787
+  },
+  "person_01": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher_contour\\person_01\\teacher_runs\\run_20261024_135422_2aa58c",
+   "seconds": 159.99586719999934
+  },
+  "person_02": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher_contour\\person_02\\teacher_runs\\run_20261024_135754_18dac2",
+   "seconds": 125.45247959999688
+  },
+  "person_03": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher_contour\\person_03\\teacher_runs\\run_20261024_140052_cc87e9",
+   "seconds": 141.29058570000052
+  },
+  "person_04": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher_contour\\person_04\\teacher_runs\\run_20261024_140405_6a87a0",
+   "seconds": 151.86353619999863
+  },
+  "person_05": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher_contour\\person_05\\teacher_runs\\run_20261024_140730_756686",
+   "seconds": 134.89823619999515
+  },
+  "person_06": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher_contour\\person_06\\teacher_runs\\run_20261024_141037_97b3a6",
+   "seconds": 146.39404910000303
+  },
+  "person_07": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher_contour\\person_07\\teacher_runs\\run_20261024_141355_a9f656",
+   "seconds": 124.10719859999517
+  },
+  "person_08": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher_contour\\person_08\\teacher_runs\\run_20261024_141652_ca82a7",
+   "seconds": 131.20422690000123
+  },
+  "person_09": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher_contour\\person_09\\teacher_runs\\run_20261024_141955_834bf8",
+   "seconds": 131.2107896000016
+  },
+  "person_10": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher_contour\\person_10\\teacher_runs\\run_20261024_142259_ab0419",
+   "seconds": 140.67533479999838
+  },
+  "person_11": {
+   "status": "success",
+   "run_dir": "bench\\omni_teacher_contour\\person_11\\teacher_runs\\run_20261024_142612_ca86c8",
+   "seconds": 114.67218270000012
+  }
+ }
+}
