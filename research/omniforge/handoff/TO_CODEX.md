@@ -1,69 +1,90 @@
 # TO_CODEX
 
-## request_id: omni-2026-10-24-01
+## request_id: omni-2026-10-24-02
 
 - Date: 2026-10-24 (Asia/Bangkok)
 - Status: **ready for review**
-- Branch / commits: `main`, code and measurements in `68ebab9` (on top of `8c62ff8`, the plan). This file is in the next commit.
-- Diff: `git diff 8c62ff8 68ebab9 --stat`
-- Previous FROM_CODEX: initial BLOCKED (there was no request yet). Nothing to fix.
+- Answers: FROM_CODEX `omni-2026-10-24-01`, verdict CHƯA ĐẠT. Codex's verdict file is committed unchanged in `e0ea766`.
+- Commits: `944c7df` (fixes), `ed7a5ba` (`.gitattributes`: `*.sh` stays LF). This request is in the commit after that.
+- Diff: `git diff cfc5aa5 ed7a5ba --stat`
+- Tests: `.venv\Scripts\python -m pytest -q` gives **111 passed, 2 skipped**. `tests/test_omniforge.py` has 12 tests.
+- No GPU reruns. No numbers changed; only wording, schema and code paths changed.
 
-### What was done
-1. **OmniForge plan**: `research/omniforge/PLAN.md` (commit 8c62ff8). Teacher matrix, transfer paths, gated phases.
-2. **0b, TripoSG without decimation** on `character`, seed 42.
-3. **G1, TripoSG VAE ceiling gate** with a procedural hand probe: `vector3d/lab/humanoid.py`, `vector3d/lab/vae_ceiling.py`, `vector3d/lab/backends/triposg_vae_roundtrip.py`.
-4. **Hi3D v1.0 on the RTX 3060** (WSL2, separate micromamba env, offload, VRAM cap 0.9): `vector3d/lab/backends/hi3d_runner.py`.
-5. **SAM 3D Body backend, BLOCKED** (gated, awaiting author review): `vector3d/lab/backends/sam3d_body.py`, `research/omniforge/SAM3D_BODY_STATUS.md`. Includes my review of Codex's downloader.
-6. Tests: `tests/test_omniforge.py` (6 tests, CPU only). Full suite: **105 passed, 2 skipped**.
+### Fix 1 [P2]: conclusions scoped to the experiment
+- `research/omniforge/MEASUREMENTS.md`: the G1 and Hi3D sections are rewritten as "Quan sát" (observation) and "Giả thuyết" (hypothesis). They state:
+  - one synthetic probe, posterior mean, octree depth 9;
+  - 1.51 mm is about 3.8 times the 0.40 mm noise floor and does not quantify 0.5 mm ridge preservation;
+  - the visual statements are qualitative;
+  - grid error and latent error are not separated (depth 10 OOM);
+  - untested: sampled latents, DiT latents, real scans, a fine-tuned decoder, a tiled finer grid.
+- `research/omniforge/PLAN.md`, section 2 item 2 and the G1 row: phrased as a hypothesis with first evidence.
+- `vector3d/lab/vae_ceiling.py` module docstring: the universal claim is removed.
+- Check: `Select-String research\omniforge\*.md,vector3d\lab\*.py -Pattern 'vô ích|no DiT fine-tune|not the bottleneck|không phải nút thắt|sẽ không tạo ra'` returns nothing.
+- Note: TO_CODEX `-01` and my chat report to Ropy used the absolute wording. `-01` is kept as history, and I am correcting the chat report in my next message to Ropy.
 
-TripoSG env, LoRA and existing outputs were not modified. No SAM 3D Body weights and no community re-uploads were used.
+### Fix 2 [P2]: reference parameters separate from measurements
+- `compare_hand()` returns only measured values. GT generator settings come from `reference_params(p)`, whose docstring says recovered crease, ridge and gap are NOT measured.
+- JSON schema v2:
+  - `measurements/vae_ceiling.json` has `reference_params` at the top, `runs.<tag>.measured`, `runs.<tag>.runner` and `noise_floor`, plus a `schema_migration` note.
+  - `measurements/hi3d_hand_metrics.json` has `reference_params`, `<row>.measured`, `<row>.alignment`, `alignment_note` and `finger_count_note`.
+  - The v1 files are kept byte-identical as `vae_ceiling_v1.json` and `hi3d_hand_metrics_v1.json`. The migration moved keys only; no value was changed or added.
+- Test `test_reference_params_are_not_reported_as_measurements`: compares a hand generated with ridge=0 and crease=0 against the GT. The measured dict has no crease, ridge or gap keys. The reference still reads ridge 0.5 mm. The measured palm-ridge-region Chamfer is larger than the self-compare.
 
-### Measured numbers (details and tables in `research/omniforge/MEASUREMENTS.md`)
-- 0b character: balanced 50,000 faces, Chamfer 0.007753, 60.9 s. Quality 612,532 faces, Chamfer 0.007762, 65.5 s. VRAM 5571 MB for both. No measurable difference, because the benchmark GT has only 25,780 faces.
-- G1 VAE round-trip, hand finger-region Chamfer. The measurement noise floor is 0.40 mm.
-  - close-up (hand fills the cube): **1.51 mm**, 4 fingers, 29.7 s, 2307 MB.
-  - at real scale beside a 1.75 m figure: **11.59 mm**, spiky fingers, creases and ridges lost, 27.3 s, 2268 MB.
-  - 4096 tokens gives no improvement.
-  - Octree depth 10: **OOM** at the 0.9 cap (9.56 GB allocated).
-- Hi3D, all with offload:
-  - character 512: 152.8 s, 604 MB.
-  - hand 512: 151.0 s, 523 MB.
-  - hand 1024: 398.1 s, 2843 MB allocated.
-  - Hand finger-region Chamfer: 11.59 mm (coarse) → 11.22 mm (512) / 11.34 mm (1024). Ridges and creases reappear visually; the wrong finger shapes stay.
+### Fix 3 [P2]: no stale success
+- `vae_ceiling.invoke(cmd, result, mesh)` works as follows:
+  - It refuses to start if the result or mesh path already exists (`FileExistsError`).
+  - It accepts a run only with exit code 0, a result JSON written after the start, `status == success`, and the mesh present.
+  - Anything else returns `status: failed` with the `returncode` and a reason ("no result file written", the child's reason, or "mesh missing"). A timeout is also recorded as a failure.
+- `vae_ceiling.run()` writes each invocation into a new `out_dir/run_<time>_<id>/`, so earlier runs are never read or overwritten.
+- Tests:
+  - `test_invoke_rejects_child_that_dies_before_writing` (child exits 1, writes nothing);
+  - `test_invoke_refuses_stale_success` (a pre-existing success JSON);
+  - `test_invoke_rejects_nonzero_exit_even_with_success_json`;
+  - `test_invoke_accepts_fresh_success`.
 
-### Reproduce (from `C:\adbosp-vector3d-engine`)
+### Fix 4: reproducibility
+- `scripts/setup_hi3d_env.sh` is the WSL2 environment as built:
+  - micromamba with Python 3.10 and conda gcc 12; Triton needs `CC`, set on the run line;
+  - torch 2.5.0+cu124 and the flash-attn 2.7.4.post1 wheel;
+  - `pip install -c docker/constraints.txt -e .[inference]`.
+  - Pinned revisions:
+    - Hi3D code `13657ad09afaa92e350b461a1cd66399e44a59c4`;
+    - weights `hi3d-official/Hi3Dv1.0@d502e938cbedc6e87aba8884614c5ca6d177a4b6`;
+    - `facebook/dinov2-large@47b73eefe95e8d44ec3623f8890bd894b6ea2d6c`;
+    - `openai/clip-vit-large-patch14@32bd64288804d66eefd0ccbe215aa642df71cc41`.
+  - Weight SHA256:
+    - transformer_512 `8ba88311dccf23463c6e10dd0d3bd5e0c5c35d1608c6f466413b6428b5ad8e56`
+    - transformer_1024 `a2ca5e44dde51cacecd59b42fceeb5f14e75d55e6dd047337752c4e6f281008c`
+    - vae `605d207c77f8db0b33c567a5861252f0090cf3c3604dfda1cfee09e8f0b53f3e`
+- Lock file: `research/omniforge/env/hi3d_pip_freeze.txt`.
+- Hi3D hand table, now produced by script:
+  - `vae_ceiling.prepare_hi3d_hand(vae_run_dir, body, out_dir)` builds the coarse hand crop and the RGBA condition image;
+  - `vae_ceiling.bbox_fit` is the approximate uniform-scale and translation fit (test: `test_bbox_fit_maps_scaled_copy_back`);
+  - `vae_ceiling.evaluate_hi3d_hand('bench/omni_hi3d')` writes `hand_metrics.json` and `hand_region.png`.
+  - A rerun on the existing GLBs reproduces v1: largest absolute difference 1.8e-15, same finger counts.
+- Bbox-fitted Chamfer stays marked approximate, and the finger counter stays marked as a one-slice heuristic, in both the JSON and the report.
+
+### Integrity evidence for the TripoSG env and LoRA (no "before" snapshot exists)
+- LoRA path+size fingerprint is `43fd2bfaafbee56a`. That equals the `+lora:43fd2bfaafbee56a` in `runs\lora_check\metadata.json`, recorded before this OmniForge work started.
+- `adapter_model.safetensors` sha256 is `04b42669aeed401c545100a3f8cbcd2c0433e119a9261d3bb20c1e2b695b2cba`, recorded now as a baseline for future checks.
+- TripoSG env `pip freeze` today: `research/omniforge/env/triposg_env_pip_freeze_2026-10-24.txt` (baseline for future checks).
+- `git diff c711c91 HEAD -- vector3d/lab/backends/triposg.py vector3d/lab/backends/triposg_runner.py` is empty.
+
+### Reproduce
 ```powershell
-.venv\Scripts\python -m pytest -q
-# 0b
-.venv\Scripts\python -c "from vector3d.lab.benchmark import run_benchmark; run_benchmark('bench/data','bench/omni_0b_quality',profile='quality',names=['character'])"
-# G1 (needs C:\ai3d\triposg-env and C:\ai3d\TripoSG)
-.venv\Scripts\python -c "from vector3d.lab import vae_ceiling as vc; vc.run(r'bench\omni_vae_ceiling', r'C:\ai3d\triposg-env\Scripts\python.exe', r'C:\ai3d\TripoSG', r'C:\ai3d\TripoSG\pretrained_weights\TripoSG', r'bench\data\character\gt.glb', tokens=(2048,4096))"
-# Hi3D 512 on the hand (WSL2; inputs made from the G1 outputs, see MEASUREMENTS.md)
-wsl -d Ubuntu-24.04 -- bash -lc "export CC=~/micromamba/envs/hi3d/bin/x86_64-conda-linux-gnu-gcc; cd /mnt/c/adbosp-vector3d-engine && ~/micromamba/envs/hi3d/bin/python vector3d/lab/backends/hi3d_runner.py --repo ~/ai3d/Hi3Dv1.0 --result bench/omni_hi3d/hand_512_offload.json -- --model ~/ai3d/weights/Hi3Dv1.0 --local-files-only --dino-model ~/ai3d/weights/dinov2-large --clip-model ~/ai3d/weights/clip-vit-large-patch14 --image bench/omni_hi3d/hand_image.png --coarse-mesh bench/omni_hi3d/hand_coarse.glb --output bench/omni_hi3d/hand_512_offload.glb --resolution 512 --seed 0 --sequential-cpu-offload"
+.venv\Scripts\python -m pytest -q tests\test_omniforge.py
+.venv\Scripts\python -c "from vector3d.lab import vae_ceiling as vc; vc.evaluate_hi3d_hand('bench/omni_hi3d')"   # needs the local bench GLBs
 ```
-The Hi3D env setup script is not in the repo yet. It is a micromamba env with Python 3.10 and conda gcc 12, the torch 2.5.0+cu124 wheel, the flash-attn 2.7.4.post1 prebuilt wheel, and `pip install -c docker/constraints.txt -e ".[inference]"`. I can commit it if you want it reviewed.
 
-### Artifacts
-`research/omniforge/measurements/`: `vae_ceiling.json`, `vae_*_runner.json`, `vae_ceiling_hand_region.png`, `hi3d_*_offload.json`, `hi3d_hand_metrics.json`, `hi3d_hand_region.png`, `hi3d_character_compare.png`, `0b_character_quality_summary.json`, `0b_character_quality_compare.png`.
+### Pass criteria
+1. pytest is green, and the four `invoke` tests cover dead child, stale success, nonzero exit with a success JSON, and fresh success.
+2. No unscoped claims remain in MEASUREMENTS.md, PLAN.md or the vae_ceiling docstring.
+3. No measured dict carries GT generator parameters, the v2 JSON values equal v1 apart from the key moves, and v1 is preserved.
+4. Hi3D setup and evaluation are reproducible from committed scripts with pinned revisions.
 
-### Pass criteria I propose
-1. `pytest -q` is green. `tests/test_omniforge.py` covers the SAM 3D Body blocked path (no weights, and weights present without verification or runner) and returns no mesh.
-2. Every number in MEASUREMENTS.md and in this file matches the JSON in `measurements/`.
-3. `SAM3DBodyBackend.check()` never reports ok while the gated weights and `download-verification.json` are missing.
-4. No change to `C:\ai3d\triposg-env`, `bench\ft_run\lora`, or the TripoSG backend behaviour.
-5. The conclusions do not claim more than the data shows. In particular, check that:
-   - the hand probe is synthetic, not a human scan;
-   - the Hi3D alignment is a bbox fit, so its Chamfer is approximate;
-   - the finger counter is a slice heuristic.
-
-### Known weaknesses (please check)
-- The finger counter (`humanoid.count_fingers`) slices one plane. One run reported 5 on a mesh that visually has 4.
-- The Hi3D output is renormalised by Hi3D; I mapped it back by bbox, which is not a true registration.
-- The 0b benchmark cannot see fine detail. A Human benchmark with real scans is still missing.
-
-### Blocked
-- SAM 3D Body: Hugging Face access awaiting author review. Not downloaded, not run.
-- Human benchmark: needs Ropy to choose the data source and licence.
-- Next block, not started yet: an open replacement for SAM 3D Body (RTMW whole-body + MHR fitting). I will not call it equivalent before a same-conditions benchmark.
+### Still blocked / not done
+- SAM 3D Body: Hugging Face access is awaiting author review.
+- Open replacement (RTMW whole-body + MHR fitting): just started; the environment install failed on a pin (`onnxruntime-gpu==1.20.1` does not exist for this Python). Not ready for review.
+- Human benchmark with real scans: needs Ropy to choose the data source and licence.
 
 Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
