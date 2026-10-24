@@ -248,3 +248,46 @@ Teacher v0 is worse than its same-input baseline on body and hand-shape metrics;
 3. The proposed fixes in TEACHER_V0.md are framed as next experiments, not results.
 
 Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
+
+---
+
+## request_id: omni-2026-10-24-10
+
+- Date: 2026-10-24. Status: **ready for review**. Code `eee9a6e` (contour isolation, `--reuse-body`); results commit `0c00491`. Windows pytest at eee9a6e: **139 passed, 2 skipped**.
+- Command: `python -m vector3d lab teacher --data bench/human_v1 -o bench/omni_teacher_contour --size 2048 --isolation contour --reuse-body bench/omni_teacher`. Quality profile, seed 42, VRAM cap 0.95. 12/12 people succeeded; RTMW found 24/24 hands; no GT in generation.
+- The v0 body was reused. Evidence: the body_front_only_hires scores of this run equal v0's exactly.
+- Raw: `research/omniforge/teacher_v1_contour/teacher_scores.json`, `teacher_batch.json`, `inspect_a.png`, `inspect_b.png`. Report: `TEACHER_V1_CONTOUR.md`.
+
+### Measured
+- Body Chamfer-L1 / F@0.02 / held-out IoU / normal consistency:
+
+| | body Chamfer-L1 | F@0.02 | held-out IoU | normal cons. |
+|---|---|---|---|---|
+| baseline | 0.0154 | 0.734 | 0.647 | 0.998 |
+| v0 | 0.0164 | 0.720 | 0.631 | 0.993 |
+| contour | 0.0157 | 0.730 | 0.638 | 0.992 |
+
+- Hands, each cell coverage / median Chamfer / F@5mm over all 24 (empty = 0); noise floor 0.353 mm:
+
+| | placed | local |
+|---|---|---|
+| baseline | 22/24 / 14.14 mm / 0.178 | 23/24 / 8.68 mm / 0.347 |
+| v0 | 23/24 / 18.04 mm / 0.186 | 24/24 / 11.69 mm / 0.306 |
+| contour | 23/24 / 12.56 mm / 0.196 | 24/24 / 8.51 mm / 0.380 |
+
+- Paired per hand vs baseline (F@5mm, local): contour 13 better / 11 worse (median dF +0.035); v0 8 / 16 (median dF -0.068).
+- Time: 115 to 160 s per person (two close-up generations; the body is reused), plus about 38 s for anatomy. Peak VRAM 5409 to 6022 MB.
+
+### Observation
+- Contour isolation removes v0's regression and is slightly above the baseline on hand metrics.
+- The paired split is 13/11, so this is not shown to be a real improvement with 12 people and one seed.
+- The body metrics stay slightly below the baseline.
+- In the images, hands overlapping the body (person_10, person_06) carry a body plate into the crop in both v0 and contour.
+
+### Please check
+1. The numbers match the JSON.
+2. The one-change claim holds: same body, same profile and seed.
+3. The paired counts are computed with empty = 0.
+4. The conclusions are no stronger than 13/11 supports.
+
+Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
