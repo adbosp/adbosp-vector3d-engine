@@ -163,3 +163,55 @@ Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
   - The earlier v1 file is kept.
 
 Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
+
+## request_id: omni-2026-10-24-08
+
+- Date: 2026-10-24 (Asia/Bangkok). Written by Claude from the cloud session (Linux, no GPU); the ROPY-PC session is out of quota.
+- Status: **ready for review (code only; no GPU result yet)**
+- Commit: `43283af`. Diff: `git diff 8a9a68d 43283af -- vector3d tests`.
+- Independent of `-07` (still pending).
+
+### What is new
+1. `vector3d/lab/teacher.py`: Omni teacher v0, the hand close-up path assembled on a whole person, single image, no GT.
+   - Body: generation on the front image, placed with `align.place_front_only`.
+   - Hand boxes: from the 2D whole-body keypoints of the same image (COCO-WholeBody 91–111 left, 112–132 right); `None` when fewer than 6 keypoints have score ≥ 0.3 (hand recorded `skipped`).
+   - Crop: square, padded 35 %, pixels outside a disc+convex-hull region around the hand keypoints made transparent (isolation), resized to 1024.
+   - Crop camera: same orthographic axes, centre moved in the image plane, half-size scaled. Test checks the projection identity to 1e-6 px.
+   - Part placement: `place_front_only` with the crop camera, then a shift along the view axis so that the part's median depth over the hand region equals the body's median depth over the same pixels. If the body has no surface there, the depth stays at the camera centre and that is written in the record.
+   - Merge: body vertices that project inside the hand region AND lie within the part's depth band ±3 cm are removed (faces whose 3 vertices are all removed), then the parts are added as separate shells. Output is a triangle soup, `watertight: false` in the record.
+   - Outputs per person: `body_placed.glb` (same-input whole-body baseline) and `teacher_placed.glb`, plus `teacher.json` (`uses_ground_truth: false`, inputs listed).
+   - `triposg_generate()` raises on blocked/failed generation, so no substitute mesh is ever assembled. `rtmw_keypoints()` raises when the anatomy step is not `success`.
+2. `human_v1.render_front(obj_dir, size)`: renders `views/front_<size>.png` from the same front camera at a higher resolution (same view and framing). Reason: at 512² a hand is roughly 15 px, too small to crop. This stands in for a high-resolution photo.
+3. `human_v1` protocols:
+   - `body_front_only_hires`: whole body from the high-resolution front render;
+   - `teacher_front_only`: teacher output.
+   - `PROTOCOL_FILES` maps each protocol to the file it scores. `hand_scores` and `body_scores` now check that file instead of always `raw_triposg.glb`.
+   - Side effect: `multiview_oracle` now requires `A_placed.glb` itself; before, it checked `raw_triposg.glb` and then loaded `A_placed.glb`.
+4. `lab teacher --data HUMAN_V1 -o DIR [--size 2048] [--people ...] [--score-only]`: runs the batch on the PC and writes `teacher_scores.json` for both protocols.
+5. `anatomy.wsl_path`: a POSIX absolute path is returned unchanged. On Linux, `tests/test_anatomy.py::test_wsl_path` and `test_script_quotes_paths_with_spaces` failed before this fix, because `Path.resolve()` turned the Windows string into a POSIX path. Behaviour on Windows is unchanged: a drive path takes the same branch as before.
+
+### Tests (CPU, stand-in generator)
+`tests/test_teacher.py`, 5 tests:
+- crop camera identity;
+- hand box rejects undetected and low-confidence hands;
+- end-to-end `run()` on a box body with an arm and a 4-finger hand (stand-in generator = the exact mesh the crop shows, canonicalised to a unit box);
+- merge cuts only inside the region and the depth band, and a far shell cuts nothing;
+- `run_human_v1` + both protocols load + a failing generator gives `failed` and writes no outputs.
+
+The placed close-up shell lies within a 2 mm median and 6 mm max of what the crop shows (measured 1.17 mm median, 1.81 mm max). This checks the geometry of the assembly only, not TripoSG quality.
+
+Full suite on Linux (Python 3.13): **138 passed, 2 skipped**.
+
+### Known limits (not hidden)
+- No GPU numbers yet. Nothing here says the teacher beats the baseline; that needs `lab teacher` on ROPY-PC.
+- The depth match follows the body. If TripoSG places the arm at the wrong depth (the main `placed` error in `HUMAN_V1.md`), the hand follows it, so `placed` can stay poor while `local` improves.
+- RTMW on untextured grey Lambert renders is untested. Hands may be missed; they will show as `skipped` and be counted in coverage.
+- The high-resolution front render is a protocol change of input resolution. The fair baseline is `body_front_only_hires` from the same run, not the 512² `front_only` numbers.
+- The merge is not watertight and MHR finger priors are not used yet.
+
+### Requested checks
+1. Is the merge's region + depth-band cut reasonable as v0, or does it risk removing body surface that should stay (wrist/forearm)?
+2. Is the hi-res protocol fair as described (baseline and teacher get the identical image), and is the `PROTOCOL_FILES` change to `multiview_oracle` acceptable?
+3. Confirm no GT reaches `teacher.run` / `run_human_v1`. The only inputs are `render_front` (image + camera) and the keypoints callable.
+
+Pass criteria: code review only. PASS does not accept any quality claim; the GPU run will be a separate request.
