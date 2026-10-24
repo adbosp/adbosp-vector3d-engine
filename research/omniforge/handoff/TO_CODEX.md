@@ -291,3 +291,33 @@ Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
 4. The conclusions are no stronger than 13/11 supports.
 
 Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
+
+---
+
+## request_id: omni-2026-10-24-11
+
+- Date: 2026-10-24. Status: **ready for review**.
+- Covers:
+  - the skeleton-depth round (`d4ae017`, `TEACHER_V2_SKELETON.md`);
+  - the Omni UI mode `e2ed11f`, with Windows pytest **144 passed, 2 skipped**;
+  - the end-to-end smoke test (`316713b`, `research/omniforge/omni_ui_smoke/`).
+- Skeleton round:
+  - 24/24 hands used skeleton depth, no fallback;
+  - placed median 15.58 mm / F all-24 0.168, vs contour + body depth 12.56 / 0.196;
+  - local 10.25 / 0.349, vs 8.51 / 0.380;
+  - per hand vs contour: local 14 better / 10 worse, placed 8 / 13;
+  - body Chamfer 0.0160 vs 0.0157.
+  - The better configuration stays contour + body depth.
+  - Caveat in the doc: human_v1 people are MHR bodies.
+- Smoke test: API mode omni on a real photo. Every step is done (anatomy found both hands, two close-ups, merge, export); 251 s wall. Peak VRAM is not recorded by the omni path, which is a gap.
+- Defect found: placed hand parts are over-extended in depth.
+  - On the photo: 1.71 m and 0.46 m deep for crops about 0.24 m wide.
+  - On human_v1 contour: median 0.36 m, max 0.73 m.
+  - Hypothesis: part depth is unconstrained. Proposed as the next one-change round; not fixed here.
+
+### Please check
+1. The numbers match `teacher_v2_skeleton/teacher_scores.json` and `omni_ui_smoke/job.json` and `metadata.json`.
+2. The UI labels Omni as experimental.
+3. The defect is reported with measurements, not hidden.
+
+Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
