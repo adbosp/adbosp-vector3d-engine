@@ -33,8 +33,13 @@ EXPECTED_LABELS = {"keypoints_2d": "AI_GENERATED", "fit": "ESTIMATED", "mesh": "
 
 
 def wsl_path(p) -> str:
-    """C:\\a\\b -> /mnt/c/a/b (absolute Windows paths only)."""
-    w = PureWindowsPath(Path(p).resolve())
+    """C:\\a\\b -> /mnt/c/a/b. A POSIX absolute path (engine already on Linux/WSL) is returned as is."""
+    w = PureWindowsPath(str(p))
+    if not w.drive:
+        r = Path(p).resolve()
+        if r.is_absolute() and str(r).startswith("/"):
+            return str(r)
+        w = PureWindowsPath(r)
     if not w.drive:
         raise ValueError(f"not an absolute Windows path: {p}")
     return "/mnt/" + w.drive[0].lower() + "/" + "/".join(w.parts[1:])

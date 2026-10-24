@@ -139,7 +139,31 @@ PROTOCOLS = {
                         "silhouettes (benchmark A_placed.glb); the three extra views are oracle information",
     "front_only": "single-image end to end: generation and placement use only views/front.png and the front "
                   "camera (align.place_front_only on the raw model output)",
+    "body_front_only_hires": "single-image end to end on the high-resolution front render (render_front): "
+                             "whole-body generation placed front-only; the same input as the teacher",
+    "teacher_front_only": "Omni teacher v0 on the high-resolution front render: body + hand close-ups from 2D "
+                          "keypoints of that image, placed and merged without GT (teacher.run)",
 }
+PROTOCOL_FILES = {"multiview_oracle": "A_placed.glb", "front_only": "raw_triposg.glb",
+                  "body_front_only_hires": "body_placed.glb", "teacher_front_only": "teacher_placed.glb"}
+
+
+def render_front(obj_dir, size: int = 2048):
+    """views/front_<size>.png: the front camera of cameras.json at a higher resolution (same view, same
+    framing). Stands in for a high-resolution photo; nothing but the image and its camera is derived."""
+    from dataclasses import replace
+
+    from . import dataset
+    from .mesh_io import load_mesh
+    from .render import render, shade
+
+    obj_dir = Path(obj_dir)
+    cam = replace(dataset.load_cameras(obj_dir)["front"], size=int(size), name=f"front_{size}")
+    png = obj_dir / "views" / f"front_{size}.png"
+    if not png.is_file():
+        mesh = load_mesh(obj_dir / "gt.glb")
+        Image.fromarray(shade(mesh, render(mesh, cam)), "RGBA").save(png)
+    return png, cam
 
 
 def placed_mesh(run_dir: Path, obj_dir: Path, protocol: str) -> Mesh:
@@ -149,6 +173,8 @@ def placed_mesh(run_dir: Path, obj_dir: Path, protocol: str) -> Mesh:
 
     if protocol == "multiview_oracle":
         return load_mesh(run_dir / "A_placed.glb")
+    if protocol in ("body_front_only_hires", "teacher_front_only"):
+        return load_mesh(run_dir / PROTOCOL_FILES[protocol])      # already placed by teacher.run
     if protocol == "front_only":
         cams = dataset.load_cameras(obj_dir)
         front = dataset.load_masks(obj_dir, ["front"])["front"]
@@ -165,7 +191,7 @@ def hand_scores(bench_dir, data_dir, protocol: str = "front_only") -> dict:
     out = {"protocol": protocol, "protocol_description": PROTOCOLS[protocol], "density_per_m2": DENSITY}
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir()):
         run = bench_dir / d.name
-        if not (run / "raw_triposg.glb").is_file():
+        if not (run / PROTOCOL_FILES[protocol]).is_file():
             out[d.name] = {"status": "missing"}
             continue
         gt, pred = load_mesh(d / "gt.glb"), placed_mesh(run, d, protocol)
@@ -188,7 +214,7 @@ def body_scores(bench_dir, data_dir, protocol: str = "front_only") -> dict:
     out = {"protocol": protocol, "protocol_description": PROTOCOLS[protocol]}
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir()):
         run = bench_dir / d.name
-        if not (run / "raw_triposg.glb").is_file():
+        if not (run / PROTOCOL_FILES[protocol]).is_file():
             out[d.name] = {"status": "missing"}
             continue
         cams = dataset.load_cameras(d)

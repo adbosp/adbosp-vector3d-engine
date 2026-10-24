@@ -11,6 +11,7 @@
   finetune    --data DIR -o DIR [--steps 1500 --rank 16]  LoRA fine-tune of TripoSG (GPU, TripoSG env)
   segbench    --data DIR -o DIR [--methods classic,isnet,birefnet] [--images DIR]   background removal
   imagine     --data DIR -o DIR [--objects a,b]     imagination loop v0 vs visual hull (CPU)
+  teacher     --data HUMAN_V1 -o DIR [--size 2048] [--people a,b]   Omni teacher v0 (hand close-ups) + scores
   report      --experiment DIR [--benchmark DIR] [--audit F] -o report.md
 """
 from __future__ import annotations
@@ -78,6 +79,14 @@ def main(argv: list[str]) -> int:
     im.add_argument("--data", required=True)
     im.add_argument("-o", "--out", required=True)
     im.add_argument("--objects", help="comma-separated subset")
+    te = sub.add_parser("teacher")
+    te.add_argument("--data", required=True, help="human_v1 folder")
+    te.add_argument("-o", "--out", required=True)
+    te.add_argument("--size", type=int, default=2048, help="front render resolution given to the pipeline")
+    te.add_argument("--people", help="comma-separated subset")
+    te.add_argument("--profile", default="quality")
+    te.add_argument("--seed", type=int, default=42)
+    te.add_argument("--score-only", action="store_true", help="rescore existing outputs, no generation")
     rp = sub.add_parser("report")
     rp.add_argument("--experiment", required=True)
     rp.add_argument("--benchmark")
@@ -184,6 +193,19 @@ def main(argv: list[str]) -> int:
                 e = r[tag]
                 print(f"{r['object']:10s} {tag:9s} chamfer {e['chamfer_l1']:.4f} F@0.02 {e['fscore@0.02']:.3f} "
                       f"held-out IoU {e['heldout_iou_mean']:.3f} {e['seconds']:.0f} s")
+        return 0
+    if args.cmd == "teacher":
+        from . import teacher
+
+        out = Path(args.out)
+        if not args.score_only:
+            b = teacher.run_human_v1(args.data, out, teacher.triposg_generate(args.profile, args.seed),
+                                     teacher.rtmw_keypoints(out / "anatomy"), args.size,
+                                     args.people.split(",") if args.people else None)
+            print(json.dumps({k: v["status"] for k, v in b["people"].items()}, indent=1))
+        s = teacher.score(args.data, out)
+        (out / "teacher_scores.json").write_text(json.dumps(s, indent=1, default=str))
+        print(json.dumps({p: v["summary"] for p, v in s.items()}, indent=1))
         return 0
     if args.cmd == "report":
         from .report import write_report
