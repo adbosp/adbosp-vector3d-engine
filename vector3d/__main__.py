@@ -36,8 +36,11 @@ def main(argv: list[str] | None = None) -> int:
     gen.add_argument("--resolution", type=int, default=128)
     gen.add_argument("--smooth", type=int, default=10, help="Taubin smoothing iterations (0 = off)")
     gen.add_argument("-o", "--out", default="out", help="output directory")
-    gen.add_argument("--mode", choices=["auto", "ai", "drawing", "photo"], default="auto",
-                     help="auto: ai (TripoSG) when installed, else photo; drawing for SVG")
+    gen.add_argument("--mode", choices=["auto", "ai", "omni", "drawing", "photo"], default="auto",
+                     help="auto: ai (TripoSG) when installed, else photo; drawing for SVG; "
+                          "omni: people, experimental (TripoSG body + hand close-ups, GPU + WSL anatomy env)")
+    gen.add_argument("--omni-isolation", choices=["contour", "band", "discs"], default="contour")
+    gen.add_argument("--omni-depth", choices=["body", "skeleton"], default="body")
     gen.add_argument("--ai-profile", choices=["fast", "balanced", "quality"], default="balanced")
     gen.add_argument("--ai-lora", action="store_true", help="ai mode: use the fine-tuned TripoSG LoRA adapter")
     gen.add_argument("--segmenter", choices=["auto", "classic", "birefnet", "birefnet-lite", "isnet", "u2net"],
@@ -117,7 +120,8 @@ def _generate(args, ap) -> int:
     opts = GenerateOptions(resolution=args.resolution, smooth_iterations=args.smooth, hints=load_hints(args.hints),
                            mode=args.mode, depth_backend=args.depth_backend, thickness=args.thickness,
                            detail=args.detail, back=args.back_side, size_m=args.size, ai_profile=args.ai_profile,
-                           segmenter=args.segmenter, ai_lora=args.ai_lora)
+                           segmenter=args.segmenter, ai_lora=args.ai_lora,
+                           omni_isolation=args.omni_isolation, omni_depth=args.omni_depth)
 
     def show(step: str, status: str, detail: str) -> None:
         if status != "running":

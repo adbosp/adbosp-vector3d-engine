@@ -6,6 +6,7 @@ rem   start.cmd triposg anh.png      TripoSG: real AI image -> 3D (NVIDIA GPU)
 rem   start.cmd photo anh.png        photo mode (Depth Anything, CPU ok)
 rem   start.cmd triposg-lora anh.png TripoSG + LoRA trained on the engine's geometry
 rem   start.cmd compare             benchmark released vs LoRA weights on the 6 objects
+rem   start.cmd omni anhnguoi.png    Omni (nguoi, thu nghiem): TripoSG than + ban tay can canh (GPU + WSL)
 rem   start.cmd benchmark | audit | test
 setlocal EnableExtensions EnableDelayedExpansion
 cd /d "%~dp0"
@@ -39,6 +40,7 @@ echo   5. Kiem tra phan cung (GPU, VRAM, CUDA)
 echo   6. Chay test
 echo   7. TripoSG + LoRA (ban train lai): anh -^> model 3D
 echo   8. So sanh TripoSG goc va ban LoRA tren 6 vat the
+echo   9. Omni nguoi (thu nghiem): anh nguoi -^> model 3D, ban tay dung can canh
 echo   0. Thoat
 echo.
 set /p "CHOICE=Chon: "
@@ -50,12 +52,14 @@ if "%CHOICE%"=="5" set "CMD=audit"
 if "%CHOICE%"=="6" set "CMD=test"
 if "%CHOICE%"=="7" set "CMD=triposg-lora"
 if "%CHOICE%"=="8" set "CMD=compare"
+if "%CHOICE%"=="9" set "CMD=omni"
 if "%CHOICE%"=="0" exit /b 0
 if "%CMD%"=="" goto menu
 set "IMG="
 if /i "%CMD%"=="triposg" set /p "IMG=Duong dan anh (keo tha file vao day): "
 if /i "%CMD%"=="photo" set /p "IMG=Duong dan anh (keo tha file vao day): "
 if /i "%CMD%"=="triposg-lora" set /p "IMG=Duong dan anh (keo tha file vao day): "
+if /i "%CMD%"=="omni" set /p "IMG=Duong dan anh nguoi (keo tha file vao day): "
 set "PAUSE_AT_END=1"
 goto dispatch
 
@@ -82,6 +86,13 @@ if /i "%CMD%"=="ui" (
   "%PY%" -m vector3d lab generate --image "!IMG!" -o "!OUT!" --profile balanced --lora bench\ft_run\lora
   if exist "!OUT!\gates\previews.png" start "" "!OUT!\gates\previews.png"
   echo Ket qua: %~dp0!OUT!
+) else if /i "%CMD%"=="omni" (
+  if not defined IMG (echo Can duong dan anh. & goto end)
+  if not defined V3D_TRIPOSG_DIR (echo Chua cai TripoSG: xem docs\LAB.md & goto end)
+  echo Omni la che do THU NGHIEM: than tot, ban tay can canh chua on dinh. Mat khoang 4-5 phut.
+  set "OUT=runs\omni_!STAMP!"
+  "%PY%" -m vector3d generate --front "!IMG!" --mode omni -o "!OUT!"
+  echo Ket qua: %~dp0!OUT!  ^(mo model.glb bang giao dien web hoac 3D Viewer^)
 ) else if /i "%CMD%"=="compare" (
   if not exist "bench\ft_run\lora\adapter_config.json" (echo Chua co LoRA: chay lab finetune truoc & goto end)
   if not exist "bench\data\manifest.json" "%PY%" -m vector3d lab dataset -o bench\data
@@ -106,7 +117,7 @@ if /i "%CMD%"=="ui" (
   "%PY%" -m pytest -q
 ) else (
   echo Lenh khong hop le: %CMD%
-  echo Dung: start.cmd [ui ^| triposg anh.png ^| triposg-lora anh.png ^| photo anh.png ^| compare ^| benchmark ^| audit ^| test]
+  echo Dung: start.cmd [ui ^| triposg anh.png ^| triposg-lora anh.png ^| omni anhnguoi.png ^| photo anh.png ^| compare ^| benchmark ^| audit ^| test]
 )
 
 :end
