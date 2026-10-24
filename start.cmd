@@ -4,6 +4,8 @@ rem   start.cmd                      menu
 rem   start.cmd ui                   web interface
 rem   start.cmd triposg anh.png      TripoSG: real AI image -> 3D (NVIDIA GPU)
 rem   start.cmd photo anh.png        photo mode (Depth Anything, CPU ok)
+rem   start.cmd triposg-lora anh.png TripoSG + LoRA trained on the engine's geometry
+rem   start.cmd compare             benchmark released vs LoRA weights on the 6 objects
 rem   start.cmd benchmark | audit | test
 setlocal EnableExtensions EnableDelayedExpansion
 cd /d "%~dp0"
@@ -35,6 +37,8 @@ echo   3. Photo mode: anh -^> model 3D (Depth Anything, chay CPU)
 echo   4. Benchmark TripoSG tren 6 vat the
 echo   5. Kiem tra phan cung (GPU, VRAM, CUDA)
 echo   6. Chay test
+echo   7. TripoSG + LoRA (ban train lai): anh -^> model 3D
+echo   8. So sanh TripoSG goc va ban LoRA tren 6 vat the
 echo   0. Thoat
 echo.
 set /p "CHOICE=Chon: "
@@ -44,11 +48,14 @@ if "%CHOICE%"=="3" set "CMD=photo"
 if "%CHOICE%"=="4" set "CMD=benchmark"
 if "%CHOICE%"=="5" set "CMD=audit"
 if "%CHOICE%"=="6" set "CMD=test"
+if "%CHOICE%"=="7" set "CMD=triposg-lora"
+if "%CHOICE%"=="8" set "CMD=compare"
 if "%CHOICE%"=="0" exit /b 0
 if "%CMD%"=="" goto menu
 set "IMG="
 if /i "%CMD%"=="triposg" set /p "IMG=Duong dan anh (keo tha file vao day): "
 if /i "%CMD%"=="photo" set /p "IMG=Duong dan anh (keo tha file vao day): "
+if /i "%CMD%"=="triposg-lora" set /p "IMG=Duong dan anh (keo tha file vao day): "
 set "PAUSE_AT_END=1"
 goto dispatch
 
@@ -67,6 +74,20 @@ if /i "%CMD%"=="ui" (
   "%PY%" -m vector3d lab generate --image "!IMG!" -o "!OUT!" --profile balanced --download
   if exist "!OUT!\gates\previews.png" start "" "!OUT!\gates\previews.png"
   echo Ket qua: %~dp0!OUT!
+) else if /i "%CMD%"=="triposg-lora" (
+  if not defined IMG (echo Can duong dan anh. & goto end)
+  if not defined V3D_TRIPOSG_DIR (echo Chua cai TripoSG: xem docs\LAB.md & goto end)
+  if not exist "bench\ft_run\lora\adapter_config.json" (echo Chua co LoRA: chay lab finetune truoc, xem docs\LAB.md & goto end)
+  set "OUT=runs\triposg_lora_!STAMP!"
+  "%PY%" -m vector3d lab generate --image "!IMG!" -o "!OUT!" --profile balanced --lora bench\ft_run\lora
+  if exist "!OUT!\gates\previews.png" start "" "!OUT!\gates\previews.png"
+  echo Ket qua: %~dp0!OUT!
+) else if /i "%CMD%"=="compare" (
+  if not exist "bench\ft_run\lora\adapter_config.json" (echo Chua co LoRA: chay lab finetune truoc & goto end)
+  if not exist "bench\data\manifest.json" "%PY%" -m vector3d lab dataset -o bench\data
+  if not exist "bench\triposg_base_rerun\summary.json" "%PY%" -m vector3d lab benchmark --data bench\data -o bench\triposg_base_rerun
+  if not exist "bench\triposg_lora\summary.json" "%PY%" -m vector3d lab benchmark --data bench\data -o bench\triposg_lora --lora bench\ft_run\lora
+  "%PY%" -m vector3d lab compare bench\triposg_base_rerun bench\triposg_lora
 ) else if /i "%CMD%"=="photo" (
   if not defined IMG (echo Can duong dan anh. & goto end)
   set "OUT=out\photo_!STAMP!"
@@ -85,7 +106,7 @@ if /i "%CMD%"=="ui" (
   "%PY%" -m pytest -q
 ) else (
   echo Lenh khong hop le: %CMD%
-  echo Dung: start.cmd [ui ^| triposg anh.png ^| photo anh.png ^| benchmark ^| audit ^| test]
+  echo Dung: start.cmd [ui ^| triposg anh.png ^| triposg-lora anh.png ^| photo anh.png ^| compare ^| benchmark ^| audit ^| test]
 )
 
 :end

@@ -6,6 +6,7 @@
   render      MESH -o DIR                            gates + front/back/left/right + turntable
   experiment  --data DIR -o DIR [--seeds 0,1,2]      silhouette refinement on a simulated baseline
   benchmark   --data DIR -o DIR [--backend triposg] [--lora DIR]  real backend: A raw vs B refined
+  compare     BASE_DIR OTHER_DIR [-o table.md]        per-object table of two benchmark runs
   finetune-data -o DIR [--count 600]                 procedural training set for TripoSG (CPU)
   finetune    --data DIR -o DIR [--steps 1500 --rank 16]  LoRA fine-tune of TripoSG (GPU, TripoSG env)
   segbench    --data DIR -o DIR [--methods classic,isnet,birefnet] [--images DIR]   background removal
@@ -37,6 +38,7 @@ def main(argv: list[str]) -> int:
     g.add_argument("--seed", type=int, default=42)
     g.add_argument("--download", action="store_true", help="allow downloading model weights")
     g.add_argument("--prompt")
+    g.add_argument("--lora", help="TripoSG LoRA adapter dir (default: none, the released weights)")
     g.add_argument("-o", "--out", required=True)
     r = sub.add_parser("render")
     r.add_argument("mesh")
@@ -53,6 +55,10 @@ def main(argv: list[str]) -> int:
     b.add_argument("--seed", type=int, default=42)
     b.add_argument("--download", action="store_true")
     b.add_argument("--lora", help="TripoSG LoRA adapter dir (lab finetune output/lora)")
+    cp = sub.add_parser("compare")
+    cp.add_argument("base")
+    cp.add_argument("other")
+    cp.add_argument("-o", "--out", help="also write the table to this markdown file")
     fd = sub.add_parser("finetune-data")
     fd.add_argument("-o", "--out", required=True)
     fd.add_argument("--count", type=int, default=600)
@@ -99,7 +105,7 @@ def main(argv: list[str]) -> int:
         from .gates import run_gates
 
         images = dict(x.split("=", 1) if "=" in x else ("front", x) for x in args.image)
-        kw = {"download": True} if args.download else {}
+        kw = {k: v for k, v in (("download", args.download or None), ("lora", args.lora)) if v}
         rec = get_backend(args.backend, **kw).generate(images, prompt=args.prompt, quality_profile=args.profile,
                                                       out_dir=args.out, seed=args.seed)
         print(json.dumps({k: rec.to_dict()[k] for k in ("status", "reason", "model", "model_version", "duration_s",
@@ -138,6 +144,14 @@ def main(argv: list[str]) -> int:
         ok = sum(r["record"]["status"] == "success" for r in s["rows"])
         print(f"{ok}/{len(s['rows'])} objects generated, summary in {Path(args.out) / 'summary.json'}")
         return 0 if ok else 2
+    if args.cmd == "compare":
+        from .benchmark import compare_summaries
+
+        table = compare_summaries(args.base, args.other, (Path(args.base).name, Path(args.other).name))
+        print(table)
+        if args.out:
+            Path(args.out).write_text(table + "\n", encoding="utf-8")
+        return 0
     if args.cmd == "finetune-data":
         from .finetune import build_dataset
 

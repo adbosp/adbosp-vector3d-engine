@@ -37,7 +37,9 @@ TripoSG ships inference code only; `backends/triposg_finetune.py` rebuilds the r
 python -m vector3d lab finetune-data -o bench/ft_data --count 600          # CPU, ~1 s per sample
 python -m vector3d lab finetune --data bench/ft_data -o bench/ft_run         # GPU, TripoSG env (needs peft)
 python -m vector3d lab benchmark --data bench/data -o bench/triposg_lora --lora bench/ft_run/lora
+python -m vector3d lab compare bench/triposg_base_rerun bench/triposg_lora -o bench/compare.md
 ```
+Using the adapter: web UI checkbox "Dùng LoRA" (AI mode, shown when `bench/ft_run/lora` or `V3D_TRIPOSG_LORA` exists), `python -m vector3d generate --front a.png --mode ai --ai-lora`, `python -m vector3d lab generate --image a.png -o out --lora bench/ft_run/lora`, or `start.cmd` options 7 (generate) and 8 (compare). Without the flag the released weights are used.
 The first `finetune` run probes the base model on 4 training images to learn the size of its model space (`base_probe.json`), so ground truth is scaled the way TripoSG expects. The run writes `train_result.json` (loss curve, peak VRAM, time) next to the adapter. Compare `bench/triposg` (released weights) with `bench/triposg_lora` on the same synthetic_v1 inputs; synthetic_v1 objects are hand-written and never produced by the training generators.
 
 ## Rules the code enforces

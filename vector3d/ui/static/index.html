@@ -148,6 +148,8 @@ ul.warn { padding-left: 18px; margin: 6px 0; color: var(--warn); font-size: 12px
         <select id="mode"><option value="auto" selected>Tự động</option><option value="ai">AI 3D: TripoSG (GPU)</option><option value="photo">Ảnh chụp (AI depth, CPU)</option><option value="drawing">Bản vẽ hình chiếu</option></select>
         <span class="ai-only">Chất lượng AI</span>
         <select class="ai-only" id="aiProfile"><option value="fast">Nhanh</option><option value="balanced" selected>Cân bằng</option><option value="quality">Cao</option></select>
+        <span class="ai-only lora-only">Bản train lại</span>
+        <label class="ai-only lora-only" title="TripoSG + LoRA train trên hình học của engine (lab finetune)"><input type="checkbox" id="aiLora"> Dùng LoRA</label>
         <span class="no-drawing">Tách nền</span>
         <select class="no-drawing" id="segmenter"><option value="auto" selected>Tự động</option><option value="birefnet">BiRefNet (MIT, GPU)</option><option value="birefnet-lite">BiRefNet lite (MIT)</option><option value="isnet">IS-Net (Apache-2.0)</option><option value="classic">Theo màu nền</option></select>
         <span class="photo-only">Độ dày</span>
@@ -372,6 +374,7 @@ function syncModeUI() {
   const photo = m === "photo" || (m === "auto" && !svgOnly && !AI.ai);
   document.querySelectorAll(".photo-only").forEach((el) => el.classList.toggle("off", !photo));
   document.querySelectorAll(".ai-only").forEach((el) => el.classList.toggle("off", !ai));
+  document.querySelectorAll(".lora-only").forEach((el) => el.classList.toggle("off", !(ai && AI.lora)));
   document.querySelectorAll(".photo-only.size").forEach((el) => el.classList.toggle("off", !(photo || ai)));
   document.querySelectorAll(".no-drawing").forEach((el) => el.classList.toggle("off", !(photo || ai)));
 }
@@ -399,7 +402,7 @@ $("genBtn").onclick = async () => {
     const { job } = await api("/api/generate", { views: viewPayload(), options: {
       mode: $("mode").value, resolution: +$("quality").value, smooth_iterations: +$("smooth").value, hints,
       thickness: +$("thickness").value, detail: +$("detail").value, back: $("back").value,
-      size_m: +$("sizeM").value || 1, ai_profile: $("aiProfile").value, segmenter: $("segmenter").value } });
+      size_m: +$("sizeM").value || 1, ai_profile: $("aiProfile").value, ai_lora: $("aiLora").checked, segmenter: $("segmenter").value } });
     let snap;
     for (;;) {
       snap = await api(`/api/jobs/${job}`);

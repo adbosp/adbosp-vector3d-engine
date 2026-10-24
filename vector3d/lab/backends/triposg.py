@@ -5,6 +5,7 @@ separate Python environment and is driven through triposg_runner.py. Paths:
   V3D_TRIPOSG_DIR      clone of https://github.com/VAST-AI-Research/TripoSG
   V3D_TRIPOSG_PYTHON   python.exe of that environment
   V3D_TRIPOSG_WEIGHTS  weights dir (default <dir>/pretrained_weights/TripoSG)
+  V3D_TRIPOSG_LORA     fine-tuned adapter (default bench/ft_run/lora), used only when asked for
 """
 from __future__ import annotations
 
@@ -25,6 +26,14 @@ RUNNER = Path(__file__).with_name("triposg_runner.py")
 # docs/LAB.md install location, used when the environment variables are not set
 DEFAULT_REPO = Path(r"C:\ai3d\TripoSG")
 DEFAULT_PYTHON = Path(r"C:\ai3d\triposg-env\Scripts\python.exe")
+# where `lab finetune -o bench/ft_run` leaves its adapter (engine repo root)
+DEFAULT_LORA = Path(__file__).resolve().parents[3] / "bench" / "ft_run" / "lora"
+
+
+def lora_path() -> Path | None:
+    """Fine-tuned LoRA adapter: V3D_TRIPOSG_LORA, else bench/ft_run/lora; None if absent."""
+    p = Path(os.environ.get("V3D_TRIPOSG_LORA") or DEFAULT_LORA)
+    return p if (p / "adapter_config.json").is_file() else None
 
 
 class TripoSGBackend(Backend):

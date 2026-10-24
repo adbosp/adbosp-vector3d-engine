@@ -142,6 +142,7 @@ def start_job(payload: dict) -> Job:
         size_m=float(clamp(float(opts.get("size_m", 1.0)), 1e-3, 1e4)),
         ai_profile=str(opts.get("ai_profile", "balanced")),
         segmenter=str(opts.get("segmenter", "auto")),
+        ai_lora=bool(opts.get("ai_lora", False)),
     )
     if options.segmenter not in SEGMENTERS:
         raise ValueError(f"segmenter must be one of {', '.join(SEGMENTERS)}")
@@ -197,8 +198,11 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/capabilities":
             from ..generate import ai_available
 
+            from ..lab.backends.triposg import lora_path
+
             ok, why = ai_available()
-            self._json(200, {"ai": ok, "ai_model": "VAST-AI/TripoSG", "ai_reason": why})
+            self._json(200, {"ai": ok, "ai_model": "VAST-AI/TripoSG", "ai_reason": why,
+                             "lora": bool(ok and lora_path())})
         elif path == "/api/examples":
             self._json(200, examples())
         elif path.startswith("/api/jobs/"):

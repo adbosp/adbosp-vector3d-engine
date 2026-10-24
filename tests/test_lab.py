@@ -157,6 +157,7 @@ def _fake_triposg(root, with_torch: bool):
                 self.samples = [(v, f)]
         class TripoSGPipeline:
             device = 'cuda'
+            transformer = 'base'
             @classmethod
             def from_pretrained(cls, path): return cls()
             def to(self, *a): return self
@@ -283,3 +284,48 @@ def test_ai_mode_fits_the_model_to_every_view(tmp_path, monkeypatch):
     lo, hi = np.array(md["validation"]["bbox"])
     assert np.allclose((hi - lo) / (hi - lo).max(), [0.75, 1.0, 0.75], atol=0.05)
     assert md["geometry_confidence"] == ("estimated" if md["fit"]["refined"] else "ai_generated")
+
+
+def test_ai_mode_with_lora_adapter(tmp_path, monkeypatch):
+    from vector3d.generate import GenerateOptions, generate
+
+    repo = _fake_triposg(tmp_path / "TripoSG", with_torch=True)
+    peft = repo / "fake_site" / "peft"
+    peft.mkdir()
+    (peft / "__init__.py").write_text(
+        "class PeftModel:\n"
+        "    @staticmethod\n"
+        "    def from_pretrained(model, path):\n"
+        "        class _M:\n"
+        "            def merge_and_unload(self): return model + '+lora'\n"
+        "        return _M()\n")
+    lora = tmp_path / "lora"
+    lora.mkdir()
+    (lora / "adapter_config.json").write_text("{}")
+    for k, v in (("V3D_TRIPOSG_DIR", repo), ("V3D_TRIPOSG_PYTHON", sys.executable),
+                 ("PYTHONPATH", repo / "fake_site"), ("V3D_TRIPOSG_LORA", lora)):
+        monkeypatch.setenv(k, str(v))
+    monkeypatch.chdir(tmp_path)
+    data = _png(tmp_path / "f.png").read_bytes()
+    r = generate({"front": ("f.png", data)}, GenerateOptions(mode="ai", ai_lora=True))
+    assert r.metadata["model"]["lora"] == str(lora)
+    assert "+lora:" in r.metadata["model"]["version"]
+    (lora / "adapter_config.json").unlink()
+    with pytest.raises(RuntimeError, match="LoRA adapter not found"):
+        generate({"front": ("f.png", data)}, GenerateOptions(mode="ai", ai_lora=True))
+
+
+def test_compare_summaries(tmp_path):
+    from vector3d.lab.benchmark import compare_summaries
+
+    def run(d, f):
+        (tmp_path / d).mkdir()
+        rows = [{"object": "crate", "record": {"duration_s": 80},
+                 "A": {"chamfer_l1": 0.1 * f, "fscore@0.02": 0.5 / f, "heldout_iou_mean": 0.6 / f,
+                       "normal_consistency": 0.9}}]
+        (tmp_path / d / "summary.json").write_text(json.dumps({"rows": rows}))
+    run("base", 1.0)
+    run("lora", 0.8)
+    t = compare_summaries(tmp_path / "base", tmp_path / "lora")
+    assert "| crate | 0.1000 | 0.0800 |" in t
+    assert "Chamfer-L1 1/1" in t and "normal cons. 0/1" in t

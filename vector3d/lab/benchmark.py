@@ -14,6 +14,7 @@ import json
 import time
 from pathlib import Path
 
+import numpy as np
 from PIL import Image
 
 from ..export.writers import to_glb
@@ -73,3 +74,38 @@ def run_benchmark(data_dir, out_dir, backend: str = "triposg", profile: str = "b
                "dataset": manifest["version"], "rows": rows}
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=1, default=str))
     return summary
+
+
+METRICS = (("chamfer_l1", "Chamfer-L1", False), ("fscore@0.02", "F@0.02", True),
+           ("heldout_iou_mean", "held-out IoU", True), ("normal_consistency", "normal cons.", True))
+
+
+def compare_summaries(a_dir, b_dir, labels=("base", "lora")) -> str:
+    """Markdown table of the raw-model (A) metrics of two benchmark runs on the same objects."""
+    runs = [json.loads((Path(d) / "summary.json").read_text()) for d in (a_dir, b_dir)]
+    rows = [{r["object"]: r for r in s["rows"]} for s in runs]
+    names = [n for n in rows[0] if n in rows[1]]
+    head = "| object | " + " | ".join(f"{m} {l}" for _, m, _ in METRICS for l in labels) + " | s " + \
+           " | s ".join(labels) + " |"
+    lines = [head, "|" + "---|" * (1 + 2 * len(METRICS) + 2)]
+    sums = {(k, i): [] for k, _, _ in METRICS for i in range(2)}
+    wins = {k: 0 for k, _, _ in METRICS}
+    for n in names:
+        a, b = rows[0][n], rows[1][n]
+        if "A" not in a or "A" not in b:
+            lines.append(f"| {n} | " + " | ".join("failed" for _ in range(2 * len(METRICS) + 2)) + " |")
+            continue
+        cells = []
+        for k, _, higher in METRICS:
+            va, vb = a["A"][k], b["A"][k]
+            sums[(k, 0)].append(va)
+            sums[(k, 1)].append(vb)
+            wins[k] += (vb > va) if higher else (vb < va)
+            cells += [f"{va:.4f}", f"{vb:.4f}"]
+        cells += [f"{(x['record'].get('duration_s') or 0):.0f}" for x in (a, b)]
+        lines.append(f"| {n} | " + " | ".join(cells) + " |")
+    mean = [f"{np.mean(sums[(k, i)]):.4f}" if sums[(k, i)] else "-" for k, _, _ in METRICS for i in range(2)]
+    lines.append("| **mean** | " + " | ".join(mean) + " | | |")
+    lines.append("")
+    lines.append(f"{labels[1]} better on: " + ", ".join(f"{m} {wins[k]}/{len(names)}" for k, m, _ in METRICS))
+    return "\n".join(lines)

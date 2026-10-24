@@ -90,6 +90,7 @@ class GenerateOptions:
     hints: dict | None = None  # see vector3d/reconstruct/hints.py and docs/AI_PLAYBOOK.md
     mode: str = "auto"         # auto | ai | drawing | photo
     ai_profile: str = "balanced"   # ai mode: fast | balanced | quality
+    ai_lora: bool = False          # ai mode: TripoSG with the fine-tuned LoRA adapter (lab finetune)
     seed: int = 42
     # photo mode
     depth_backend: str = "auto"    # auto | depth-anything | inflation
@@ -451,11 +452,16 @@ def _generate_ai(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResult:
     done("segment", f"{seg_method}; subject covers {mask.mean():.0%} of the image")
 
     step("ai_generate")
-    backend = get_backend("triposg")
+    from .lab.backends.triposg import lora_path
+
+    lora = lora_path() if opts.ai_lora else None
+    if opts.ai_lora and lora is None:
+        raise RuntimeError("LoRA adapter not found: run `lab finetune` or set V3D_TRIPOSG_LORA")
+    backend = get_backend("triposg", lora=str(lora) if lora else None)
     ok, why = backend.check()
     if not ok:
         raise RuntimeError(f"TripoSG is not available: {why}. Install it (docs/LAB.md) or choose photo mode.")
-    run.report("ai_generate", "running", "TripoSG on the GPU, usually 1-2 minutes")
+    run.report("ai_generate", "running", "TripoSG" + (" + LoRA" if lora else "") + " on the GPU, usually 1-2 minutes")
     run_dir = Path(tempfile.mkdtemp(prefix="v3d_ai_", dir=Path("runs").resolve() if Path("runs").is_dir() else None))
     src = run_dir / "input.png"
     Image.fromarray(cut, "RGBA").save(src)
@@ -549,6 +555,7 @@ def _generate_ai(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResult:
         "method": "triposg_image_to_3d",
         "model": {"name": rec.model, "version": rec.model_version, "license": rec.license,
                   "profile": rec.quality_profile, "seed": rec.seed, "device": rec.device,
+                  "lora": str(lora) if lora else None,
                   "duration_s": rec.duration_s, "load_s": rec.load_s, "peak_vram_mb": rec.peak_vram_mb,
                   "raw_output": rec.output_path},
         "segmentation": seg_method,
