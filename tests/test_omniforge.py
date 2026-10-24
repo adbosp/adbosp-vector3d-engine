@@ -96,6 +96,25 @@ def test_invoke_accepts_fresh_success(tmp_path):
     assert rr["status"] == "success" and rr["duration_s"] == 1
 
 
+def test_invoke_missing_interpreter_is_a_failure(tmp_path):
+    rr = vae_ceiling.invoke([str(tmp_path / "no_such_python.exe"), "-c", "pass"], tmp_path / "r.json", tmp_path / "m.glb")
+    assert rr["status"] == "failed" and rr["returncode"] is None and "could not start runner" in rr["reason"]
+
+
+def test_invoke_broken_json_is_a_failure(tmp_path):
+    res, mesh = tmp_path / "r.json", tmp_path / "m.glb"
+    code = f"open(r'{mesh}','w').write('x'); open(r'{res}','w').write('{{not json')"
+    rr = vae_ceiling.invoke(_child(code), res, mesh)
+    assert rr["status"] == "failed" and rr["returncode"] == 0 and "JSONDecodeError" in rr["reason"]
+
+
+def test_invoke_json_list_is_a_failure(tmp_path):
+    res, mesh = tmp_path / "r.json", tmp_path / "m.glb"
+    code = f"open(r'{mesh}','w').write('x'); open(r'{res}','w').write('[]')"
+    rr = vae_ceiling.invoke(_child(code), res, mesh)
+    assert rr["status"] == "failed" and "is a list" in rr["reason"]
+
+
 def test_bbox_fit_maps_scaled_copy_back():
     m = humanoid.hand_mesh(voxel=0.002)
     moved = vae_ceiling.Mesh(m.vertices * 7.0 + 1.5, m.faces)

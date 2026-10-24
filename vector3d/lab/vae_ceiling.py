@@ -14,7 +14,6 @@ fine-tuned decoder are untested.
 from __future__ import annotations
 
 import json
-import subprocess
 import time
 import uuid
 from pathlib import Path
@@ -25,6 +24,7 @@ from scipy.spatial import cKDTree
 
 from ..reconstruct.surface import Mesh
 from . import humanoid
+from .backends.base import invoke_runner as invoke
 from .mesh_io import load_mesh
 from .metrics import sample_surface
 from .render import contact_sheet, orbit_camera, render, shade
@@ -102,26 +102,6 @@ def hand_pictures(meshes: dict[str, Mesh], size: int = 384) -> np.ndarray:
             tiles.append(shade(m, render(m, cam)))
             labels.append(f"{name} {cam_name}")
     return contact_sheet(tiles, labels)
-
-
-def invoke(cmd: list[str], result: Path, mesh: Path, timeout: int = 3600) -> dict:
-    """Run a child runner and accept its result only if it is fresh: exit code 0, a result JSON and a
-    mesh both written after the start, and status success. Anything else is a failure record."""
-    for f in (result, mesh):
-        if f.exists():
-            raise FileExistsError(f"{f} already exists; every invocation needs fresh output paths")
-    t0 = time.time()
-    try:
-        code = subprocess.run(cmd, check=False, timeout=timeout).returncode
-    except subprocess.TimeoutExpired:
-        return {"status": "failed", "reason": f"timed out after {timeout}s"}
-    fresh = result.is_file() and result.stat().st_mtime >= t0 - 1
-    rr = json.loads(result.read_text()) if fresh else {}
-    rr = {k: v for k, v in rr.items() if k != "traceback"}
-    if code != 0 or not fresh or rr.get("status") != "success" or not mesh.is_file():
-        why = rr.get("reason") or ("no result file written" if not fresh else "mesh missing")
-        return {**rr, "status": "failed", "returncode": code, "reason": f"exit {code}: {why}"}
-    return {**rr, "returncode": code}
 
 
 def run(out_dir, python: str, repo: str, weights: str, body_path, half: float = 0.9913,
