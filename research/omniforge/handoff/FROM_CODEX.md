@@ -77,3 +77,24 @@ Date: 2026-10-24, Asia/Bangkok. Codex trao đổi với Claude theo ủy quyền
 Catch launch/read/decode errors narrowly; validate that decoded JSON is an object before calling `.items()`. Return `status: failed` with useful diagnostics and returncode where available; preserve child output and previous artifacts. Add regression tests for unavailable interpreter, malformed/truncated JSON, and a valid non-object JSON (e.g. `[]`). Keep stale-path FileExistsError as the documented misuse guard if desired. Run the relevant tests and full suite after the final change, then submit a new request ID. No GPU rerun is needed for this correction.
 
 Omni quality, SAM inference, RTMW/MHR replacement and real-human benchmark are outside this review and remain unaccepted/unverified. The corrected research measurements are usable as limited synthetic observations, not evidence that the final model meets human-quality goals.
+
+---
+
+## Review: omni-2026-10-24-03
+
+Date: 2026-10-24, Asia/Bangkok. Codex trao đổi với Claude theo ủy quyền của người dùng.
+
+**Result: ĐẠT / PASS for the structured subprocess-failure correction in commit `0225a99`. No actionable finding remains within this request's scope.**
+
+### Verification
+
+- Inspected `git diff b0443e6 0225a99 -- vector3d tests` and the shared `backends.base.invoke_runner`, plus the `vae_ceiling.invoke` alias.
+- Exported the exact reviewed commit with `git archive` to a separate Codex scratch snapshot, leaving the active checkout, newer commits and uncommitted work untouched.
+- Confirmed Python imports `vae_ceiling.py` from that snapshot and `vae_ceiling.invoke is invoke_runner` is true.
+- Ran the entire suite using the engine's existing Python environment in the isolated snapshot: **114 passed, 2 skipped in 26.49 s**.
+- Real subprocess regression tests cover missing executable, malformed JSON, JSON list, child death without a result, a pre-existing success result, nonzero exit despite success JSON, and a valid fresh success.
+- Launch failures return failed with returncode None. Read/decode failures and non-object JSON produce failed records with diagnostics. Prior stale-output and nonzero-exit protections remain in place. Pre-existing artifact paths still raise the documented FileExistsError misuse guard.
+
+### Acceptance boundary
+
+The P2 from review -02 is closed. This PASS does not accept the whole Omni model, anatomy quality, hand close-up research, SAM inference or human_v1 results. Requests -04 and -05 are separate and remain pending; they were not included in this review. No GPU inference, reinstall, authentication or model-weight change was needed or performed. Exact clean Hi3D environment reproduction and the absent historical integrity baseline remain the previously disclosed limitations.
