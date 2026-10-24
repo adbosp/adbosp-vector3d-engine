@@ -1,9 +1,10 @@
 """Pluggable image-to-3D backends. Each one runs a real pretrained model or
 reports why it cannot; none of them ever returns a stand-in mesh."""
 from .base import Backend, GenerationRecord
+from .sam3d_body import SAM3DBodyBackend
 from .triposg import TripoSGBackend
 
-BACKENDS = {"triposg": TripoSGBackend}
+BACKENDS = {"triposg": TripoSGBackend, "sam3d_body": SAM3DBodyBackend}
 
 
 def get_backend(name: str, **kw) -> Backend:

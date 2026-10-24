@@ -1,0 +1,175 @@
+{
+ "hand_params": {
+  "gap": 0.004,
+  "radius": 0.0085,
+  "crease": 0.0012,
+  "ridge": 0.0005,
+  "ridge_period": 0.006
+ },
+ "gt_half": 0.9913,
+ "n_points": 200000,
+ "runs": {
+  "closeup_t2048": {
+   "runner": {
+    "status": "success",
+    "python": "3.10.11",
+    "platform": "Windows-10-10.0.26300-SP0",
+    "tokens": 2048,
+    "octree_depth": 9,
+    "torch": "2.6.0+cu124",
+    "gpu": "NVIDIA GeForce RTX 3060",
+    "load_s": 0.7692941999994218,
+    "weights_fingerprint": "9ae2fc428004bf58",
+    "input_points": 200000,
+    "duration_s": 29.65343149999535,
+    "latent_shape": [
+     1,
+     2048,
+     64
+    ],
+    "peak_vram_mb": 2306.8759765625,
+    "faces": 778756,
+    "output_path": "bench\\omni_vae_ceiling\\closeup_t2048.glb"
+   },
+   "hand_faces": 778756,
+   "chamfer_mm": 1.4214610316813265,
+   "chamfer_fingers_mm": 1.5071075631723163,
+   "chamfer_palm_ridges_mm": 1.5616357060425718,
+   "normal_agreement": 0.9666130628508307,
+   "normal_agreement_fingers": 0.9325994053427975,
+   "fingers": 4,
+   "crease_depth_mm": 1.2,
+   "ridge_amplitude_mm": 0.5,
+   "finger_gap_mm": 4.0
+  },
+  "closeup_t4096": {
+   "runner": {
+    "status": "success",
+    "python": "3.10.11",
+    "platform": "Windows-10-10.0.26300-SP0",
+    "tokens": 4096,
+    "octree_depth": 9,
+    "torch": "2.6.0+cu124",
+    "gpu": "NVIDIA GeForce RTX 3060",
+    "load_s": 0.4710999000017182,
+    "weights_fingerprint": "9ae2fc428004bf58",
+    "input_points": 200000,
+    "duration_s": 62.11575480000465,
+    "latent_shape": [
+     1,
+     4096,
+     64
+    ],
+    "peak_vram_mb": 2308.55859375,
+    "faces": 778868,
+    "output_path": "bench\\omni_vae_ceiling\\closeup_t4096.glb"
+   },
+   "hand_faces": 778868,
+   "chamfer_mm": 1.4229273742855693,
+   "chamfer_fingers_mm": 1.5071189922915635,
+   "chamfer_palm_ridges_mm": 1.5608530841033637,
+   "normal_agreement": 0.9661366593171632,
+   "normal_agreement_fingers": 0.9314156899657079,
+   "fingers": 4,
+   "crease_depth_mm": 1.2,
+   "ridge_amplitude_mm": 0.5,
+   "finger_gap_mm": 4.0
+  },
+  "in_body_t2048": {
+   "runner": {
+    "status": "success",
+    "python": "3.10.11",
+    "platform": "Windows-10-10.0.26300-SP0",
+    "tokens": 2048,
+    "octree_depth": 9,
+    "torch": "2.6.0+cu124",
+    "gpu": "NVIDIA GeForce RTX 3060",
+    "load_s": 0.47864149999804795,
+    "weights_fingerprint": "9ae2fc428004bf58",
+    "input_points": 200000,
+    "duration_s": 27.338101800000004,
+    "latent_shape": [
+     1,
+     2048,
+     64
+    ],
+    "peak_vram_mb": 2268.359375,
+    "faces": 690250,
+    "output_path": "bench\\omni_vae_ceiling\\in_body_t2048.glb"
+   },
+   "hand_faces": 5733,
+   "chamfer_mm": 12.35062984339392,
+   "chamfer_fingers_mm": 11.586579805888647,
+   "chamfer_palm_ridges_mm": 16.03176232537493,
+   "normal_agreement": 0.627901553832706,
+   "normal_agreement_fingers": 0.6040936449019166,
+   "fingers": 4,
+   "crease_depth_mm": 1.2,
+   "ridge_amplitude_mm": 0.5,
+   "finger_gap_mm": 4.0
+  },
+  "in_body_t4096": {
+   "runner": {
+    "status": "success",
+    "python": "3.10.11",
+    "platform": "Windows-10-10.0.26300-SP0",
+    "tokens": 4096,
+    "octree_depth": 9,
+    "torch": "2.6.0+cu124",
+    "gpu": "NVIDIA GeForce RTX 3060",
+    "load_s": 0.43667879999702564,
+    "weights_fingerprint": "9ae2fc428004bf58",
+    "input_points": 200000,
+    "duration_s": 58.37261489999946,
+    "latent_shape": [
+     1,
+     4096,
+     64
+    ],
+    "peak_vram_mb": 2267.845703125,
+    "faces": 690614,
+    "output_path": "bench\\omni_vae_ceiling\\in_body_t4096.glb"
+   },
+   "hand_faces": 5673,
+   "chamfer_mm": 12.439744039197487,
+   "chamfer_fingers_mm": 11.909445010644042,
+   "chamfer_palm_ridges_mm": 16.008518348474293,
+   "normal_agreement": 0.6186306487824159,
+   "normal_agreement_fingers": 0.594089533640531,
+   "fingers": 5,
+   "crease_depth_mm": 1.2,
+   "ridge_amplitude_mm": 0.5,
+   "finger_gap_mm": 4.0
+  },
+  "in_body_t2048_d10": {
+   "runner": {
+    "status": "failed",
+    "python": "3.10.11",
+    "platform": "Windows-10-10.0.26300-SP0",
+    "tokens": 2048,
+    "octree_depth": 10,
+    "torch": "2.6.0+cu124",
+    "gpu": "NVIDIA GeForce RTX 3060",
+    "load_s": 0.8353158999962034,
+    "weights_fingerprint": "9ae2fc428004bf58",
+    "input_points": 200000,
+    "reason": "OutOfMemoryError: CUDA out of memory. Tried to allocate 492.00 MiB. GPU 0 has a total capacity of 12.00 GiB of which 410.74 MiB is free. 10.80 GiB allowed; Of the allocated memory 9.56 GiB is allocated by PyTorch, and 825.57 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)"
+   },
+   "reason": "OutOfMemoryError: CUDA out of memory. Tried to allocate 492.00 MiB. GPU 0 has a total capacity of 12.00 GiB of which 410.74 MiB is free. 10.80 GiB allowed; Of the allocated memory 9.56 GiB is allocated by PyTorch, and 825.57 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)"
+  }
+ },
+ "reference": {
+  "input_hand": {
+   "hand_faces": 395484,
+   "chamfer_mm": 0.3991167246897171,
+   "chamfer_fingers_mm": 0.3985665181838531,
+   "chamfer_palm_ridges_mm": 0.4034591375725687,
+   "normal_agreement": 0.9970258846210505,
+   "normal_agreement_fingers": 0.9951457979476256,
+   "fingers": 4,
+   "crease_depth_mm": 1.2,
+   "ridge_amplitude_mm": 0.5,
+   "finger_gap_mm": 4.0
+  }
+ }
+}

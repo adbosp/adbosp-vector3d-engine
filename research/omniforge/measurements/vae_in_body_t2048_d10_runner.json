@@ -1,0 +1,14 @@
+{
+ "status": "failed",
+ "python": "3.10.11",
+ "platform": "Windows-10-10.0.26300-SP0",
+ "tokens": 2048,
+ "octree_depth": 10,
+ "torch": "2.6.0+cu124",
+ "gpu": "NVIDIA GeForce RTX 3060",
+ "load_s": 0.8353158999962034,
+ "weights_fingerprint": "9ae2fc428004bf58",
+ "input_points": 200000,
+ "reason": "OutOfMemoryError: CUDA out of memory. Tried to allocate 492.00 MiB. GPU 0 has a total capacity of 12.00 GiB of which 410.74 MiB is free. 10.80 GiB allowed; Of the allocated memory 9.56 GiB is allocated by PyTorch, and 825.57 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+ "traceback": "Traceback (most recent call last):\n  File \"C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_vae_roundtrip.py\", line 66, in main\n    out = flash_extract_geometry(lat, vae, bounds=(-1.005, -1.005, -1.005, 1.005, 1.005, 1.005),\n  File \"C:\\ai3d\\triposg-env\\lib\\site-packages\\torch\\utils\\_contextlib.py\", line 116, in decorate_context\n    return func(*args, **kwargs)\n  File \"C:\\ai3d\\TripoSG\\triposg\\inference_utils.py\", line 402, in flash_extract_geometry\n    curr_points = extract_near_surface_volume_fn(grid_logits.squeeze(0), mc_level)\n  File \"C:\\ai3d\\TripoSG\\triposg\\inference_utils.py\", line 288, in extract_near_surface_volume_fn\n    torch.sign(down.to(torch.float32)),\ntorch.OutOfMemoryError: CUDA out of memory. Tried to allocate 492.00 MiB. GPU 0 has a total capacity of 12.00 GiB of which 410.74 MiB is free. 10.80 GiB allowed; Of the allocated memory 9.56 GiB is allocated by PyTorch, and 825.57 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)\n"
+}

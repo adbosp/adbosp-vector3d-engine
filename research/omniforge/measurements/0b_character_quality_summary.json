@@ -1,0 +1,292 @@
+{
+ "benchmark": "synthetic_v1 single-image",
+ "backend": "triposg",
+ "profile": "quality",
+ "seed": 42,
+ "dataset": "synthetic_v1",
+ "rows": [
+  {
+   "object": "character",
+   "category": "stylized_character",
+   "record": {
+    "backend": "triposg",
+    "model": "VAST-AI/TripoSG",
+    "model_version": "weights:90facf66b8638c8d",
+    "license": "MIT",
+    "status": "success",
+    "quality_profile": "quality",
+    "config": {
+     "name": "quality",
+     "steps": 50,
+     "guidance": 7.0,
+     "faces": -1,
+     "vram_fraction": 0.95,
+     "dtype": "float16",
+     "segmentation": "alpha",
+     "command": [
+      "C:\\ai3d\\triposg-env\\Scripts\\python.exe",
+      "C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_runner.py",
+      "--repo",
+      "C:\\ai3d\\TripoSG",
+      "--weights",
+      "C:\\ai3d\\TripoSG\\pretrained_weights\\TripoSG",
+      "--image",
+      "bench\\omni_0b_quality\\character\\input_rgba.png",
+      "--out",
+      "bench\\omni_0b_quality\\character\\raw_triposg.glb",
+      "--result",
+      "bench\\omni_0b_quality\\character\\runner_result.json",
+      "--seed",
+      "42",
+      "--steps",
+      "50",
+      "--guidance",
+      "7.0",
+      "--faces",
+      "-1",
+      "--vram-fraction",
+      "0.95",
+      "--dtype",
+      "float16"
+     ],
+     "runtime": {
+      "python": "3.10.11",
+      "torch": "2.6.0+cu124",
+      "torch_cuda": "12.4",
+      "platform": "Windows-10-10.0.26300-SP0",
+      "gpu_total_mb": 12287.5,
+      "raw_faces": 612532,
+      "faces": 612532,
+      "vertices": 306268,
+      "vram_after_load_mb": 3789.3115234375
+     }
+    },
+    "seed": 42,
+    "duration_s": 65.48817820000113,
+    "load_s": 3.8571611999941524,
+    "peak_vram_mb": 5570.68798828125,
+    "peak_vram_reserved_mb": 8026.0,
+    "device": "NVIDIA GeForce RTX 3060",
+    "output_path": "bench\\omni_0b_quality\\character\\raw_triposg.glb",
+    "inputs": [
+     {
+      "view": "front",
+      "source": "bench\\data\\character\\views\\front.png",
+      "copy": "bench\\omni_0b_quality\\character\\inputs\\front.png",
+      "sha256": "8b2813805561bddd6ff5dd0d9c797ffb834962685df28aa40ab316890cfa7f92"
+     }
+    ],
+    "reason": "",
+    "warnings": [],
+    "label": "AI_GENERATED",
+    "started_at": "2026-10-24T09:24:23+0700"
+   },
+   "placement": {
+    "rotation": [
+     [
+      1.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "scale": 0.6885560727063662,
+    "mean_ref_iou": 0.9273377714132236,
+    "label": "ESTIMATED",
+    "method": "24 rotations + silhouette box, scored by reference IoU (no ground truth)"
+   },
+   "A": {
+    "ref_iou": {
+     "front": 0.9437904269081501,
+     "back": 0.9437904269081501,
+     "left": 0.910885115918297,
+     "right": 0.910885115918297
+    },
+    "ref_iou_mean": 0.9273377714132236,
+    "heldout_iou": {
+     "az45_el20": 0.899930216329379,
+     "az135_el20": 0.8764473410524856,
+     "az225_el-15": 0.9057866059728257,
+     "top": 0.7704297820823245
+    },
+    "heldout_iou_mean": 0.8631484863592536,
+    "chamfer_l1": 0.007762197520739028,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.8007454917265064,
+    "fscore@0.02": 0.9652717360337728,
+    "fscore@0.05": 0.9954683392350385,
+    "normal_consistency": 0.99974965404242,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "B": {
+    "ref_iou": {
+     "front": 0.9968389858412907,
+     "back": 0.9968389858412907,
+     "left": 0.9951648351648351,
+     "right": 0.9951648351648351
+    },
+    "ref_iou_mean": 0.9960019105030629,
+    "heldout_iou": {
+     "az45_el20": 0.8691924227318046,
+     "az135_el20": 0.8857953777537505,
+     "az225_el-15": 0.8718301552978179,
+     "top": 0.7747854394791358
+    },
+    "heldout_iou_mean": 0.8504008488156272,
+    "chamfer_l1": 0.007293499766164211,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.802107398753894,
+    "fscore@0.02": 0.9574193539963965,
+    "fscore@0.05": 0.9951204622534857,
+    "normal_consistency": 0.9951729427780139,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "refine_seconds": 28.30000640000071,
+   "refine_history": [
+    {
+     "iteration": 0,
+     "mean_iou": 0.9273377714132236,
+     "iou": {
+      "front": 0.9437904269081501,
+      "back": 0.9437904269081501,
+      "left": 0.910885115918297,
+      "right": 0.910885115918297
+     }
+    },
+    {
+     "iteration": 1,
+     "mean_iou": 0.981279781465659,
+     "iou": {
+      "front": 0.9906671048307591,
+      "back": 0.9906671048307591,
+      "left": 0.9718924581005587,
+      "right": 0.9718924581005587
+     }
+    },
+    {
+     "iteration": 2,
+     "mean_iou": 0.9960019105030629,
+     "iou": {
+      "front": 0.9968389858412907,
+      "back": 0.9968389858412907,
+      "left": 0.9951648351648351,
+      "right": 0.9951648351648351
+     }
+    },
+    {
+     "iteration": 3,
+     "mean_iou": 0.9894480380528066,
+     "iou": {
+      "front": 0.993502231556839,
+      "back": 0.993502231556839,
+      "left": 0.9853938445487741,
+      "right": 0.9853938445487741
+     }
+    },
+    {
+     "iteration": 4,
+     "mean_iou": 0.9946192195655446,
+     "iou": {
+      "front": 0.9959863139886828,
+      "back": 0.9959863139886828,
+      "left": 0.9932521251424065,
+      "right": 0.9932521251424065
+     }
+    },
+    {
+     "iteration": 5,
+     "mean_iou": 0.9900055330471114,
+     "iou": {
+      "front": 0.993502231556839,
+      "back": 0.993502231556839,
+      "left": 0.9865088345373836,
+      "right": 0.9865088345373836
+     }
+    },
+    {
+     "iteration": 6,
+     "mean_iou": 0.9938672059637732,
+     "iou": {
+      "front": 0.9950042726615395,
+      "back": 0.9950042726615395,
+      "left": 0.9927301392660068,
+      "right": 0.9927301392660068
+     }
+    }
+   ],
+   "gates": {
+    "accepted": true,
+    "gates": {
+     "readable_mesh": {
+      "status": "pass",
+      "detail": "306268 vertices, 612532 triangles"
+     },
+     "actual_geometry": {
+      "status": "pass",
+      "detail": ""
+     },
+     "finite_coordinates": {
+      "status": "pass",
+      "detail": ""
+     },
+     "validation_report": {
+      "status": "pass",
+      "detail": "validation.json"
+     },
+     "model_version_recorded": {
+      "status": "pass",
+      "detail": {
+       "model": "VAST-AI/TripoSG",
+       "version": "weights:90facf66b8638c8d",
+       "duration_s": 65.48817820000113,
+       "peak_vram_mb": 5570.68798828125
+      }
+     },
+     "runtime_recorded": {
+      "status": "pass",
+      "detail": {
+       "duration_s": 65.48817820000113,
+       "peak_vram_mb": 5570.68798828125
+      }
+     },
+     "previews_rendered": {
+      "status": "pass",
+      "detail": [
+       "preview_front.png",
+       "preview_back.png",
+       "preview_left.png",
+       "preview_right.png"
+      ]
+     },
+     "input_view_comparison": {
+      "status": "pass",
+      "detail": {
+       "front": 0.9437904269081501,
+       "back": 0.9437904269081501,
+       "left": 0.910885115918297,
+       "right": 0.910885115918297
+      }
+     },
+     "blender_roundtrip": {
+      "status": "skipped",
+      "detail": "blender not found on PATH"
+     }
+    }
+   },
+   "output_bytes": 11026392
+  }
+ ]
+}

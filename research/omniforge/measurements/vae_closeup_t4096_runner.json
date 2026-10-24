@@ -1,0 +1,21 @@
+{
+ "status": "success",
+ "python": "3.10.11",
+ "platform": "Windows-10-10.0.26300-SP0",
+ "tokens": 4096,
+ "octree_depth": 9,
+ "torch": "2.6.0+cu124",
+ "gpu": "NVIDIA GeForce RTX 3060",
+ "load_s": 0.4710999000017182,
+ "weights_fingerprint": "9ae2fc428004bf58",
+ "input_points": 200000,
+ "duration_s": 62.11575480000465,
+ "latent_shape": [
+  1,
+  4096,
+  64
+ ],
+ "peak_vram_mb": 2308.55859375,
+ "faces": 778868,
+ "output_path": "bench\\omni_vae_ceiling\\closeup_t4096.glb"
+}

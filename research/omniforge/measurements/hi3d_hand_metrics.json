@@ -1,0 +1,40 @@
+{
+ "coarse_in_body_vae": {
+  "hand_faces": 5733,
+  "chamfer_mm": 12.35062836203039,
+  "chamfer_fingers_mm": 11.586579806205526,
+  "chamfer_palm_ridges_mm": 16.031762386418787,
+  "normal_agreement": 0.6279003730690577,
+  "normal_agreement_fingers": 0.6040936324317632,
+  "fingers": 4,
+  "crease_depth_mm": 1.2,
+  "ridge_amplitude_mm": 0.5,
+  "finger_gap_mm": 4.0
+ },
+ "hi3d_512": {
+  "hand_faces": 484192,
+  "chamfer_mm": 11.692062148109365,
+  "chamfer_fingers_mm": 11.219851393705557,
+  "chamfer_palm_ridges_mm": 15.630287168641004,
+  "normal_agreement": 0.6443865279193509,
+  "normal_agreement_fingers": 0.6044365018514101,
+  "fingers": 4,
+  "crease_depth_mm": 1.2,
+  "ridge_amplitude_mm": 0.5,
+  "finger_gap_mm": 4.0,
+  "bbox_scale_applied": 0.09645944141655091
+ },
+ "hi3d_1024": {
+  "hand_faces": 997263,
+  "chamfer_mm": 11.724505759752915,
+  "chamfer_fingers_mm": 11.340781027164454,
+  "chamfer_palm_ridges_mm": 15.764176755623103,
+  "normal_agreement": 0.6359150163549441,
+  "normal_agreement_fingers": 0.6059764686519808,
+  "fingers": 5,
+  "crease_depth_mm": 1.2,
+  "ridge_amplitude_mm": 0.5,
+  "finger_gap_mm": 4.0,
+  "bbox_scale_applied": 0.10375625901554628
+ }
+}

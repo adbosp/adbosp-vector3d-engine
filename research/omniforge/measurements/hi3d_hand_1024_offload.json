@@ -1,0 +1,32 @@
+{
+ "status": "success",
+ "python": "3.10.22",
+ "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+ "vram_fraction": 0.9,
+ "args": [
+  "--model",
+  "/home/ropy/ai3d/weights/Hi3Dv1.0",
+  "--local-files-only",
+  "--dino-model",
+  "/home/ropy/ai3d/weights/dinov2-large",
+  "--clip-model",
+  "/home/ropy/ai3d/weights/clip-vit-large-patch14",
+  "--image",
+  "bench/omni_hi3d/hand_image.png",
+  "--coarse-mesh",
+  "bench/omni_hi3d/hand_coarse.glb",
+  "--output",
+  "bench/omni_hi3d/hand_1024_offload.glb",
+  "--resolution",
+  "1024",
+  "--seed",
+  "0",
+  "--sequential-cpu-offload"
+ ],
+ "torch": "2.5.0+cu124",
+ "gpu": "NVIDIA GeForce RTX 3060",
+ "gpu_total_mb": 12287.5,
+ "duration_s": 398.05780368600006,
+ "peak_vram_mb": 2843.2939453125,
+ "peak_vram_reserved_mb": 3874.0
+}
