@@ -145,6 +145,57 @@ def test_contour_isolation_follows_the_silhouette_and_cuts_the_arm(scene):
     assert teacher.isolation_info(box, "contour", True)["wrist_cut"] is True
 
 
+def skeleton_for(cam):
+    """Stand-in for the MHR fit: torso joints at z=0, left-hand joints at the hand's true depth, in cm."""
+    pts = {"l_uparm": (0.15, 0.25, 0), "r_uparm": (-0.15, 0.25, 0), "l_upleg": (0.12, -0.25, 0),
+           "r_upleg": (-0.12, -0.25, 0), "l_wrist": tuple(HAND_AT - [0, 0.045, 0]),
+           "l_middle1": tuple(HAND_AT + [0, 0.04, 0]), "l_index_null": tuple(HAND_AT + [-0.009, 0.085, 0])}
+    names = tuple(pts)
+    sk = teacher.Skeleton(names, np.array([pts[n] for n in names]) * 100, cam.size / (2 * cam.half_size) / 100)
+    xy = {5: pts["l_uparm"], 6: pts["r_uparm"], 11: pts["l_upleg"], 12: pts["r_upleg"]}
+    return sk, {k: cam.project(np.array([v]))[0, :2] for k, v in xy.items()}
+
+
+def test_skeleton_depth_fixes_a_wrong_arm_depth(scene, tmp_path):
+    """The generated body has its arm and hand 8 cm too far back; the skeleton's hand-minus-torso depth
+    (with the torso depth read from that same body) puts the close-up back where the hand is."""
+    body, hand, cam = scene
+    png = tmp_path / "front.png"
+    Image.fromarray(shade(body, render(body, cam)), "RGBA").save(png)
+    alpha = np.asarray(Image.open(png))[..., 3]
+    kp = keypoints_for(hand, cam)
+    sk, torso_xy = skeleton_for(cam)
+    for k, v in torso_xy.items():
+        kp["xy"][k], kp["score"][k] = v, 0.9
+    kp["skeleton"] = sk
+    # the arm of this scene runs behind the palm, so the stand-in generator returns the hand alone
+    seen = visible_in(hand, cam, teacher.region_mask(teacher.hand_box(kp["xy"], kp["score"], "l"),
+                                                     (cam.size, cam.size), alpha))
+    v = body.vertices.copy()
+    v[v[:, 0] > 0.2, 2] -= 0.08
+    wrong = Mesh(v, body.faces)
+
+    def generate(image, out):
+        out.mkdir(parents=True, exist_ok=True)
+        m = canonical(seen)
+        np.savez(out / "raw.npz", v=m.vertices, f=m.faces)
+        return out / "raw.npz"
+
+    load = lambda f: Mesh(np.load(f)["v"], np.load(f)["f"])  # noqa: E731
+    err = {}
+    for mode in ("body", "skeleton"):
+        rep = teacher.run(png, cam, kp, generate, tmp_path / mode, crop_size=512, load=load, body=wrong, depth=mode)
+        assert rep["steps"]["body"]["status"] == "reused"
+        from vector3d.lab.mesh_io import load_mesh
+
+        run_dir = next((tmp_path / mode).iterdir())
+        part = load_mesh(run_dir / "teacher_placed.glb").vertices[len(wrong.vertices):]
+        mid = lambda z: (z.min() + z.max()) / 2  # noqa: E731
+        err[mode] = abs(mid(part[:, 2]) - mid(seen.vertices[:, 2]))    # depth only: X/Y come from the crop
+    assert rep["steps"]["hand_l"]["depth_source"].startswith("skeleton")
+    assert err["skeleton"] < 0.003 and err["body"] > 0.04
+
+
 def test_merge_cuts_only_inside_region_and_depth_band(scene):
     body, hand, cam = scene
     box = teacher.hand_box(**keypoints_for(hand, cam), side="l")

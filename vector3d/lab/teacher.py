@@ -14,7 +14,9 @@ Outputs per run: body_placed.glb (the same-input baseline: whole body only) and 
 Every input comes from the one front image and its camera: generation is a callable, so the same code runs
 TripoSG on the RTX 3060 and a stand-in in tests. Nothing here reads GT; scoring is human_v1.hand_scores.
 Limits: orthographic cameras only; the depth match uses the body mesh, so a body arm placed at the wrong
-depth carries the hand with it; MHR finger priors are not used yet (next step).
+depth carries the hand with it unless depth="skeleton" (MHR hand-minus-torso depth from a 2D-only fit,
+ESTIMATED). human_v1 people are MHR bodies, so skeleton placement is measured on data that favours it.
+MHR finger priors are not used yet.
 """
 from __future__ import annotations
 
@@ -163,29 +165,87 @@ def crop_image(rgba: Image.Image, box: HandBox, size: int, isolate: bool = True,
 
 
 def depth_of_region(mesh: Mesh, cam: OrthoCamera, mask: np.ndarray, mode: str = "median") -> float | None:
-    """Depth (along cam.toward, from cam.center) of the mesh vertices that project inside the mask."""
+    """Depth (along cam.toward, from cam.center) of the mesh vertices that project inside the mask:
+    median, max, or mid (halfway between the 5th and 95th percentiles: the mid-plane of a closed shell,
+    independent of how densely its front and back are meshed)."""
     p = cam.project(mesh.vertices)
     x, y = np.floor(p[:, 0]).astype(int), np.floor(p[:, 1]).astype(int)
     ok = (x >= 0) & (y >= 0) & (x < mask.shape[1]) & (y < mask.shape[0])
     ok[ok] = mask[y[ok], x[ok]]
     if ok.sum() < 3:
         return None
-    return float(np.median(p[ok, 2]) if mode == "median" else p[ok, 2].max())
+    d = p[ok, 2]
+    if mode == "mid":
+        return float(np.percentile(d, 5) + np.percentile(d, 95)) / 2
+    return float(np.median(d) if mode == "median" else d.max())
+
+
+TORSO_KEYPOINTS = {5: "l_uparm", 6: "r_uparm", 11: "l_upleg", 12: "r_upleg"}   # shoulders and hips
+
+
+@dataclass(frozen=True)
+class Skeleton:
+    """The MHR fit of the anatomy step, in its own orthographic frame: px = (x, -y) * scale + shift.
+    joints_cm: (J, 3) with the person's facing applied, +Z toward the camera. ESTIMATED: a 2D-only fit,
+    its depth comes from bone lengths and priors, not from a depth measurement."""
+    names: tuple[str, ...]
+    joints_cm: np.ndarray
+    scale: float            # image pixels per cm
+
+    def joint(self, name: str) -> np.ndarray:
+        return self.joints_cm[self.names.index(name)]
+
+    def hand_centre(self, side: str) -> np.ndarray:
+        return self.joints_cm[[i for i, n in enumerate(self.names) if n.startswith(f"{side}_") and
+                               any(f in n for f in ("wrist", "thumb", "index", "middle", "ring", "pinky"))]].mean(0)
+
+
+def skeleton_depth(sk: Skeleton, side: str, keypoints: dict, body: Mesh, cam: OrthoCamera,
+                   min_score: float = 0.3) -> tuple[float | None, dict]:
+    """Target depth (along cam.toward) of the hand's centre: the body's depth over the torso (hull of the
+    shoulder and hip keypoints) plus the skeleton's hand-minus-torso depth, cm -> m through the fit's scale
+    and the camera's pixel size. Torso and part depths are mid-planes (depth_of_region "mid").
+    None (with the reason) when the torso is not seen."""
+    xy, sc = np.asarray(keypoints["xy"], float), np.asarray(keypoints["score"], float)
+    ok = [k for k in TORSO_KEYPOINTS if sc[k] >= min_score]
+    if len(ok) < 3:
+        return None, {"reason": f"only {len(ok)} confident torso keypoints"}
+    torso = disc_mask(HandBox("torso", 0, 0, 1, xy[ok], 0.0), (cam.size, cam.size))
+    body_d = depth_of_region(body, cam, torso, "mid")
+    if body_d is None:
+        return None, {"reason": "body has no surface under the torso keypoints"}
+    m_per_cm = (2 * cam.half_size / cam.size) * sk.scale
+    dz_cm = float(sk.hand_centre(side)[2] - np.mean([sk.joint(TORSO_KEYPOINTS[k])[2] for k in ok]))
+    # both the fit's +Z and cam.toward point at the viewer, so a nearer hand has a larger depth
+    return body_d + dz_cm * m_per_cm, {"torso_depth": body_d, "hand_minus_torso_cm": dz_cm,
+                                       "m_per_cm": m_per_cm}
 
 
 def place_part(raw: Mesh, crop_rgba: Image.Image, crop_cam: OrthoCamera, body: Mesh, full_cam: OrthoCamera,
-               full_region: np.ndarray) -> tuple[Mesh, dict]:
+               full_region: np.ndarray, target_depth: float | None = None, target_info: dict | None = None,
+               core: np.ndarray | None = None) -> tuple[Mesh, dict]:
     """Place a close-up generation: scale and X/Y from the crop silhouette (place_front_only with the crop
-    camera), then depth shifted so the part's median depth over the hand region matches the body's."""
+    camera), then depth shifted so the part's median depth over the hand region matches target_depth
+    (skeleton) or, without it, the body's median depth over the same region (v0). With a target, the part's
+    own depth is its mid-plane over `core` (the keypoint neighbourhood, default the region), so an arm stub
+    that the region kept does not pull the hand's centre."""
     mask = np.asarray(crop_rgba)[..., 3] > 127
     part, info = place_front_only(raw, mask, crop_cam)
-    target = depth_of_region(body, full_cam, full_region)
-    own = depth_of_region(part, full_cam, full_region)
+    if target_depth is not None:
+        target, source = target_depth, "skeleton: body torso depth + MHR hand-minus-torso depth"
+    else:
+        target = depth_of_region(body, full_cam, full_region)
+        source = ("body mesh median over the hand region" if target is not None
+                  else "none: body has no surface under the hand region; depth left at the camera centre")
+    if target_depth is not None:
+        own = depth_of_region(part, full_cam, full_region if core is None else core, "mid")
+    else:
+        own = depth_of_region(part, full_cam, full_region)
     shift = 0.0 if target is None or own is None else target - own
     part = Mesh(part.vertices + shift * np.asarray(full_cam.toward, float), part.faces, part.colors)
-    info.update(depth_shift=shift, depth_source="body mesh median over the hand region" if target is not None
-                else "none: body has no surface under the hand region; depth left at the camera centre",
-                label="ESTIMATED")
+    info.update(depth_shift=shift, depth_source=source, label="ESTIMATED")
+    if target_info:
+        info["skeleton_depth"] = target_info
     return part, info
 
 
@@ -222,8 +282,10 @@ Generate = Callable[[Path, Path], Path]   # (input png, output dir) -> raw mesh 
 
 
 def run(front_png, front_cam: OrthoCamera, keypoints: dict, generate: Generate, out_dir,
-        crop_size: int = 1024, load=None, isolation: str = "contour", body: Mesh | None = None) -> dict:
-    """One person: body + both hands. keypoints = {"xy": (133,2), "score": (133,)} in front_png pixels.
+        crop_size: int = 1024, load=None, isolation: str = "contour", body: Mesh | None = None,
+        depth: str = "body") -> dict:
+    """One person: body + both hands. keypoints = {"xy": (133,2), "score": (133,)} in front_png pixels,
+    plus "skeleton" (a Skeleton) for depth="skeleton"; without it the hand falls back to the body depth.
     body: an already placed whole-body mesh from the same image (reused so that one change is measured
     at a time); None generates it. Writes a new run folder with teacher_placed.glb and teacher.json."""
     from ..export.writers import to_glb
@@ -236,7 +298,9 @@ def run(front_png, front_cam: OrthoCamera, keypoints: dict, generate: Generate, 
     if img.size != (front_cam.size, front_cam.size):
         raise ValueError(f"image {img.size} does not match the front camera size {front_cam.size}")
     rep = {"run_dir": str(out), "inputs": ["front image", "front camera", "2D keypoints of the front image"],
-           "uses_ground_truth": False, "isolation": isolation, "steps": {}}
+           "uses_ground_truth": False, "isolation": isolation, "depth": depth, "steps": {}}
+    if depth not in ("body", "skeleton"):
+        raise ValueError(f"unknown depth mode {depth!r}")
     t0 = time.perf_counter()
     alpha = np.asarray(img)[..., 3]
     if body is None:
@@ -256,8 +320,16 @@ def run(front_png, front_cam: OrthoCamera, keypoints: dict, generate: Generate, 
         crop = crop_image(img, box, crop_size, region=region)
         crop.save(out / f"hand_{side}.png")
         ccam = crop_camera(front_cam, box, crop_size)
+        target, tinfo = None, None
+        if depth == "skeleton":
+            sk = keypoints.get("skeleton")
+            target, tinfo = (skeleton_depth(sk, side, keypoints, body, front_cam) if sk is not None
+                             else (None, {"reason": "no skeleton from the anatomy step"}))
+            if target is None:
+                tinfo["fallback"] = "body depth over the hand region"
         part, pinfo = place_part(load(generate(out / f"hand_{side}.png", out / f"hand_{side}")), crop, ccam,
-                                 body, front_cam, region)
+                                 body, front_cam, region, target, tinfo,
+                                 core=region & disc_mask(box, region.shape))
         parts.append((part, region))
         rep["steps"][f"hand_{side}"] = {"status": "success", "box": box.to_dict(), "crop_camera": ccam.to_dict(),
                                         **isolation_info(box, isolation, True), **pinfo, "seconds": time.perf_counter() - t1}
@@ -302,7 +374,13 @@ def rtmw_keypoints(out_dir, **step_kw) -> Callable[[Path], dict]:
         if r.get("status") != "success":
             raise RuntimeError(f"anatomy step {r.get('status')}: {r.get('reason')}")
         k = r["keypoints_2d"]
-        return {"xy": np.asarray(k["xy"], float), "score": np.asarray(k["score"], float)}
+        out = {"xy": np.asarray(k["xy"], float), "score": np.asarray(k["score"], float)}
+        fit = Path(r["run_dir"]) / "fit.npz"
+        if fit.is_file():
+            f = np.load(fit)
+            out["skeleton"] = Skeleton(tuple(str(n) for n in f["joint_names"]), np.asarray(f["joints_cm"], float),
+                                       float(np.asarray(f["scale"]).reshape(-1)[0]))
+        return out
 
     return kp
 
@@ -320,7 +398,8 @@ def score(data_dir, bench_dir) -> dict:
 
 
 def run_human_v1(data_dir, bench_dir, generate: Generate, keypoints_for: Callable[[Path], dict],
-                 size: int = 2048, names=None, load=None, isolation: str = "contour", reuse_body=None) -> dict:
+                 size: int = 2048, names=None, load=None, isolation: str = "contour", reuse_body=None,
+                 depth: str = "body") -> dict:
     """Teacher on every human_v1 person from a size x size front render (human_v1.render_front).
     keypoints_for(image) -> {"xy", "score"} from that image only (the RTMW anatomy step on the PC).
     Copies body_placed.glb / teacher_placed.glb into bench_dir/<person>/ for human_v1.hand_scores.
@@ -332,7 +411,7 @@ def run_human_v1(data_dir, bench_dir, generate: Generate, keypoints_for: Callabl
     data_dir, bench_dir = Path(data_dir), Path(bench_dir)
     from .mesh_io import load_mesh
 
-    out = {"size": size, "isolation": isolation, "reuse_body": str(reuse_body) if reuse_body else None,
+    out = {"size": size, "isolation": isolation, "depth": depth, "reuse_body": str(reuse_body) if reuse_body else None,
            "people": {}}
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir() and (p / "gt.glb").is_file()):
         if names and d.name not in names:
@@ -342,7 +421,7 @@ def run_human_v1(data_dir, bench_dir, generate: Generate, keypoints_for: Callabl
         try:
             body = load_mesh(Path(reuse_body) / d.name / "body_placed.glb") if reuse_body else None
             rep = run(png, cam, keypoints_for(png), generate, dest / "teacher_runs", load=load,
-                      isolation=isolation, body=body)
+                      isolation=isolation, body=body, depth=depth)
         except Exception as e:  # recorded per person; the batch goes on
             out["people"][d.name] = {"status": "failed", "reason": f"{type(e).__name__}: {e}"}
             continue
