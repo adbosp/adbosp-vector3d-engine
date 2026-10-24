@@ -11,6 +11,7 @@
   finetune    --data DIR -o DIR [--steps 1500 --rank 16]  LoRA fine-tune of TripoSG (GPU, TripoSG env)
   segbench    --data DIR -o DIR [--methods classic,isnet,birefnet] [--images DIR]   background removal
   imagine     --data DIR -o DIR [--objects a,b]     imagination loop v0 vs visual hull (CPU)
+  omni-distill --data DIR -o DIR [--teachers trellis] [--margin 0.02]   teacher pairs for the Omni LoRA
   teacher     --data HUMAN_V1 -o DIR [--size 2048] [--people a,b] [--isolation contour|band|discs] [--reuse-body DIR] [--depth body|skeleton]
               Omni teacher (hand close-ups) + scores
   report      --experiment DIR [--benchmark DIR] [--audit F] -o report.md
@@ -95,6 +96,14 @@ def main(argv: list[str]) -> int:
                     help="v0-v3 behaviour: keep scattered pieces and the raw hand depth")
     te.add_argument("--depth", choices=("body", "skeleton"), default="body",
                     help="hand depth: body surface under the hand (v0) or MHR skeleton relative to the torso")
+    od = sub.add_parser("omni-distill")
+    od.add_argument("--data", required=True, help="human_v1-layout folder (views/*.png, cameras.json); never the test set")
+    od.add_argument("-o", "--out", required=True, help="training pairs for lab finetune")
+    od.add_argument("--teachers", default="trellis", help="comma-separated lab backends")
+    od.add_argument("--base", default="triposg")
+    od.add_argument("--people", help="comma-separated subset")
+    od.add_argument("--margin", type=float, default=0.02, help="held-out IoU the teacher must gain")
+    od.add_argument("--seed", type=int, default=42)
     rp = sub.add_parser("report")
     rp.add_argument("--experiment", required=True)
     rp.add_argument("--benchmark")
@@ -216,6 +225,16 @@ def main(argv: list[str]) -> int:
         s = teacher.score(args.data, out)
         (out / "teacher_scores.json").write_text(json.dumps(s, indent=1, default=str))
         print(json.dumps({p: v["summary"] for p, v in s.items()}, indent=1))
+        return 0
+    if args.cmd == "omni-distill":
+        from . import omni_distill
+
+        names = [args.base] + [t for t in args.teachers.split(",") if t and t != args.base]
+        gens = {n: omni_distill.backend_generator(n, seed=args.seed) for n in names}
+        m = omni_distill.build(args.data, args.out, gens, base=args.base,
+                               names=args.people.split(",") if args.people else None, margin=args.margin)
+        print(json.dumps({"accepted": m["accepted"], "count": m["count"],
+                          "samples": {r["name"]: r["status"] for r in m["samples"]}}, indent=1))
         return 0
     if args.cmd == "report":
         from .report import write_report
