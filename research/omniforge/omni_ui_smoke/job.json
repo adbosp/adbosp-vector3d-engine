@@ -1,0 +1,284 @@
+{
+ "id": "3b6787f59b48",
+ "status": "done",
+ "error": null,
+ "mode": "omni",
+ "steps": [
+  {
+   "key": "load",
+   "title": "Read input image",
+   "status": "done",
+   "detail": "local_photo.jpg: 1024x725 px"
+  },
+  {
+   "key": "segment",
+   "title": "Remove background",
+   "status": "done",
+   "detail": "background_color; subject covers 7% of the image"
+  },
+  {
+   "key": "frame",
+   "title": "Frame the person (2048 px, front camera)",
+   "status": "done",
+   "detail": "2048x2048 px, subject centred with an 8% margin"
+  },
+  {
+   "key": "ai_generate",
+   "title": "Generate the whole body (TripoSG, GPU)",
+   "status": "done",
+   "detail": "50,000 triangles in 77 s"
+  },
+  {
+   "key": "anatomy",
+   "title": "Body and hand keypoints (RTMW + MHR)",
+   "status": "done",
+   "detail": "hands found: left yes, right yes"
+  },
+  {
+   "key": "hands",
+   "title": "Hand close-ups (TripoSG, GPU)",
+   "status": "done",
+   "detail": "2 close-up(s): left, right"
+  },
+  {
+   "key": "merge",
+   "title": "Merge hands into the body",
+   "status": "done",
+   "detail": "removed 1,114 body faces, added 2 hand shell(s); not watertight"
+  },
+  {
+   "key": "color",
+   "title": "Colour from image",
+   "status": "done",
+   "detail": "vertex colours projected from the front image (back side reuses them)"
+  },
+  {
+   "key": "validate",
+   "title": "Validate mesh",
+   "status": "done",
+   "detail": "watertight: no"
+  },
+  {
+   "key": "export",
+   "title": "Export GLB / OBJ / metadata",
+   "status": "done",
+   "detail": "GLB 3028 KB, OBJ 9492 KB"
+  }
+ ],
+ "metadata": {
+  "generator": "Vector3D Engine",
+  "mode": "omni",
+  "status": "experimental",
+  "units": "m",
+  "scale": {
+   "source": "assumed",
+   "largest_dimension_m": 1.0,
+   "confidence": "estimated"
+  },
+  "coordinate_system": {
+   "right_handed": true,
+   "up": "+Y",
+   "front": "+Z",
+   "unit": "meter"
+  },
+  "geometry_confidence": "estimated",
+  "method": "omni_teacher: TripoSG body + RTMW hand boxes + TripoSG hand close-ups, merged",
+  "model": {
+   "name": "VAST-AI/TripoSG",
+   "license": "MIT",
+   "profile": "balanced",
+   "seed": 42
+  },
+  "omni": {
+   "isolation": "contour",
+   "depth": "body",
+   "anatomy": {
+    "status": "success",
+    "hands_found": {
+     "l": true,
+     "r": true
+    },
+    "skeleton": true
+   },
+   "teacher_steps": {
+    "body": {
+     "status": "reused",
+     "reason": "placed body from an earlier run of the same image"
+    },
+    "hand_l": {
+     "status": "success",
+     "box": {
+      "side": "l",
+      "cx": 1231.095344543457,
+      "cy": 1118.3052401542664,
+      "side_px": 242.867958037058,
+      "keypoints_used": 21,
+      "radius_px": 25.71543085098261,
+      "wrist": [
+       1231.095344543457,
+       1046.8734877904258
+      ],
+      "knuckle": [
+       1247.7073805067275,
+       1126.6112578709922
+      ]
+     },
+     "crop_camera": {
+      "name": "front_hand_l",
+      "right": [
+       1.0,
+       0.0,
+       0.0
+      ],
+      "up": [
+       0.0,
+       1.0,
+       0.0
+      ],
+      "toward": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "center": [
+       0.20224154740571976,
+       -0.09209496108815074,
+       0.0
+      ],
+      "half_size": 0.11858787013528223,
+      "size": 1024
+     },
+     "isolation": "contour",
+     "wrist_cut": true,
+     "scale": 0.9113892430087853,
+     "label": "ESTIMATED",
+     "inputs": [
+      "front silhouette",
+      "front camera"
+     ],
+     "method": "canonical rotation; scale from silhouette height; X/Y from silhouette box; depth at camera centre",
+     "depth_shift": 0.16064026238091553,
+     "depth_source": "body mesh median over the hand region",
+     "seconds": 56.38275849999627
+    },
+    "hand_r": {
+     "status": "success",
+     "box": {
+      "side": "r",
+      "cx": 814.13324186537,
+      "cy": 1139.900886217753,
+      "side_px": 237.21986598968505,
+      "keypoints_used": 21,
+      "radius_px": 25.117397575378416,
+      "wrist": [
+       809.1496310763889,
+       1070.1303373972573
+      ],
+      "knuckle": [
+       802.5048166910808,
+       1146.5457003911338
+      ]
+     },
+     "crop_camera": {
+      "name": "front_hand_r",
+      "right": [
+       1.0,
+       0.0,
+       0.0
+      ],
+      "up": [
+       0.0,
+       1.0,
+       0.0
+      ],
+      "toward": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "center": [
+       -0.2049480059908496,
+       -0.11318445919702436,
+       0.0
+      ],
+      "half_size": 0.1158300126902759,
+      "size": 1024
+     },
+     "isolation": "contour",
+     "wrist_cut": true,
+     "scale": 0.24538142578537728,
+     "label": "ESTIMATED",
+     "inputs": [
+      "front silhouette",
+      "front camera"
+     ],
+     "method": "canonical rotation; scale from silhouette height; X/Y from silhouette box; depth at camera centre",
+     "depth_shift": -0.043876508343747456,
+     "depth_source": "body mesh median over the hand region",
+     "seconds": 58.74027519999072
+    },
+    "merge": {
+     "body_vertices_removed": [
+      437,
+      322
+     ],
+     "body_faces_removed": 1114,
+     "watertight": false,
+     "label": "ESTIMATED",
+     "method": "region + depth-band cut of the body, parts added as separate shells"
+    }
+   },
+   "uses_ground_truth": false,
+   "run_dir": "C:\\adbosp-vector3d-engine\\runs\\v3d_omni_c9bagtj2"
+  },
+  "segmentation": "background_color",
+  "notes": [
+   "Experimental. On the human_v1 benchmark (12 synthetic people, 1 seed) the best Omni setting so far is only slightly better than TripoSG alone on hands (13 of 24 hands better) and slightly worse on the whole body; not a proven improvement.",
+   "Hands are separate shells merged into the body: the mesh is not watertight.",
+   "Colours are projected from the front image, so the back repeats the front."
+  ],
+  "validation": {
+   "vertices": 59819,
+   "triangles": 118676,
+   "watertight": false,
+   "non_manifold_edges": 35,
+   "boundary_edges": 460,
+   "degenerate_triangles": 0,
+   "euler_characteristic": 286,
+   "volume": 0.011251032862754945,
+   "bbox": [
+    [
+     -0.13594688842035202,
+     -0.4919290275461947,
+     -0.4059067694809916
+    ],
+    [
+     0.1353748779232053,
+     0.4919290275461947,
+     0.5940932305190084
+    ]
+   ]
+  },
+  "timings_s": {
+   "load": 0.081,
+   "segment": 0.143,
+   "frame": 0.126,
+   "ai_generate": 76.802,
+   "anatomy": 54.006,
+   "hands": 115.216,
+   "merge": 0.079,
+   "color": 0.007,
+   "validate": 0.212,
+   "export": 0.426
+  }
+ },
+ "files": {
+  "glb": "/api/jobs/3b6787f59b48/model.glb",
+  "obj": "/api/jobs/3b6787f59b48/model.obj",
+  "metadata": "/api/jobs/3b6787f59b48/metadata.json"
+ },
+ "images": {
+  "mask": "/api/jobs/3b6787f59b48/mask.png"
+ },
+ "wall_s": 251.28520607948303
+}
