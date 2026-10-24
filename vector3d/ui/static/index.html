@@ -388,7 +388,11 @@ function syncModeUI() {
   document.querySelectorAll(".photo-only.size").forEach((el) => el.classList.toggle("off", !(photo || ai)));
   document.querySelectorAll(".no-drawing").forEach((el) => el.classList.toggle("off", !(photo || ai)));
 }
-$("mode").onchange = syncModeUI;
+$("mode").onchange = () => {
+  // Omni was measured with the quality profile: balanced decimates to 50k faces and loses fingers
+  if ($("mode").value === "omni") $("aiProfile").value = "quality";
+  syncModeUI();
+};
 let hints = null;
 $("hintsBtn").onclick = () => { $("hintsInput").value = ""; $("hintsInput").click(); };
 $("hintsInput").onchange = async (e) => {

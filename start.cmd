@@ -91,7 +91,7 @@ if /i "%CMD%"=="ui" (
   if not defined V3D_TRIPOSG_DIR (echo Chua cai TripoSG: xem docs\LAB.md & goto end)
   echo Omni la che do THU NGHIEM: than tot, ban tay can canh chua on dinh. Mat khoang 4-5 phut.
   set "OUT=runs\omni_!STAMP!"
-  "%PY%" -m vector3d generate --front "!IMG!" --mode omni -o "!OUT!"
+  "%PY%" -m vector3d generate --front "!IMG!" --mode omni --ai-profile quality -o "!OUT!"
   echo Ket qua: %~dp0!OUT!  ^(mo model.glb bang giao dien web hoac 3D Viewer^)
 ) else if /i "%CMD%"=="compare" (
   if not exist "bench\ft_run\lora\adapter_config.json" (echo Chua co LoRA: chay lab finetune truoc & goto end)
