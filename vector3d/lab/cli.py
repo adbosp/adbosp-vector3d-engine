@@ -11,7 +11,7 @@
   finetune    --data DIR -o DIR [--steps 1500 --rank 16]  LoRA fine-tune of TripoSG (GPU, TripoSG env)
   segbench    --data DIR -o DIR [--methods classic,isnet,birefnet] [--images DIR]   background removal
   imagine     --data DIR -o DIR [--objects a,b]     imagination loop v0 vs visual hull (CPU)
-  teacher     --data HUMAN_V1 -o DIR [--size 2048] [--people a,b] [--isolation contour|discs] [--reuse-body DIR] [--depth body|skeleton]
+  teacher     --data HUMAN_V1 -o DIR [--size 2048] [--people a,b] [--isolation contour|band|discs] [--reuse-body DIR] [--depth body|skeleton]
               Omni teacher (hand close-ups) + scores
   report      --experiment DIR [--benchmark DIR] [--audit F] -o report.md
 """
@@ -88,7 +88,7 @@ def main(argv: list[str]) -> int:
     te.add_argument("--profile", default="quality")
     te.add_argument("--seed", type=int, default=42)
     te.add_argument("--score-only", action="store_true", help="rescore existing outputs, no generation")
-    te.add_argument("--isolation", choices=("contour", "discs"), default="contour",
+    te.add_argument("--isolation", choices=("contour", "band", "discs"), default="contour",
                     help="hand isolation in the crop (discs = v0)")
     te.add_argument("--reuse-body", help="earlier teacher bench dir whose body_placed.glb is reused")
     te.add_argument("--depth", choices=("body", "skeleton"), default="body",

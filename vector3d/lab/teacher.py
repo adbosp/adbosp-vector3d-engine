@@ -6,7 +6,8 @@
     -> per hand: crop, isolate the hand, generate, place the part with the crop camera, depth matched to
        the body's surface in the same pixels                                 (ESTIMATED)
        isolation "contour" (default): the image's own silhouette inside the dilated keypoint hull, cut at
-       the wrist line; "discs" (v0, kept for reproducibility): discs around the keypoints plus their hull
+       the wrist line; "band": contour within reach of the 2D hand skeleton (hands over torso or face);
+       "discs" (v0, kept for reproducibility): discs around the keypoints plus their hull
     -> merge: body faces under the hand region and within the part's depth band are removed, the part is
        added. The result is a triangle soup, not watertight (reported, not hidden).
 
@@ -48,6 +49,8 @@ class HandBox:
     radius_px: float     # isolation disc radius around each keypoint
     wrist: tuple[float, float] | None = None      # hand keypoint 0, when confident
     knuckle: tuple[float, float] | None = None    # hand keypoint 9 (middle finger MCP), when confident
+    kp21: np.ndarray | None = None                # (21, 2) all hand keypoints in COCO-WholeBody hand order
+    ok21: np.ndarray | None = None                # (21,) which of them are confident
 
     def to_dict(self) -> dict:
         return {"side": self.side, "cx": self.cx, "cy": self.cy, "side_px": self.side_px,
@@ -68,7 +71,8 @@ def hand_box(xy, score, side: str, min_score: float = 0.3, min_points: int = 6, 
     side_px = max(extent * (1 + 2 * pad), min_side_px)
     c = (lo + hi) / 2
     at = lambda i: tuple(map(float, xy[idx[i]])) if score[idx[i]] >= min_score else None  # noqa: E731
-    return HandBox(side, float(c[0]), float(c[1]), side_px, pts, extent * 0.18, at(0), at(9))
+    return HandBox(side, float(c[0]), float(c[1]), side_px, pts, extent * 0.18, at(0), at(9),
+                   xy[idx].copy(), score[idx] >= min_score)
 
 
 def crop_camera(cam: OrthoCamera, box: HandBox, size: int) -> OrthoCamera:
@@ -114,15 +118,53 @@ def wrist_halfplane(box: HandBox, shape: tuple[int, int], behind: float = 0.15) 
     return s >= -behind * n
 
 
+# hand order: 0 wrist, 1-4 thumb CMC..tip, 5-8 index MCP..tip, 9-12 middle, 13-16 ring, 17-20 pinky
+FINGER_CHAINS = [[0, 1, 2, 3, 4]] + [[b, b + 1, b + 2, b + 3] for b in (5, 9, 13, 17)]
+PALM = [0, 1, 5, 9, 13, 17]
+
+
+def hand_band(box: HandBox, shape: tuple[int, int], width: float = 0.15) -> np.ndarray | None:
+    """Pixels near the 2D hand skeleton: finger bones and the palm polygon (with the wrist widened across
+    the hand axis), dilated by width x the wrist -> middle-knuckle length. Separates a hand from the torso
+    or face it overlaps in the image, where the alpha cannot. None without wrist and middle knuckle."""
+    if box.kp21 is None or box.wrist is None or box.knuckle is None:
+        return None
+    from scipy import ndimage
+
+    w, k = np.asarray(box.wrist), np.asarray(box.knuckle)
+    length = float(np.linalg.norm(k - w))
+    if length < 2.0:
+        return None
+    perp = np.array([-(k - w)[1], (k - w)[0]]) / length
+    img = Image.new("L", (shape[1], shape[0]), 0)
+    d = ImageDraw.Draw(img)
+    palm = [tuple(box.kp21[i]) for i in PALM if box.ok21[i]]
+    palm += [tuple(w + 0.35 * length * perp), tuple(w - 0.35 * length * perp)]
+    from scipy.spatial import ConvexHull
+
+    try:
+        pts = np.array(palm)
+        d.polygon([tuple(p) for p in pts[ConvexHull(pts).vertices]], fill=255)
+    except Exception:  # degenerate palm: bones only
+        pass
+    for ch in FINGER_CHAINS:
+        for a, b in zip(ch[:-1], ch[1:]):
+            if box.ok21[a] and box.ok21[b]:
+                d.line([tuple(box.kp21[a]), tuple(box.kp21[b])], fill=255, width=1)
+    bones = np.asarray(img) > 0
+    return ndimage.distance_transform_edt(~bones) <= width * length
+
+
 def region_mask(box: HandBox, shape: tuple[int, int], alpha: np.ndarray | None = None,
                 mode: str = "contour") -> np.ndarray:
     """Full-image mask of the hand region.
     contour: alpha > 127 inside the keypoint hull dilated by radius_px, on the fingers' side of the wrist
     line, keeping only the connected pieces that hold a keypoint. Falls back to the discs (and says so via
-    isolation_info) when no alpha is given. discs: disc_mask (v0)."""
+    isolation_info) when no alpha is given. discs: disc_mask (v0). band: contour restricted to hand_band,
+    for hands over the torso or face (contour alone when the band cannot be drawn)."""
     if mode == "discs" or alpha is None:
         return disc_mask(box, shape)
-    if mode != "contour":
+    if mode not in ("contour", "band"):
         raise ValueError(f"unknown isolation mode {mode!r}")
     from scipy import ndimage
 
@@ -134,6 +176,10 @@ def region_mask(box: HandBox, shape: tuple[int, int], alpha: np.ndarray | None =
     cut = wrist_halfplane(box, shape)
     if cut is not None:
         m &= cut
+    if mode == "band":
+        band = hand_band(box, shape)
+        if band is not None:
+            m &= band
     lab, n = ndimage.label(m)
     if n > 1:
         x = np.clip(box.points[:, 0].astype(int), 0, shape[1] - 1)
@@ -147,7 +193,10 @@ def region_mask(box: HandBox, shape: tuple[int, int], alpha: np.ndarray | None =
 def isolation_info(box: HandBox, mode: str, alpha_given: bool) -> dict:
     if mode == "discs" or not alpha_given:
         return {"isolation": "discs", "reason": "requested" if mode == "discs" else "no alpha channel"}
-    return {"isolation": "contour", "wrist_cut": box.wrist is not None and box.knuckle is not None}
+    out = {"isolation": mode, "wrist_cut": box.wrist is not None and box.knuckle is not None}
+    if mode == "band":
+        out["band_used"] = box.kp21 is not None and out["wrist_cut"]
+    return out
 
 
 def crop_image(rgba: Image.Image, box: HandBox, size: int, isolate: bool = True, region: np.ndarray | None = None

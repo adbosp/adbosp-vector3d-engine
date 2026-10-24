@@ -145,6 +145,44 @@ def test_contour_isolation_follows_the_silhouette_and_cuts_the_arm(scene):
     assert teacher.isolation_info(box, "contour", True)["wrist_cut"] is True
 
 
+def test_band_isolation_separates_a_hand_over_the_torso():
+    """Hand held in front of the chest: the alpha is solid there, so contour keeps torso pixels; the band
+    around the 2D hand skeleton removes most of them and keeps the hand."""
+    at = np.array([0.04, 0.0, 0.16])
+
+    def front_hand(p):
+        q = ds._t(p, *at)
+        palm = ds.sd_box(q, (0.035, 0.045, 0.012), 0.005)
+        return np.minimum.reduce([palm, *[ds.sd_capsule(q, np.array([x, 0.04, 0]), np.array([x, 0.085, 0]), 0.008)
+                                          for x in (-0.027, -0.009, 0.009, 0.027)]])
+
+    def scene_sdf(p):
+        arm = ds.sd_capsule(p, np.array([0.17, -0.2, 0.0]), at - np.array([0, 0.055, 0.0]), 0.03)
+        return np.minimum.reduce([ds.sd_box(p, (0.18, 0.3, 0.1), 0.02), arm, front_hand(p)])
+
+    body, hand = ds.mesh_sdf(scene_sdf, 160, 0.6), ds.mesh_sdf(front_hand, 96, 0.6)
+    c, h = frame(body)
+    cam = view_camera("front", c, h, 1024)
+    alpha = np.asarray(Image.fromarray(shade(body, render(body, cam)), "RGBA"))[..., 3]
+    j = {0: (0, -0.045)}                                        # wrist; no thumb in this hand
+    for f, x in enumerate((-0.027, -0.009, 0.009, 0.027)):      # index..pinky: MCP, PIP, DIP, tip
+        for i, y in enumerate((0.04, 0.055, 0.07, 0.09)):
+            j[5 + 4 * f + i] = (x, y)
+    xy, score = np.zeros((133, 2)), np.zeros(133)
+    for i, (x, y) in j.items():
+        xy[91 + i] = cam.project((at + [x, y, 0])[None])[0, :2]
+        score[91 + i] = 0.9
+    box = teacher.hand_box(xy, score, "l")
+    true_hand = silhouette(hand, cam)
+    near = ndimage.binary_dilation(true_hand, iterations=3)
+    contour = teacher.region_mask(box, alpha.shape, alpha, "contour")
+    band = teacher.region_mask(box, alpha.shape, alpha, "band")
+    assert (contour & ~near).sum() > 0.3 * true_hand.sum()       # contour drags torso pixels along
+    assert (band & ~near).sum() < 0.5 * (contour & ~near).sum()   # gaps between fingers stay in the band
+    assert (true_hand & ~band).sum() < 0.03 * true_hand.sum()
+    assert teacher.isolation_info(box, "band", True)["band_used"] is True
+
+
 def skeleton_for(cam):
     """Stand-in for the MHR fit: torso joints at z=0, left-hand joints at the hand's true depth, in cm."""
     pts = {"l_uparm": (0.15, 0.25, 0), "r_uparm": (-0.15, 0.25, 0), "l_upleg": (0.12, -0.25, 0),
