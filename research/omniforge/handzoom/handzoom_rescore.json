@@ -1,0 +1,126 @@
+{
+ "run_dir": "bench\\omni_handzoom\\run_20261024_103041_6b111e",
+ "alignment": "evaluation only, uses GT",
+ "methods": {
+  "whole_body": {
+   "global": {
+    "hand_faces": 10136,
+    "chamfer_mm": 7.517490514331367,
+    "chamfer_fingers_mm": 7.764099416807049,
+    "chamfer_palm_ridges_mm": 1.6235270621385445,
+    "normal_agreement": 0.6580634599550481,
+    "normal_agreement_fingers": 0.5947355979127611,
+    "fingers": 11
+   },
+   "local": {
+    "hand_faces": 10019,
+    "chamfer_mm": 6.182715398903084,
+    "chamfer_fingers_mm": 5.454415377752219,
+    "chamfer_palm_ridges_mm": 3.4293063418756433,
+    "normal_agreement": 0.6581984479386839,
+    "normal_agreement_fingers": 0.6720291580161913,
+    "fingers": 10
+   },
+   "local_margin_m": 0.01,
+   "local_icp_shift_mm": 20.837746525351626,
+   "local_by_margin": {
+    "0.0": {
+     "chamfer_fingers_mm": 4.437056916487357,
+     "icp_shift_mm": 17.501930044029525
+    },
+    "0.01": {
+     "chamfer_fingers_mm": 5.454415377752219,
+     "icp_shift_mm": 20.837746525351626
+    },
+    "0.02": {
+     "chamfer_fingers_mm": 5.801599136165432,
+     "icp_shift_mm": 25.103670730302124
+    },
+    "0.05": {
+     "chamfer_fingers_mm": 7.325023205379791,
+     "icp_shift_mm": 66.05229263339142
+    }
+   }
+  },
+  "closeup": {
+   "global": {
+    "hand_faces": 684968,
+    "chamfer_mm": 2.3634947116335288,
+    "chamfer_fingers_mm": 1.587789919567764,
+    "chamfer_palm_ridges_mm": 2.500082341591189,
+    "normal_agreement": 0.9358984828274993,
+    "normal_agreement_fingers": 0.9391809007060568,
+    "fingers": 4
+   },
+   "local": {
+    "hand_faces": 684968,
+    "chamfer_mm": 2.363236193630927,
+    "chamfer_fingers_mm": 1.5871992249072653,
+    "chamfer_palm_ridges_mm": 2.4969915779066563,
+    "normal_agreement": 0.9359443743417606,
+    "normal_agreement_fingers": 0.9394674967905091,
+    "fingers": 4
+   },
+   "local_margin_m": 0.01,
+   "local_icp_shift_mm": 0.056913732239190586,
+   "local_by_margin": {
+    "0.0": {
+     "chamfer_fingers_mm": 1.5586010927997174,
+     "icp_shift_mm": 0.24160967521181068
+    },
+    "0.01": {
+     "chamfer_fingers_mm": 1.5871992249072653,
+     "icp_shift_mm": 0.056913732239190586
+    },
+    "0.02": {
+     "chamfer_fingers_mm": 1.5871992249072653,
+     "icp_shift_mm": 0.056913732239190586
+    },
+    "0.05": {
+     "chamfer_fingers_mm": 1.5871992249072653,
+     "icp_shift_mm": 0.056913732239190586
+    }
+   }
+  },
+  "closeup_hi3d": {
+   "global": {
+    "hand_faces": 636950,
+    "chamfer_mm": 2.368923685704089,
+    "chamfer_fingers_mm": 1.5793558401050156,
+    "chamfer_palm_ridges_mm": 2.5296110130916443,
+    "normal_agreement": 0.9317363730908041,
+    "normal_agreement_fingers": 0.9272592057483068,
+    "fingers": 4
+   },
+   "local": {
+    "hand_faces": 636950,
+    "chamfer_mm": 2.368917950497216,
+    "chamfer_fingers_mm": 1.5822238104110256,
+    "chamfer_palm_ridges_mm": 2.530229536252117,
+    "normal_agreement": 0.9320376436752791,
+    "normal_agreement_fingers": 0.9276964128152547,
+    "fingers": 4
+   },
+   "local_margin_m": 0.01,
+   "local_icp_shift_mm": 0.08190663694193519,
+   "local_by_margin": {
+    "0.0": {
+     "chamfer_fingers_mm": 1.5306701805157834,
+     "icp_shift_mm": 0.2377649711527643
+    },
+    "0.01": {
+     "chamfer_fingers_mm": 1.5822238104110256,
+     "icp_shift_mm": 0.08190663694193519
+    },
+    "0.02": {
+     "chamfer_fingers_mm": 1.5822238104110256,
+     "icp_shift_mm": 0.08190663694193519
+    },
+    "0.05": {
+     "chamfer_fingers_mm": 1.5822238104110256,
+     "icp_shift_mm": 0.08190663694193519
+    }
+   }
+  }
+ }
+}

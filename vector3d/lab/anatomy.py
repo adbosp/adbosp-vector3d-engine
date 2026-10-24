@@ -6,7 +6,9 @@ keypoints with the model's own joint limits, a finger interpenetration penalty a
 Runs in its own WSL2 environment (scripts/setup_anatomy_env.sh) through backends/anatomy_runner.py.
 
 Labels: keypoints AI_GENERATED, fitted pose and mesh ESTIMATED, reprojection residuals VERIFIED (a
-measured distance between the fit and the detections, nothing more). This is NOT claimed to be
+measured distance between the fit and the detections, nothing more). Joint limits are a soft penalty;
+the remaining violation is reported, not assumed zero. The finger proximity check uses skeleton axis
+points, not the mesh surface: it is not a collision test. This is NOT claimed to be
 equivalent to SAM 3D Body: no same-conditions benchmark has been run. Depth (MoGe-2) and face
 fitting are reported as skipped. A missing environment returns blocked, never a substitute.
   V3D_ANATOMY_DISTRO  WSL distribution (default Ubuntu-24.04)
@@ -16,6 +18,7 @@ fitting are reported as skipped. A missing environment returns blocked, never a 
 from __future__ import annotations
 
 import os
+import shlex
 import subprocess
 import time
 import uuid
@@ -54,15 +57,21 @@ def check_labels(result: dict) -> list[str]:
 
 
 def finger_summary(result: dict) -> dict:
-    """Per hand: whether the fitted hand has five fingers whose tips land on the detected tips.
-    correct = model fingers 5, every detected fingertip matched, no finger pair closer than 1 cm.
-    Only detected fingers can be checked; undetected ones are counted, not assumed correct."""
+    """Per hand, agreement between the fitted MHR fingertips and the 2D detector, with coverage.
+    This is detector consistency only: it says nothing about 3D anatomical correctness, which has no
+    ground truth here. `all_five_tips_consistent` needs all 5 tips detected AND matched; partial evidence
+    (e.g. 1/5 checked) is reported as coverage, never as a consistent hand."""
     out = {}
     for side, h in result.get("hands", {}).items():
         checked, matched = h.get("fingertips_checked", 0), h.get("fingertips_matched", 0)
+        close = h.get("finger_axis_pairs_closer_than_1cm", h.get("finger_pairs_closer_than_1cm"))
         out[side] = {"fingers_detected": h.get("fingers_detected", 0), "checked": checked, "matched": matched,
-                     "correct": bool(h.get("fingers_model") == 5 and checked > 0 and matched == checked
-                                     and h.get("finger_pairs_closer_than_1cm", 1) == 0)}
+                     "coverage": checked / 5,
+                     "detected_tips_consistent": bool(checked > 0 and matched == checked),
+                     "all_five_tips_consistent": bool(checked == 5 and matched == 5),
+                     "finger_axis_pairs_closer_than_1cm": close,
+                     "anatomical_correctness": "not measured (no 3D ground truth; skeleton distance is not a "
+                                               "mesh collision test)"}
     return out
 
 
@@ -88,6 +97,13 @@ class AnatomyStep:
                            f"({self.python}, {self.assets}); run scripts/setup_anatomy_env.sh")
         return True, "ok"
 
+    def script(self, image, run_dir, result, steps: int, seed: int) -> str:
+        """bash command line; every path that comes from Windows is shell-quoted (spaces, quotes).
+        The configured python/assets paths are left as given so that ~ and $HOME still expand."""
+        q = lambda p: shlex.quote(wsl_path(p))  # noqa: E731
+        return (f"{self.python} {q(RUNNER)} --image {q(image)} --assets {self.assets} "
+                f"--out-dir {q(run_dir)} --result {q(result)} --steps {int(steps)} --seed {int(seed)}")
+
     def run(self, image, out_dir, steps: int = 600, seed: int = 0, timeout: int = 1800) -> dict:
         """One invocation = one new folder; returns the runner result plus checks, or blocked/failed."""
         run_dir = Path(out_dir) / f"run_{time.strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
@@ -96,9 +112,7 @@ class AnatomyStep:
         if not ok:
             return {"status": "blocked", "reason": why, "run_dir": str(run_dir)}
         result, mesh = run_dir / "result.json", run_dir / "mhr_fit.glb"
-        script = (f"{self.python} {wsl_path(RUNNER)} --image {wsl_path(image)} --assets {self.assets} "
-                  f"--out-dir {wsl_path(run_dir)} --result {wsl_path(result)} --steps {steps} --seed {seed}")
-        rr = invoke_runner(self._wsl(script), result, mesh, timeout=timeout)
+        rr = invoke_runner(self._wsl(self.script(image, run_dir, result, steps, seed)), result, mesh, timeout=timeout)
         rr["run_dir"] = str(run_dir)
         if rr["status"] == "success":
             rr["label_problems"] = check_labels(rr)

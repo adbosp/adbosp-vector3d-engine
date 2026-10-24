@@ -7,8 +7,8 @@
 - **MHR** (Meta Momentum Human Rig, code và asset Apache-2.0, bản release v1.0.1, `assets.zip` có sha256 `e4f4f205…`): 127 khớp, mỗi ngón có đủ chuỗi khớp, 18.439 đỉnh (LOD1). Chạy trên CPU torch.
 - **Khớp mô hình** (`vector3d/lab/backends/anatomy_runner.py`), tối ưu Adam 600 bước, 2 khởi tạo (quay mặt vào hoặc quay lưng với camera), lấy cái có sai số thấp hơn. Hàm mục tiêu gồm:
   - sai số chiếu 2D (camera trực giao), trọng số là bình phương độ tin cậy của RTMW; thân trước, ngón tay từ bước thứ 1/3 trở đi;
-  - **giới hạn khớp của chính MHR** (198 giới hạn min/max lấy từ model, không tự bịa);
-  - phạt hai ngón tay đâm vào nhau (khoảng cách giữa các đốt ngón khác nhau nhỏ hơn 1,2 cm);
+  - **giới hạn khớp của chính MHR** (198 giới hạn min/max lấy từ model, không tự bịa). Đây là **phạt mềm**: sau khi khớp vẫn còn vi phạm nhỏ, đã đo lại từ `fit.npz` (`anatomy/joint_limit_violations.json`): 2–30 tham số vượt giới hạn, mức vượt lớn nhất 0,0002–0,0016 (radian với tham số xoay, đơn vị model với tham số tỉ lệ);
+  - phạt khi trục xương của hai ngón khác nhau gần nhau dưới 1,2 cm. Đây là heuristic trên điểm của khung xương, **không phải kiểm tra va chạm bề mặt mesh**;
   - prior tư thế và tỉ lệ cơ thể.
   - **Giả định "đứng"** (bật mặc định, ghi trong `assumptions` của kết quả): thân và chân gần một mặt phẳng chiều sâu. Không có giả định này, ảnh 2D cho phép cả người ngả về phía camera (đã thấy trên ảnh uihghj).
 - **Nhãn:** điểm khớp `AI_GENERATED`; tư thế và mesh khớp được `ESTIMATED`; sai số chiếu `VERIFIED` (chỉ là khoảng cách đo được giữa kết quả khớp và điểm phát hiện). `anatomy.check_labels` từ chối kết quả nếu phần khớp được tự gắn `VERIFIED`.
@@ -27,14 +27,15 @@
 
 Cách đọc bảng:
 - "Ngón x/5": số đầu ngón **phát hiện được** mà đầu ngón của MHR sau khi chiếu nằm trong 0,35 × kích thước bàn tay.
-- ✓ nghĩa là: MHR có 5 ngón (luôn đúng do cấu trúc model), mọi đầu ngón phát hiện được đều khớp, và không cặp ngón nào gần nhau dưới 1 cm. Ngón không phát hiện được thì không tính là đúng.
+- ✓ (bản đầu, theo review Codex `-04`) chỉ nghĩa là **nhất quán với detector 2D**: 5/5 đầu ngón được phát hiện và đều khớp, và không cặp trục ngón nào gần nhau dưới 1 cm. Không phải độ đúng giải phẫu 3D, vì không có GT.
+- `anatomy.finger_summary` hiện báo riêng từng thứ: `coverage` (số đầu ngón kiểm được chia 5), `detected_tips_consistent` (mọi đầu ngón kiểm được đều khớp), `all_five_tips_consistent` (chỉ đúng khi 5/5), và `anatomical_correctness: not measured`. Cả 8 bàn tay ✓ trong bảng đều có coverage 5/5.
 - "GPU (delta)" là mức tăng bộ nhớ GPU toàn máy (`nvidia-smi`) quanh bước RTMW. Bước khớp MHR chạy trên CPU.
 
 Ảnh: `anatomy/<tên>_hands.png` (ảnh gốc cắt quanh tay, MHR nhìn thẳng và nhìn chéo 60°) và `anatomy/<tên>_overlay.jpg` (xanh: điểm RTMW; đỏ: khớp MHR chiếu lên ảnh).
 
 ## Quan sát (chưa phải kết luận)
-- Ở 8/10 bàn tay, mọi đầu ngón phát hiện được đều khớp, và không ngón nào đâm vào nhau. Sai số chiếu vùng tay là 1,9–6,6 px.
-- Model MHR **luôn có 5 ngón đúng giải phẫu**, kể cả khi ngón bị che (yuyyuw). Đây đúng là kiểu "tưởng tượng ra bàn tay hợp lý" mà Ropy cần. Tuy vậy, tư thế ngón chỉ đúng tới mức điểm 2D cho phép, và chưa có chiều sâu thật.
+- Ở 8/10 bàn tay, cả 5/5 đầu ngón phát hiện được đều khớp với detector, và heuristic trục xương không thấy cặp ngón nào gần nhau dưới 1 cm. Va chạm bề mặt mesh **chưa được kiểm**. Sai số chiếu vùng tay là 1,9–6,6 px.
+- Về cấu trúc, MHR luôn có 5 chuỗi ngón, kể cả khi ngón bị che (yuyyuw). Đây là một prior có thể giúp "tưởng tượng ra bàn tay", nhưng tính đúng giải phẫu 3D của từng tư thế **chưa được kiểm chứng**. Tư thế ngón chỉ đúng tới mức điểm 2D cho phép, và chưa có chiều sâu thật.
 - **Thất bại:** ở yuyyuw (chỉ thấy nửa người, tay nắm vật), phần thân khớp sai hẳn (415 px) nên kéo theo tay sai. Cần chế độ "nửa người" và ràng buộc chiều sâu.
 - **Giới hạn:** nhân vật hoạt hình có tỉ lệ ngoài phạm vi cơ thể người (chân rất ngắn). Thân khớp sai 39 px và chân bị dạng ra (ảnh uihghj). MHR là model người thật, nên không nên dùng nó để đo nhân vật cách điệu.
 - Mất khoảng 43–49 s mỗi ảnh, trong đó khoảng 37 s là bước khớp trên CPU (2 khởi tạo × 600 bước). Chưa tối ưu tốc độ.

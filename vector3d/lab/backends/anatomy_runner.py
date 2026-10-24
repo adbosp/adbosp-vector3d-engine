@@ -242,13 +242,20 @@ def main() -> int:
             tips3d = J[[names.index(f"{sd}_{'thumb_null' if f == 0 else FINGERS[f] + '_null'}") for f in range(5)]]
             sep = torch.cdist(tips3d, tips3d) + torch.eye(5) * 1e9
             pts = finger_points(J, sd)
-            pen_pairs = sum(1 for i in range(5) for k in range(i + 1, 5)
+            pen_pairs = sum(1 for i in range(5) for k in range(i + 1, 5)          # skeleton axes only
                             if float(torch.cdist(pts[i][1:], pts[k][1:]).min()) < 1.0)
             hands[s] = {"fingers_model": 5, "fingers_detected": int(sum(detected)),
                         "fingertips_matched": int(sum(tips_ok)), "fingertips_checked": len(tips_ok),
                         "hand_size_px": hand_px, "min_fingertip_separation_cm": float(sep.min()),
-                        "finger_pairs_closer_than_1cm": pen_pairs, "label": "ESTIMATED"}
+                        "finger_axis_pairs_closer_than_1cm": pen_pairs,
+                        "note": "skeleton-axis distance heuristic, not a mesh collision test",
+                        "label": "ESTIMATED"}
         res["hands"] = hands
+        th = (theta * pose_mask)[0]
+        viol = torch.maximum(th[lim_i] - lim_hi, lim_lo - th[lim_i]).clamp_min(0)
+        res["joint_limits"] = {"kind": "soft penalty during the fit", "count": len(lims),
+                               "violated": int((viol > 1e-4).sum()), "max_violation": float(viol.max()),
+                               "units": "radians for rotations, model units for scale/length parameters"}
 
         import trimesh
         out = Path(a.out_dir)

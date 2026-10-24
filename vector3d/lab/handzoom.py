@@ -9,6 +9,7 @@ of any generation path. Results are observations on one synthetic hand, not clai
 from __future__ import annotations
 
 import json
+import shlex
 import time
 import uuid
 from pathlib import Path
@@ -114,6 +115,39 @@ def run(out_dir, body_path, hi3d_wsl=None, triposg_kw: dict | None = None, profi
     return report
 
 
+def rescore(run_dir, body_path, margins=(0.0, 0.01, 0.02, 0.05), local_margin: float = 0.01) -> dict:
+    """Recompute a run's metrics from its raw outputs, two ways (both use GT, evaluation only):
+    global = whole output aligned (bbox + similarity ICP), then the hand region measured: placement + shape;
+    local  = the global result's hand crop (local_margin around the GT hand box) rigidly ICP-aligned onto the
+             GT hand: shape only. The local number depends on the crop margin (more of the arm in the crop
+             pulls the ICP), so it is also reported for every value in `margins`."""
+    run_dir = Path(run_dir)
+    p = humanoid.HandParams()
+    hand = humanoid.hand_mesh(p)
+    fig, off = figure_with_hand(hand, load_mesh(body_path))
+    raws = {"whole_body": (run_dir / "whole_body" / "raw_triposg.glb", fig, off),
+            "closeup": (run_dir / "closeup" / "raw_triposg.glb", hand, None),
+            "closeup_hi3d": (run_dir / "closeup_hi3d.glb", hand, None)}
+    out = {"run_dir": str(run_dir), "alignment": "evaluation only, uses GT", "methods": {}}
+    for name, (f, ref, offset) in raws.items():
+        if not f.is_file():
+            out["methods"][name] = {"status": "missing"}
+            continue
+        aligned, _ = align_eval(load_mesh(f), ref)
+        if offset is not None:
+            aligned = Mesh(aligned.vertices - offset, aligned.faces)
+        sens = {}
+        for m in sorted(set(margins) | {local_margin}):
+            local, info = similarity_icp(crop_to_hand(aligned, hand, margin=m), hand, scale=False)
+            sens[m] = (compare_hand(local, hand, p), float(np.linalg.norm(info["translation"]) * 1000))
+        out["methods"][name] = {"global": compare_hand(crop_to_hand(aligned, hand), hand, p),
+                                "local": sens[local_margin][0], "local_margin_m": local_margin,
+                                "local_icp_shift_mm": sens[local_margin][1],
+                                "local_by_margin": {str(m): {"chamfer_fingers_mm": r["chamfer_fingers_mm"],
+                                                             "icp_shift_mm": s} for m, (r, s) in sens.items()}}
+    return out
+
+
 def hi3d_via_wsl(resolution: int = 512, distro: str = "Ubuntu-24.04"):
     """Callable for run(): Hi3D refine_mesh through hi3d_runner.py in the WSL env of scripts/setup_hi3d_env.sh."""
     from .anatomy import wsl_path
@@ -123,12 +157,13 @@ def hi3d_via_wsl(resolution: int = 512, distro: str = "Ubuntu-24.04"):
 
     def call(image, coarse, output):
         result = Path(output).with_suffix(".json")
+        q = lambda p: shlex.quote(wsl_path(p))  # noqa: E731 - Windows paths may contain spaces
         script = ("export CC=~/micromamba/envs/hi3d/bin/x86_64-conda-linux-gnu-gcc; "
-                  f"~/micromamba/envs/hi3d/bin/python {wsl_path(runner)} --repo ~/ai3d/Hi3Dv1.0 "
-                  f"--result {wsl_path(result)} -- --model ~/ai3d/weights/Hi3Dv1.0 --local-files-only "
+                  f"~/micromamba/envs/hi3d/bin/python {q(runner)} --repo ~/ai3d/Hi3Dv1.0 "
+                  f"--result {q(result)} -- --model ~/ai3d/weights/Hi3Dv1.0 --local-files-only "
                   "--dino-model ~/ai3d/weights/dinov2-large --clip-model ~/ai3d/weights/clip-vit-large-patch14 "
-                  f"--image {wsl_path(image)} --coarse-mesh {wsl_path(coarse)} --output {wsl_path(output)} "
-                  f"--resolution {resolution} --seed 0 --sequential-cpu-offload")
+                  f"--image {q(image)} --coarse-mesh {q(coarse)} --output {q(output)} "
+                  f"--resolution {int(resolution)} --seed 0 --sequential-cpu-offload")
         return invoke_runner(["wsl", "-d", distro, "--", "bash", "-lc", script], result, Path(output), timeout=3600)
 
     return call

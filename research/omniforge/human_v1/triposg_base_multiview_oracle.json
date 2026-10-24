@@ -1,0 +1,963 @@
+{
+ "hands": {
+  "protocol": "multiview_oracle",
+  "protocol_description": "single-image generation + placement from the front/back/left/right reference silhouettes (benchmark A_placed.glb); the three extra views are oracle information",
+  "density_per_m2": 2000000.0,
+  "person_00": {
+   "l": {
+    "placed": {
+     "chamfer_mm": 9.097903818575872,
+     "fscore@5mm": 0.3059126623209352,
+     "gt_points": 79807,
+     "pred_points": 74285,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 8.492887260118566,
+     "fscore@5mm": 0.37820979236510693,
+     "gt_points": 79807,
+     "pred_points": 86364,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 540.9406538628286
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.3520703573183021,
+     "fscore@5mm": 1.0,
+     "gt_points": 79967,
+     "pred_points": 80149,
+     "density_per_m2": 2000000.0
+    }
+   },
+   "r": {
+    "placed": {
+     "chamfer_mm": 11.816054689997435,
+     "fscore@5mm": 0.3140833598977048,
+     "gt_points": 81220,
+     "pred_points": 89118,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 9.358145219272341,
+     "fscore@5mm": 0.277026587520115,
+     "gt_points": 81220,
+     "pred_points": 98115,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 565.7687665854953
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.3526158182961367,
+     "fscore@5mm": 1.0,
+     "gt_points": 81404,
+     "pred_points": 81431,
+     "density_per_m2": 2000000.0
+    }
+   }
+  },
+  "person_01": {
+   "l": {
+    "placed": {
+     "chamfer_mm": 34.528335557133204,
+     "fscore@5mm": 0.0880806971491435,
+     "gt_points": 93031,
+     "pred_points": 28410,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 15.416139231294746,
+     "fscore@5mm": 0.24266987974463253,
+     "gt_points": 93031,
+     "pred_points": 58036,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 322.5777178925427
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.3532457358755111,
+     "fscore@5mm": 1.0,
+     "gt_points": 93146,
+     "pred_points": 93248,
+     "density_per_m2": 2000000.0
+    }
+   },
+   "r": {
+    "placed": {
+     "chamfer_mm": 10.585090422981795,
+     "fscore@5mm": 0.3060247513394661,
+     "gt_points": 86680,
+     "pred_points": 87078,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 13.303573264306696,
+     "fscore@5mm": 0.23664665645921484,
+     "gt_points": 86680,
+     "pred_points": 84309,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 168.94565609778965
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.35238648312698406,
+     "fscore@5mm": 1.0,
+     "gt_points": 87051,
+     "pred_points": 87065,
+     "density_per_m2": 2000000.0
+    }
+   }
+  },
+  "person_02": {
+   "l": {
+    "placed": {
+     "chamfer_mm": 11.328193455216192,
+     "fscore@5mm": 0.2838034837842061,
+     "gt_points": 82267,
+     "pred_points": 74232,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 10.989604281935804,
+     "fscore@5mm": 0.30114668926522886,
+     "gt_points": 82267,
+     "pred_points": 82724,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 163.477319638951
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.35210261049134495,
+     "fscore@5mm": 1.0,
+     "gt_points": 82470,
+     "pred_points": 82552,
+     "density_per_m2": 2000000.0
+    }
+   },
+   "r": {
+    "placed": {
+     "chamfer_mm": 9.872306026624948,
+     "fscore@5mm": 0.3131113978161847,
+     "gt_points": 83702,
+     "pred_points": 74873,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 6.599808040966566,
+     "fscore@5mm": 0.5023276365282879,
+     "gt_points": 83702,
+     "pred_points": 87259,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 153.40524355313644
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.35398803407240764,
+     "fscore@5mm": 1.0,
+     "gt_points": 83855,
+     "pred_points": 84066,
+     "density_per_m2": 2000000.0
+    }
+   }
+  },
+  "person_03": {
+   "l": {
+    "placed": {
+     "chamfer_mm": 92.4169567581672,
+     "fscore@5mm": 0.0,
+     "gt_points": 92853,
+     "pred_points": 2570,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 16.422569510673082,
+     "fscore@5mm": 0.1693898259804967,
+     "gt_points": 92853,
+     "pred_points": 41634,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 280.03555750609513
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.3525590069352775,
+     "fscore@5mm": 1.0,
+     "gt_points": 92956,
+     "pred_points": 92915,
+     "density_per_m2": 2000000.0
+    }
+   },
+   "r": {
+    "placed": {
+     "status": "empty",
+     "gt_points": 87910,
+     "pred_points": 0
+    },
+    "local": {
+     "chamfer_mm": 14.34645730220668,
+     "fscore@5mm": 0.24756968100581922,
+     "gt_points": 87910,
+     "pred_points": 35241,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 797.5591960270334
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.35276646296324965,
+     "fscore@5mm": 1.0,
+     "gt_points": 88048,
+     "pred_points": 88232,
+     "density_per_m2": 2000000.0
+    }
+   }
+  },
+  "person_04": {
+   "l": {
+    "placed": {
+     "chamfer_mm": 17.864605147527687,
+     "fscore@5mm": 0.21283142391097193,
+     "gt_points": 85736,
+     "pred_points": 91595,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 9.129417655356509,
+     "fscore@5mm": 0.4039814781236085,
+     "gt_points": 85736,
+     "pred_points": 100379,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 210.54826306360405
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.35306206546204283,
+     "fscore@5mm": 1.0,
+     "gt_points": 85890,
+     "pred_points": 85985,
+     "density_per_m2": 2000000.0
+    }
+   },
+   "r": {
+    "placed": {
+     "chamfer_mm": 44.641187537742226,
+     "fscore@5mm": 0.00011079262627589581,
+     "gt_points": 86613,
+     "pred_points": 5104,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 15.013106961479187,
+     "fscore@5mm": 0.2839575964507035,
+     "gt_points": 86613,
+     "pred_points": 30939,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 629.2395011190323
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.35352628843648604,
+     "fscore@5mm": 1.0,
+     "gt_points": 86692,
+     "pred_points": 86800,
+     "density_per_m2": 2000000.0
+    }
+   }
+  },
+  "person_05": {
+   "l": {
+    "placed": {
+     "chamfer_mm": 43.91009147795751,
+     "fscore@5mm": 0.004602970505777156,
+     "gt_points": 85107,
+     "pred_points": 5998,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 8.124199197564613,
+     "fscore@5mm": 0.43770427182937954,
+     "gt_points": 85107,
+     "pred_points": 58997,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 186.53922216269586
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.35442449789925623,
+     "fscore@5mm": 1.0,
+     "gt_points": 85237,
+     "pred_points": 85353,
+     "density_per_m2": 2000000.0
+    }
+   },
+   "r": {
+    "placed": {
+     "chamfer_mm": 11.828379967413836,
+     "fscore@5mm": 0.3613766812911765,
+     "gt_points": 88618,
+     "pred_points": 67528,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 6.666018915052084,
+     "fscore@5mm": 0.5423275087830994,
+     "gt_points": 88618,
+     "pred_points": 78335,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 124.51332641412115
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.3527179751892205,
+     "fscore@5mm": 1.0,
+     "gt_points": 88728,
+     "pred_points": 88799,
+     "density_per_m2": 2000000.0
+    }
+   }
+  },
+  "person_06": {
+   "l": {
+    "placed": {
+     "chamfer_mm": 37.3258714315752,
+     "fscore@5mm": 0.057557649428785454,
+     "gt_points": 84033,
+     "pred_points": 82067,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 8.739051850953631,
+     "fscore@5mm": 0.41668048401702523,
+     "gt_points": 84033,
+     "pred_points": 84591,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 515.2782413635083
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.3527771215175817,
+     "fscore@5mm": 1.0,
+     "gt_points": 84238,
+     "pred_points": 84328,
+     "density_per_m2": 2000000.0
+    }
+   },
+   "r": {
+    "placed": {
+     "chamfer_mm": 28.86516050536562,
+     "fscore@5mm": 0.06782281326493933,
+     "gt_points": 85623,
+     "pred_points": 89242,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 8.2437416202928,
+     "fscore@5mm": 0.3747066415860583,
+     "gt_points": 85623,
+     "pred_points": 105371,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 321.79650679544295
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.35338746003121974,
+     "fscore@5mm": 1.0,
+     "gt_points": 85477,
+     "pred_points": 85755,
+     "density_per_m2": 2000000.0
+    }
+   }
+  },
+  "person_07": {
+   "l": {
+    "placed": {
+     "chamfer_mm": 12.932718101338946,
+     "fscore@5mm": 0.2100586058749344,
+     "gt_points": 82444,
+     "pred_points": 104444,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 6.6047980576580745,
+     "fscore@5mm": 0.5140620673251208,
+     "gt_points": 82444,
+     "pred_points": 100370,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 454.26850953580464
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.3523752384793811,
+     "fscore@5mm": 1.0,
+     "gt_points": 82601,
+     "pred_points": 82738,
+     "density_per_m2": 2000000.0
+    }
+   },
+   "r": {
+    "placed": {
+     "chamfer_mm": 22.88353453878849,
+     "fscore@5mm": 0.16314680201287096,
+     "gt_points": 84498,
+     "pred_points": 78688,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 8.72629071146932,
+     "fscore@5mm": 0.4360568431798146,
+     "gt_points": 84498,
+     "pred_points": 73588,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 626.9735280629864
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.3538738415916726,
+     "fscore@5mm": 1.0,
+     "gt_points": 84710,
+     "pred_points": 84790,
+     "density_per_m2": 2000000.0
+    }
+   }
+  },
+  "person_08": {
+   "l": {
+    "placed": {
+     "chamfer_mm": 11.72564636403867,
+     "fscore@5mm": 0.32963990305521224,
+     "gt_points": 84233,
+     "pred_points": 116767,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 9.139173431278993,
+     "fscore@5mm": 0.42854491849981996,
+     "gt_points": 84233,
+     "pred_points": 115137,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 174.43693951002103
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.3526706768418811,
+     "fscore@5mm": 1.0,
+     "gt_points": 84596,
+     "pred_points": 84658,
+     "density_per_m2": 2000000.0
+    }
+   },
+   "r": {
+    "placed": {
+     "chamfer_mm": 14.78675848236294,
+     "fscore@5mm": 0.17988142104892882,
+     "gt_points": 85327,
+     "pred_points": 105447,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 8.011522866345459,
+     "fscore@5mm": 0.44344163271301645,
+     "gt_points": 85327,
+     "pred_points": 115471,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 378.7284641761898
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.3526988905254462,
+     "fscore@5mm": 1.0,
+     "gt_points": 85421,
+     "pred_points": 85505,
+     "density_per_m2": 2000000.0
+    }
+   }
+  },
+  "person_09": {
+   "l": {
+    "placed": {
+     "chamfer_mm": 10.7168495505983,
+     "fscore@5mm": 0.28674300622692744,
+     "gt_points": 83462,
+     "pred_points": 79290,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 7.983818955529822,
+     "fscore@5mm": 0.4009409642654583,
+     "gt_points": 83462,
+     "pred_points": 79673,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 309.8824501764579
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.3529963412422433,
+     "fscore@5mm": 1.0,
+     "gt_points": 83642,
+     "pred_points": 83669,
+     "density_per_m2": 2000000.0
+    }
+   },
+   "r": {
+    "placed": {
+     "status": "empty",
+     "pred_faces": 0
+    },
+    "local": {
+     "status": "empty",
+     "pred_faces": 0
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.35140075630370843,
+     "fscore@5mm": 1.0,
+     "gt_points": 84253,
+     "pred_points": 84373,
+     "density_per_m2": 2000000.0
+    }
+   }
+  },
+  "person_10": {
+   "l": {
+    "placed": {
+     "chamfer_mm": 12.310130143420222,
+     "fscore@5mm": 0.2382767615289747,
+     "gt_points": 88815,
+     "pred_points": 85003,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 8.120548844369766,
+     "fscore@5mm": 0.3723538133761684,
+     "gt_points": 88815,
+     "pred_points": 96035,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 327.91713156413624
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.35381457462843197,
+     "fscore@5mm": 1.0,
+     "gt_points": 89071,
+     "pred_points": 89136,
+     "density_per_m2": 2000000.0
+    }
+   },
+   "r": {
+    "placed": {
+     "chamfer_mm": 15.641778489805,
+     "fscore@5mm": 0.22248950437843124,
+     "gt_points": 86136,
+     "pred_points": 53706,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 9.387967760644807,
+     "fscore@5mm": 0.3226407346291459,
+     "gt_points": 86136,
+     "pred_points": 71710,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 162.74424397514113
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.3527571888150225,
+     "fscore@5mm": 1.0,
+     "gt_points": 86324,
+     "pred_points": 86491,
+     "density_per_m2": 2000000.0
+    }
+   }
+  },
+  "person_11": {
+   "l": {
+    "placed": {
+     "chamfer_mm": 13.910712142065123,
+     "fscore@5mm": 0.2978430810231284,
+     "gt_points": 82731,
+     "pred_points": 104793,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 13.954705659161487,
+     "fscore@5mm": 0.21475968726803665,
+     "gt_points": 82731,
+     "pred_points": 93850,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 1040.1713778861952
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.35141909564905566,
+     "fscore@5mm": 1.0,
+     "gt_points": 82847,
+     "pred_points": 82963,
+     "density_per_m2": 2000000.0
+    }
+   },
+   "r": {
+    "placed": {
+     "chamfer_mm": 46.696903122882105,
+     "fscore@5mm": 0.026080867182189858,
+     "gt_points": 86628,
+     "pred_points": 3713,
+     "density_per_m2": 2000000.0
+    },
+    "local": {
+     "chamfer_mm": 22.327647921182912,
+     "fscore@5mm": 0.21698994658775567,
+     "gt_points": 86628,
+     "pred_points": 26678,
+     "density_per_m2": 2000000.0,
+     "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+     "icp_shift_mm": 179.7350853010929
+    },
+    "noise_floor": {
+     "chamfer_mm": 0.35292943725648684,
+     "fscore@5mm": 1.0,
+     "gt_points": 86746,
+     "pred_points": 86909,
+     "density_per_m2": 2000000.0
+    }
+   }
+  }
+ },
+ "body": {
+  "protocol": "multiview_oracle",
+  "protocol_description": "single-image generation + placement from the front/back/left/right reference silhouettes (benchmark A_placed.glb); the three extra views are oracle information",
+  "person_00": {
+   "ref_iou": {
+    "front": 0.8877883874028824,
+    "back": 0.8877883874028824,
+    "left": 0.6510783834717666,
+    "right": 0.6510783834717666
+   },
+   "ref_iou_mean": 0.7694333854373245,
+   "heldout_iou": {
+    "az45_el20": 0.7763719512195122,
+    "az135_el20": 0.686277281465566,
+    "az225_el-15": 0.7794617817292201,
+    "top": 0.7088068181818182
+   },
+   "heldout_iou_mean": 0.7377294581490291,
+   "chamfer_l1": 0.011156384155752229,
+   "units": "fraction of GT bbox diagonal",
+   "samples": 20000,
+   "fscore@0.01": 0.49301016983523444,
+   "fscore@0.02": 0.8882146946242613,
+   "fscore@0.05": 1.0,
+   "normal_consistency": 0.9984042323324535,
+   "non_manifold_edges": 0,
+   "watertight": true
+  },
+  "person_01": {
+   "ref_iou": {
+    "front": 0.8805657273257974,
+    "back": 0.8805657273257974,
+    "left": 0.3577662496185536,
+    "right": 0.3577662496185536
+   },
+   "ref_iou_mean": 0.6191659884721755,
+   "heldout_iou": {
+    "az45_el20": 0.46878025714350047,
+    "az135_el20": 0.49232181797314356,
+    "az225_el-15": 0.4666022784643414,
+    "top": 0.4252508361204013
+   },
+   "heldout_iou_mean": 0.4632387974253467,
+   "chamfer_l1": 0.02784682310665105,
+   "units": "fraction of GT bbox diagonal",
+   "samples": 20000,
+   "fscore@0.01": 0.23456875798892204,
+   "fscore@0.02": 0.401241192951871,
+   "fscore@0.05": 0.8624355250216952,
+   "normal_consistency": 0.9981386397789108,
+   "non_manifold_edges": 0,
+   "watertight": true
+  },
+  "person_02": {
+   "ref_iou": {
+    "front": 0.8849646539439493,
+    "back": 0.8849646539439493,
+    "left": 0.7609373428542693,
+    "right": 0.7609373428542693
+   },
+   "ref_iou_mean": 0.8229509983991092,
+   "heldout_iou": {
+    "az45_el20": 0.7740072202166065,
+    "az135_el20": 0.8059658601069027,
+    "az225_el-15": 0.7769507259502448,
+    "top": 0.630289403897152
+   },
+   "heldout_iou_mean": 0.7468033025427265,
+   "chamfer_l1": 0.00982418864737368,
+   "units": "fraction of GT bbox diagonal",
+   "samples": 20000,
+   "fscore@0.01": 0.5769906944504614,
+   "fscore@0.02": 0.9420571853109744,
+   "fscore@0.05": 1.0,
+   "normal_consistency": 0.9980920918665824,
+   "non_manifold_edges": 0,
+   "watertight": true
+  },
+  "person_03": {
+   "ref_iou": {
+    "front": 0.6873798995207557,
+    "back": 0.6873798995207557,
+    "left": 0.42560474012713206,
+    "right": 0.42560474012713206
+   },
+   "ref_iou_mean": 0.5564923198239439,
+   "heldout_iou": {
+    "az45_el20": 0.550646352723915,
+    "az135_el20": 0.4409866729015665,
+    "az225_el-15": 0.5513408490161082,
+    "top": 0.3608000445707282
+   },
+   "heldout_iou_mean": 0.4759434798030795,
+   "chamfer_l1": 0.02853720522780069,
+   "units": "fraction of GT bbox diagonal",
+   "samples": 20000,
+   "fscore@0.01": 0.21388554737703003,
+   "fscore@0.02": 0.42865435353122994,
+   "fscore@0.05": 0.8250945620891271,
+   "normal_consistency": 0.9975332657613487,
+   "non_manifold_edges": 0,
+   "watertight": true
+  },
+  "person_04": {
+   "ref_iou": {
+    "front": 0.8998546423596391,
+    "back": 0.8998546423596391,
+    "left": 0.4671957855335667,
+    "right": 0.4671957855335667
+   },
+   "ref_iou_mean": 0.6835252139466029,
+   "heldout_iou": {
+    "az45_el20": 0.615814268385568,
+    "az135_el20": 0.5849597034624133,
+    "az225_el-15": 0.6119095946020078,
+    "top": 0.4985234403839055
+   },
+   "heldout_iou_mean": 0.5778017517084736,
+   "chamfer_l1": 0.01686603781127138,
+   "units": "fraction of GT bbox diagonal",
+   "samples": 20000,
+   "fscore@0.01": 0.3153702417756639,
+   "fscore@0.02": 0.6360191737746158,
+   "fscore@0.05": 0.9940409461294704,
+   "normal_consistency": 0.9979263342218688,
+   "non_manifold_edges": 0,
+   "watertight": true
+  },
+  "person_05": {
+   "ref_iou": {
+    "front": 0.9344150192714161,
+    "back": 0.9344150192714161,
+    "left": 0.5590709656643723,
+    "right": 0.5590709656643723
+   },
+   "ref_iou_mean": 0.7467429924678942,
+   "heldout_iou": {
+    "az45_el20": 0.6254382816598106,
+    "az135_el20": 0.6126327557294577,
+    "az225_el-15": 0.6314633551150999,
+    "top": 0.5738278516445067
+   },
+   "heldout_iou_mean": 0.6108405610372187,
+   "chamfer_l1": 0.015205011282934514,
+   "units": "fraction of GT bbox diagonal",
+   "samples": 20000,
+   "fscore@0.01": 0.341868197440585,
+   "fscore@0.02": 0.684358817298561,
+   "fscore@0.05": 0.9986999098828477,
+   "normal_consistency": 0.998163660254234,
+   "non_manifold_edges": 0,
+   "watertight": true
+  },
+  "person_06": {
+   "ref_iou": {
+    "front": 0.9280618686868687,
+    "back": 0.9280618686868687,
+    "left": 0.6301337072119824,
+    "right": 0.6301337072119824
+   },
+   "ref_iou_mean": 0.7790977879494254,
+   "heldout_iou": {
+    "az45_el20": 0.706656747315306,
+    "az135_el20": 0.7002234605266879,
+    "az225_el-15": 0.6989099968857054,
+    "top": 0.6678765880217786
+   },
+   "heldout_iou_mean": 0.6934166981873695,
+   "chamfer_l1": 0.013010716044401571,
+   "units": "fraction of GT bbox diagonal",
+   "samples": 20000,
+   "fscore@0.01": 0.4479183466279913,
+   "fscore@0.02": 0.7654532392894461,
+   "fscore@0.05": 1.0,
+   "normal_consistency": 0.9982453248183586,
+   "non_manifold_edges": 0,
+   "watertight": true
+  },
+  "person_07": {
+   "ref_iou": {
+    "front": 0.9218132221779508,
+    "back": 0.9218132221779508,
+    "left": 0.6565993406343552,
+    "right": 0.6565993406343552
+   },
+   "ref_iou_mean": 0.789206281406153,
+   "heldout_iou": {
+    "az45_el20": 0.7422762242031994,
+    "az135_el20": 0.6976243864008242,
+    "az225_el-15": 0.7499849424802747,
+    "top": 0.5932236457046238
+   },
+   "heldout_iou_mean": 0.6957772996972305,
+   "chamfer_l1": 0.011416114043708007,
+   "units": "fraction of GT bbox diagonal",
+   "samples": 20000,
+   "fscore@0.01": 0.4893092627599243,
+   "fscore@0.02": 0.86820295430332,
+   "fscore@0.05": 0.9999249943745782,
+   "normal_consistency": 0.9981012671009957,
+   "non_manifold_edges": 0,
+   "watertight": true
+  },
+  "person_08": {
+   "ref_iou": {
+    "front": 0.9003595105379465,
+    "back": 0.9003595105379465,
+    "left": 0.6631528124245595,
+    "right": 0.6631528124245595
+   },
+   "ref_iou_mean": 0.7817561614812529,
+   "heldout_iou": {
+    "az45_el20": 0.740151017728168,
+    "az135_el20": 0.7440021266697681,
+    "az225_el-15": 0.7367324701961288,
+    "top": 0.592335822032607
+   },
+   "heldout_iou_mean": 0.703305359156668,
+   "chamfer_l1": 0.01261587349003149,
+   "units": "fraction of GT bbox diagonal",
+   "samples": 20000,
+   "fscore@0.01": 0.4896268742026027,
+   "fscore@0.02": 0.7896386025454315,
+   "fscore@0.05": 1.0,
+   "normal_consistency": 0.997667063357082,
+   "non_manifold_edges": 0,
+   "watertight": true
+  },
+  "person_09": {
+   "ref_iou": {
+    "front": 0.9152650628060464,
+    "back": 0.9152650628060464,
+    "left": 0.5611485902093063,
+    "right": 0.5611485902093063
+   },
+   "ref_iou_mean": 0.7382068265076764,
+   "heldout_iou": {
+    "az45_el20": 0.5995901639344262,
+    "az135_el20": 0.6450913106930146,
+    "az225_el-15": 0.6051954318803281,
+    "top": 0.4871620307333204
+   },
+   "heldout_iou_mean": 0.5842597343102723,
+   "chamfer_l1": 0.013830372372600427,
+   "units": "fraction of GT bbox diagonal",
+   "samples": 20000,
+   "fscore@0.01": 0.4673528873917228,
+   "fscore@0.02": 0.8435680781083323,
+   "fscore@0.05": 0.955749832592205,
+   "normal_consistency": 0.9981465627467585,
+   "non_manifold_edges": 0,
+   "watertight": true
+  },
+  "person_10": {
+   "ref_iou": {
+    "front": 0.9297712188067782,
+    "back": 0.9297712188067782,
+    "left": 0.7606255749770009,
+    "right": 0.7606255749770009
+   },
+   "ref_iou_mean": 0.8451983968918895,
+   "heldout_iou": {
+    "az45_el20": 0.8032378580323786,
+    "az135_el20": 0.795151213971319,
+    "az225_el-15": 0.8037159466545082,
+    "top": 0.7778458844133099
+   },
+   "heldout_iou_mean": 0.7949877257678789,
+   "chamfer_l1": 0.0073308564487046205,
+   "units": "fraction of GT bbox diagonal",
+   "samples": 20000,
+   "fscore@0.01": 0.767307913340935,
+   "fscore@0.02": 0.9645138798890646,
+   "fscore@0.05": 0.997669581777633,
+   "normal_consistency": 0.9981045274854792,
+   "non_manifold_edges": 0,
+   "watertight": true
+  },
+  "person_11": {
+   "ref_iou": {
+    "front": 0.8899110515413671,
+    "back": 0.8899110515413671,
+    "left": 0.5181288553803975,
+    "right": 0.5181288553803975
+   },
+   "ref_iou_mean": 0.7040199534608823,
+   "heldout_iou": {
+    "az45_el20": 0.6083052405761569,
+    "az135_el20": 0.6313064223168053,
+    "az225_el-15": 0.6103193809566491,
+    "top": 0.5930856219709209
+   },
+   "heldout_iou_mean": 0.610754166455133,
+   "chamfer_l1": 0.018848289833596363,
+   "units": "fraction of GT bbox diagonal",
+   "samples": 20000,
+   "fscore@0.01": 0.32139512365842277,
+   "fscore@0.02": 0.5758528065986542,
+   "fscore@0.05": 0.9852756247938498,
+   "normal_consistency": 0.9979460454653428,
+   "non_manifold_edges": 0,
+   "watertight": true
+  }
+ },
+ "body_mean": {
+  "chamfer_l1": 0.0155406560387355,
+  "fscore@0.02": 0.7323145815188136,
+  "heldout_iou_mean": 0.6412381945200356,
+  "normal_consistency": 0.9980390845991178
+ },
+ "hand_summary": {
+  "placed": {
+   "hands": 24,
+   "measured": 22,
+   "empty": 2,
+   "coverage": 0.9166666666666666,
+   "chamfer_mm_median_measured": 14.348735312214032,
+   "chamfer_mm_mean_measured": 23.894780351435386,
+   "fscore@5mm_mean_all": 0.17789494315279852,
+   "fscore@5mm_mean_measured": 0.19406721071214383
+  },
+  "local": {
+   "hands": 24,
+   "measured": 23,
+   "empty": 1,
+   "coverage": 0.9583333333333334,
+   "chamfer_mm_median_measured": 9.129417655356509,
+   "chamfer_mm_mean_measured": 10.656573674744086,
+   "fscore@5mm_mean_all": 0.3401723057292963,
+   "fscore@5mm_mean_measured": 0.35496240597839623
+  },
+  "noise_floor": {
+   "hands": 24,
+   "measured": 24,
+   "empty": 0,
+   "coverage": 1.0,
+   "chamfer_mm_median_measured": 0.35276182588913607,
+   "chamfer_mm_mean_measured": 0.35285691495618127,
+   "fscore@5mm_mean_all": 1.0,
+   "fscore@5mm_mean_measured": 1.0
+  }
+ }
+}

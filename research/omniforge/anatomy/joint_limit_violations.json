@@ -1,0 +1,125 @@
+{
+ "bench/omni_anatomy/runs/run_20261024_102048_728b50/fit.npz": {
+  "count": 198,
+  "violated": 11,
+  "max_violation_rad": 0.000928411609493196,
+  "worst": [
+   [
+    "spine1_ry_flexible",
+    0.000928411609493196
+   ],
+   [
+    "spine2_ry_flexible",
+    0.0009235646575689316
+   ],
+   [
+    "spine0_ry_flexible",
+    0.000919328595045954
+   ],
+   [
+    "spine3_ry_flexible",
+    0.0008980993879958987
+   ],
+   [
+    "r_clavicle_rx",
+    0.0003130169352516532
+   ]
+  ]
+ },
+ "bench/omni_anatomy/runs/run_20261024_102137_bf8385/fit.npz": {
+  "count": 198,
+  "violated": 2,
+  "max_violation_rad": 0.00029916822677478194,
+  "worst": [
+   [
+    "r_clavicle_ry",
+    0.00029916822677478194
+   ],
+   [
+    "scale_hip_height",
+    0.00010270827624481171
+   ]
+  ]
+ },
+ "bench/omni_anatomy/runs/run_20261024_102222_622cd5/fit.npz": {
+  "count": 198,
+  "violated": 30,
+  "max_violation_rad": 0.0015953046968206763,
+  "worst": [
+   [
+    "spine1_rx_flexible",
+    0.0015953046968206763
+   ],
+   [
+    "spine3_rx_flexible",
+    0.0015091426903381944
+   ],
+   [
+    "spine2_rx_flexible",
+    0.0015022952575236559
+   ],
+   [
+    "spine0_rx_flexible",
+    0.001283360761590302
+   ],
+   [
+    "spine0_rz_flexible",
+    0.0011532983044162393
+   ]
+  ]
+ },
+ "bench/omni_anatomy/runs/run_20261024_102306_1d3a86/fit.npz": {
+  "count": 198,
+  "violated": 6,
+  "max_violation_rad": 0.00019736750982701778,
+  "worst": [
+   [
+    "spine3_ry_flexible",
+    0.00019736750982701778
+   ],
+   [
+    "spine2_ry_flexible",
+    0.0001490152208134532
+   ],
+   [
+    "leg_length_flexible",
+    0.0001336492714472115
+   ],
+   [
+    "scale_hip_height",
+    0.00012117429287172854
+   ],
+   [
+    "spine1_ry_flexible",
+    0.00011893760529346764
+   ]
+  ]
+ },
+ "bench/omni_anatomy/runs/run_20261024_102349_d56a9c/fit.npz": {
+  "count": 198,
+  "violated": 6,
+  "max_violation_rad": 0.00035433206357993186,
+  "worst": [
+   [
+    "scale_hip_height",
+    0.00035433206357993186
+   ],
+   [
+    "scale_uplegs",
+    0.00027424097061157227
+   ],
+   [
+    "leg_length_flexible",
+    0.00026486770366318524
+   ],
+   [
+    "spine3_ry_flexible",
+    0.0001910405553644523
+   ],
+   [
+    "spine2_ry_flexible",
+    0.000147427519550547
+   ]
+  ]
+ }
+}

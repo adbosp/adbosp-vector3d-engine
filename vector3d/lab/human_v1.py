@@ -3,7 +3,9 @@
 People are sampled from MHR v1.0.1 (Apache-2.0) by backends/human_v1_gen.py in the anatomy WSL env
 (random identity, yaw, arm/spine motion, per-finger curl and spread within MHR's own joint limits).
 Each person gets gt.glb, joints.json (MHR joints, metres) and the usual reference + held-out views, so
-lab benchmark runs on it unchanged. Methods only ever see views/front.png; everything else is GT.
+lab benchmark runs on it unchanged. Generation only ever sees views/front.png. Placement follows a named
+protocol (PROTOCOLS): front_only is the single-image end-to-end protocol; multiview_oracle is what lab
+benchmark's A_placed.glb uses (three extra reference silhouettes). Held-out views and GT are for scoring.
 
 Limits: smooth MHR skin (no hair, clothes, nails or wrinkles), untextured Lambert renders, and the
 bodies come from the same model the anatomy step fits, so that step is in-distribution here.
@@ -30,21 +32,51 @@ def hand_region(joints: dict, side: str, margin: float = 0.03) -> tuple[np.ndarr
     return pts.min(0) - margin, pts.max(0) + margin
 
 
-def region_metrics(pred: Mesh, gt: Mesh, box: tuple[np.ndarray, np.ndarray], n: int = 200000, seed: int = 0) -> dict:
-    """Chamfer (mm) and F-score@5 mm restricted to a GT region box; pred must be in the GT frame."""
+DENSITY = 2.0e6          # surface samples per m^2 on both sides (about 0.7 mm spacing)
+QUERY_PAD = 0.05         # nearest neighbours are searched within the box plus this margin
+
+
+def area(mesh: Mesh) -> float:
+    v = mesh.vertices[mesh.faces]
+    return float(np.linalg.norm(np.cross(v[:, 1] - v[:, 0], v[:, 2] - v[:, 0]), axis=1).sum() / 2)
+
+
+def region_metrics(pred: Mesh, gt: Mesh, box: tuple[np.ndarray, np.ndarray], seed: int = 0,
+                   density: float = DENSITY) -> dict:
+    """Chamfer (mm) and F-score@5 mm restricted to a GT region box; pred must be in the GT frame.
+    Both meshes are cropped to the box plus QUERY_PAD and sampled at the same areal density with fixed
+    seeds, so the sampling noise is the same whichever way the prediction was placed. Distances to
+    surface farther than QUERY_PAD outside the box are not seen (errors above 5 cm are underestimated)."""
     lo, hi = box
-    gp, pp = sample_surface(gt, n, seed), sample_surface(pred, n, seed + 1)
+    gc, pc = crop_box(gt, box, QUERY_PAD), crop_box(pred, box, QUERY_PAD)
+    if len(gc.faces) < 20 or len(pc.faces) < 20:
+        return {"status": "empty", "pred_faces": int(len(pc.faces))}
+    ng = int(min(4e5, max(2000, density * area(gc))))
+    npd = int(min(4e5, max(2000, density * area(pc))))
+    gp, pp = sample_surface(gc, ng, seed), sample_surface(pc, npd, seed + 1)
     gin = np.all((gp >= lo) & (gp <= hi), 1)
     pin = np.all((pp >= lo) & (pp <= hi), 1)
     if gin.sum() < 50 or pin.sum() < 50:
         return {"status": "empty", "gt_points": int(gin.sum()), "pred_points": int(pin.sum())}
-    d_g = cKDTree(pp).query(gp[gin])[0]        # GT region -> all of pred (missing parts)
-    d_p = cKDTree(gp).query(pp[pin])[0]        # pred region -> all of GT (extra parts)
+    d_g = cKDTree(pp).query(gp[gin])[0]        # GT region -> pred near the region (missing parts)
+    d_p = cKDTree(gp).query(pp[pin])[0]        # pred region -> GT near the region (extra parts)
     t = 0.005
     prec, rec = float((d_p < t).mean()), float((d_g < t).mean())
     return {"chamfer_mm": float((d_g.mean() + d_p.mean()) / 2 * 1000),
             "fscore@5mm": 2 * prec * rec / (prec + rec) if prec + rec else 0.0,
-            "gt_points": int(gin.sum()), "pred_points": int(pin.sum())}
+            "gt_points": int(gin.sum()), "pred_points": int(pin.sum()), "density_per_m2": density}
+
+
+def summarize(scores: dict, variant: str) -> dict:
+    """Coverage and statistics over all hands; an empty hand counts as F = 0 in fscore_all."""
+    rows = [v[s][variant] for v in scores.values() if isinstance(v, dict) and "l" in v for s in ("l", "r")]
+    got = [r for r in rows if "chamfer_mm" in r]
+    return {"hands": len(rows), "measured": len(got), "empty": len(rows) - len(got),
+            "coverage": len(got) / len(rows) if rows else 0.0,
+            "chamfer_mm_median_measured": float(np.median([r["chamfer_mm"] for r in got])) if got else None,
+            "chamfer_mm_mean_measured": float(np.mean([r["chamfer_mm"] for r in got])) if got else None,
+            "fscore@5mm_mean_all": float(np.mean([r.get("fscore@5mm", 0.0) for r in rows])) if rows else None,
+            "fscore@5mm_mean_measured": float(np.mean([r["fscore@5mm"] for r in got])) if got else None}
 
 
 def crop_box(mesh: Mesh, box: tuple[np.ndarray, np.ndarray], pad: float = 0.0) -> Mesh:
@@ -65,7 +97,7 @@ def region_metrics_local(pred: Mesh, gt: Mesh, box, pad: float = 0.05) -> dict:
     if len(pc.faces) < 20 or len(gc.faces) < 20:
         return {"status": "empty", "pred_faces": int(len(pc.faces))}
     aligned, info = similarity_icp(pc, gc, scale=False)
-    r = region_metrics(aligned, gc, box)
+    r = region_metrics(aligned, gt, box)
     r["alignment"] = "rigid ICP of the cropped region onto GT (evaluation only)"
     r["icp_shift_mm"] = float(np.linalg.norm(info["translation"]) * 1000)
     return r
@@ -102,20 +134,65 @@ def build(raw_dir, out_dir, size: int = 512) -> dict:
     return manifest
 
 
-def hand_scores(bench_dir, data_dir, variant: str = "A_placed.glb") -> dict:
-    """Region metrics of each person's placed output (benchmark A) for both hands."""
+PROTOCOLS = {
+    "multiview_oracle": "single-image generation + placement from the front/back/left/right reference "
+                        "silhouettes (benchmark A_placed.glb); the three extra views are oracle information",
+    "front_only": "single-image end to end: generation and placement use only views/front.png and the front "
+                  "camera (align.place_front_only on the raw model output)",
+}
+
+
+def placed_mesh(run_dir: Path, obj_dir: Path, protocol: str) -> Mesh:
+    from . import dataset
+    from .align import place_front_only
+    from .mesh_io import load_mesh
+
+    if protocol == "multiview_oracle":
+        return load_mesh(run_dir / "A_placed.glb")
+    if protocol == "front_only":
+        cams = dataset.load_cameras(obj_dir)
+        front = dataset.load_masks(obj_dir, ["front"])["front"]
+        return place_front_only(load_mesh(run_dir / "raw_triposg.glb"), front, cams["front"])[0]
+    raise ValueError(f"unknown protocol {protocol!r}; choose from {sorted(PROTOCOLS)}")
+
+
+def hand_scores(bench_dir, data_dir, protocol: str = "front_only") -> dict:
+    """Per person and hand: placed (protocol placement, no GT) and local (rigid crop ICP, uses GT) region
+    metrics, plus the GT-vs-GT noise floor of the same sampling."""
     from .mesh_io import load_mesh
 
     bench_dir, data_dir = Path(bench_dir), Path(data_dir)
-    out = {}
+    out = {"protocol": protocol, "protocol_description": PROTOCOLS[protocol], "density_per_m2": DENSITY}
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir()):
-        f = bench_dir / d.name / variant
-        if not f.is_file():
+        run = bench_dir / d.name
+        if not (run / "raw_triposg.glb").is_file():
             out[d.name] = {"status": "missing"}
             continue
-        gt, pred = load_mesh(d / "gt.glb"), load_mesh(f)
+        gt, pred = load_mesh(d / "gt.glb"), placed_mesh(run, d, protocol)
         joints = {k: np.array(v) for k, v in json.loads((d / "joints.json").read_text()).items()}
         out[d.name] = {side: {"placed": region_metrics(pred, gt, hand_region(joints, side)),
-                              "local": region_metrics_local(pred, gt, hand_region(joints, side))}
+                              "local": region_metrics_local(pred, gt, hand_region(joints, side)),
+                              "noise_floor": region_metrics(gt, gt, hand_region(joints, side), seed=7)}
                        for side in ("l", "r")}
+    return out
+
+
+def body_scores(bench_dir, data_dir, protocol: str = "front_only") -> dict:
+    """Whole-body A metrics (experiments.evaluate) under a placement protocol, from the raw outputs."""
+    from . import dataset
+    from .experiments import evaluate
+    from .mesh_io import load_mesh
+
+    bench_dir, data_dir = Path(bench_dir), Path(data_dir)
+    manifest = json.loads((data_dir / "manifest.json").read_text())
+    out = {"protocol": protocol, "protocol_description": PROTOCOLS[protocol]}
+    for d in sorted(p for p in data_dir.iterdir() if p.is_dir()):
+        run = bench_dir / d.name
+        if not (run / "raw_triposg.glb").is_file():
+            out[d.name] = {"status": "missing"}
+            continue
+        cams = dataset.load_cameras(d)
+        out[d.name] = evaluate(placed_mesh(run, d, protocol), load_mesh(d / "gt.glb"), cams,
+                               dataset.load_masks(d, manifest["reference_views"]),
+                               dataset.load_masks(d, manifest["heldout_views"]))
     return out

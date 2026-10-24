@@ -84,6 +84,28 @@ def silhouette_box(targets: dict, cameras: dict) -> tuple[np.ndarray, np.ndarray
     return lo, hi
 
 
+def place_front_only(pred: Mesh, front_mask: np.ndarray, front_cam) -> tuple[Mesh, dict]:
+    """Single-image placement: only the front silhouette and the front camera are used.
+    Rotation is the generator's canonical frame (TripoSG: front faces +Z), not searched. Uniform scale
+    from the silhouette height, X/Y from the silhouette box centre, depth centred on the front camera's
+    centre (camera metadata, not an observation of depth)."""
+    if not front_mask.any():
+        raise ValueError("front silhouette is empty")
+    u0, u1, v0, v1 = _mask_box(front_mask, front_cam)
+    right, up, toward = (np.asarray(x, float) for x in (front_cam.right, front_cam.up, front_cam.toward))
+    centre = np.asarray(front_cam.center, float)
+    p = pred.vertices - centre
+    pu, pv, pd = p @ right, p @ up, p @ toward
+    s = float((v1 - v0) / max(np.ptp(pv), 1e-12))
+    du = (u0 + u1) / 2 - s * (pu.min() + pu.max()) / 2
+    dv = (v0 + v1) / 2 - s * (pv.min() + pv.max()) / 2
+    dd = -s * (pd.min() + pd.max()) / 2
+    v = centre + s * p + du * right + dv * up + dd * toward
+    return Mesh(v, pred.faces, pred.colors), {
+        "scale": s, "label": "ESTIMATED", "inputs": ["front silhouette", "front camera"],
+        "method": "canonical rotation; scale from silhouette height; X/Y from silhouette box; depth at camera centre"}
+
+
 def align_to_silhouettes(pred: Mesh, targets: dict, cameras: dict) -> tuple[Mesh, dict]:
     """Ground-truth-free placement: 24 rotations, uniform scale and offset from
     the observed silhouette box, scored by mean silhouette IoU."""

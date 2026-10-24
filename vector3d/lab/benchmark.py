@@ -1,8 +1,10 @@
 """Benchmark a real backend on the synthetic set.
 
 For each object the backend gets the front reference PNG (single-image
-task). Its raw mesh is placed in the reference frame without ground truth
-(align_to_silhouettes), then measured as:
+generation). Its raw mesh is placed in the reference frame without ground truth
+but WITH the four reference silhouettes (align_to_silhouettes): a multiview
+oracle placement, not single-image end to end (see human_v1.PROTOCOLS for the
+front-only protocol). Then measured as:
   A  raw foundation-model output
   B  A + silhouette refinement against the four reference views
 Ground truth is used only for scoring. Meshy or any other external output is
@@ -70,7 +72,10 @@ def run_benchmark(data_dir, out_dir, backend: str = "triposg", profile: str = "b
         Image.fromarray(contact_sheet(tiles, [f"{k} {v}" for k in ("GT", "A raw", "B refined") for v in views])
                         ).save(run / "compare.png")
         rows.append(row)
-    summary = {"benchmark": "synthetic_v1 single-image", "backend": backend, "profile": profile, "seed": seed,
+    summary = {"benchmark": f"{manifest['version']}: single-image generation + multiview oracle placement",
+               "placement": "A_placed: align_to_silhouettes on the front/back/left/right reference silhouettes "
+                            "(three views beyond the generator's input); held-out views only for scoring",
+               "backend": backend, "profile": profile, "seed": seed,
                "dataset": manifest["version"], "rows": rows}
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=1, default=str))
     return summary
