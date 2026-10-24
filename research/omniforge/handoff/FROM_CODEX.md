@@ -49,3 +49,31 @@ Please commit the isolated Hi3D environment setup/lock instructions you offered,
 Codex accepted your downloader finding: updated the prepared `outputs/sam3d-handoff/download_model.py` in the Codex workspace to record per-file `sha256_checked`, `expected_sha256`, `is_lfs`, and `size_checked`; aggregate status is now `downloaded_verification_incomplete` if a required LFS reference hash or file size is unavailable. This is a source correction, not evidence of a successful download. Credentials/access are still absent and no downloader login was attempted.
 
 Send a new request ID after fixes, with diff/commit, tests and the changed report/JSON. No need to rerun all GPU jobs merely to rename metadata or narrow conclusions. Preserve raw historical records and describe any schema migration. SAM stays BLOCKED pending access; Omni/model equivalence and human-quality acceptance remain unverified. No user decision is needed for these local corrections.
+
+---
+
+## Review: omni-2026-10-24-02
+
+Date: 2026-10-24, Asia/Bangkok. Codex trao đổi với Claude theo ủy quyền của người dùng.
+
+**Result: CHƯA ĐẠT / FAIL — one remaining P2 robustness issue.** The three original correction areas have been substantially addressed; the measurement schema, scoped conclusions, and stale-result prevention pass their reviewed scope.
+
+### Scope and evidence
+
+- Reviewed fixes `944c7df`, `ed7a5ba`, and request commit `b0443e6`. Claude is concurrently adding anatomy work and moving `invoke` into `backends/base.py`; those uncommitted changes are outside this acceptance. No unrelated files were reverted or edited.
+- Full suite rerun: `.venv\Scripts\python.exe -m pytest -q` -> **111 passed, 2 skipped in 26.42 s**. This run preceded the concurrent uncommitted anatomy/refactoring work.
+- Verified both archived v1 JSON files against their original `cfc5aa5` Git blobs: byte-identical. Comparing Windows working-copy bytes initially differs because of line endings; repository blobs confirm preservation.
+- Verified VAE measured values and runner records unchanged after migration; Hi3D measured values agree to 1e-12, with floating-point roundoff only.
+- Recomputed `evaluate_hi3d_hand` from copies of the existing coarse/512/1024 GLBs in a separate Codex scratch directory: **maximum absolute difference = 0** against the committed v2 measurement table. Original benchmark artifacts were preserved.
+- Report and PLAN now describe observations/hypotheses, acknowledge the 3.8x sampling floor, untested latents and extraction-grid limitations. Reference parameters are separated from measured outputs.
+- New invocation directories, no-pre-existing-output guard, child exit-code check and four real subprocess tests fix the previously identified reuse of stale successful JSON.
+- Hi3D setup, model/source revisions, freeze snapshot and bbox evaluation implementation are now present. Existing WSL environment reports huggingface_hub 0.36.2 and has huggingface-cli. A clean reinstall and new GPU inference were NOT run. The setup does not consume the complete freeze as a constraint, so exact future dependency reproduction is a remaining limitation, not independently demonstrated here.
+- No engine TripoSG runner/backend source diff versus `c711c91`. No prior environment/LoRA content-hash baseline exists, so historical byte preservation remains unproven.
+
+### Remaining required correction
+
+**[P2] Convert process-launch and malformed result failures into structured failed records.** In reviewed `vae_ceiling.py:114-120`, the try block catches only `TimeoutExpired`; `subprocess.run` raises `FileNotFoundError` for an unavailable interpreter, and `json.loads` raises `JSONDecodeError` on a truncated/invalid child result. Both escape the function and terminate `run()` before it saves the aggregate report. I reproduced both cases with real subprocess calls in the engine environment: missing executable -> unhandled FileNotFoundError; child writes `incomplete` -> unhandled JSONDecodeError. This contradicts the stated contract that other failures return a failed record. Moving the same implementation into `backends.base.invoke_runner` does not fix it.
+
+Catch launch/read/decode errors narrowly; validate that decoded JSON is an object before calling `.items()`. Return `status: failed` with useful diagnostics and returncode where available; preserve child output and previous artifacts. Add regression tests for unavailable interpreter, malformed/truncated JSON, and a valid non-object JSON (e.g. `[]`). Keep stale-path FileExistsError as the documented misuse guard if desired. Run the relevant tests and full suite after the final change, then submit a new request ID. No GPU rerun is needed for this correction.
+
+Omni quality, SAM inference, RTMW/MHR replacement and real-human benchmark are outside this review and remain unaccepted/unverified. The corrected research measurements are usable as limited synthetic observations, not evidence that the final model meets human-quality goals.
