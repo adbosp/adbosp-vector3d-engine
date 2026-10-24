@@ -1,0 +1,175 @@
+{
+ "run_dir": "bench\\omni_handzoom\\run_20261024_103041_6b111e",
+ "profile": "quality",
+ "seed": 42,
+ "methods": {
+  "whole_body": {
+   "record": {
+    "status": "success",
+    "reason": "",
+    "duration_s": 61.6349029999983,
+    "peak_vram_mb": 5585.20068359375,
+    "model_version": "weights:90facf66b8638c8d"
+   },
+   "alignment": {
+    "bbox": {
+     "scale": 0.9339227411963453,
+     "translation": [
+      0.09197319235501919,
+      0.8907019966996663,
+      0.016167616071124394
+     ],
+     "method": "bbox fit (approximate)"
+    },
+    "icp": {
+     "scale": 0.978607056153378,
+     "rotation": [
+      [
+       0.9999962927729297,
+       0.0016741938039083364,
+       -0.002147443947569654
+      ],
+      [
+       -0.0016853663636544852,
+       0.9999849997407186,
+       -0.005211509740854861
+      ],
+      [
+       0.0021386866580364876,
+       0.00521510965040197,
+       0.9999841141991761
+      ]
+     ],
+     "translation": [
+      -0.0010268399411380328,
+      0.026303249371416686,
+      0.014133896071633283
+     ],
+     "iters": 30
+    },
+    "note": "uses GT; evaluation only"
+   },
+   "measured": {
+    "hand_faces": 10136,
+    "chamfer_mm": 7.517490514331367,
+    "chamfer_fingers_mm": 7.764099416807049,
+    "chamfer_palm_ridges_mm": 1.6235270621385445,
+    "normal_agreement": 0.6580634599550481,
+    "normal_agreement_fingers": 0.5947355979127611,
+    "fingers": 11
+   }
+  },
+  "closeup": {
+   "record": {
+    "status": "success",
+    "reason": "",
+    "duration_s": 67.1593617000035,
+    "peak_vram_mb": 5600.478515625,
+    "model_version": "weights:90facf66b8638c8d"
+   },
+   "alignment": {
+    "bbox": {
+     "scale": 0.09544440301267873,
+     "translation": [
+      -0.02214706075516315,
+      0.09104778762123895,
+      0.008760931422011889
+     ],
+     "method": "bbox fit (approximate)"
+    },
+    "icp": {
+     "scale": 1.021224911881079,
+     "rotation": [
+      [
+       0.9937430733575434,
+       -0.01477437037145432,
+       0.11070872654867622
+      ],
+      [
+       0.013994248142230718,
+       0.9998714930600603,
+       0.007820382648516528
+      ],
+      [
+       -0.11081004093869885,
+       -0.006222165697136628,
+       0.993822126681228
+      ]
+     ],
+     "translation": [
+      2.0641801242570902e-05,
+      -0.001626699440558147,
+      -0.006178914903461336
+     ],
+     "iters": 30
+    },
+    "note": "uses GT; evaluation only"
+   },
+   "measured": {
+    "hand_faces": 684968,
+    "chamfer_mm": 2.3634947116335288,
+    "chamfer_fingers_mm": 1.587789919567764,
+    "chamfer_palm_ridges_mm": 2.500082341591189,
+    "normal_agreement": 0.9358984828274993,
+    "normal_agreement_fingers": 0.9391809007060568,
+    "fingers": 4
+   }
+  },
+  "closeup_hi3d": {
+   "runner": {
+    "status": "success",
+    "reason": null,
+    "duration_s": 137.355131918,
+    "peak_vram_mb": 662.75634765625,
+    "returncode": 0
+   },
+   "alignment": {
+    "bbox": {
+     "scale": 0.09545363619599231,
+     "translation": [
+      -0.007720471004212148,
+      0.08334643396900786,
+      0.007158988383106107
+     ],
+     "method": "bbox fit (approximate)"
+    },
+    "icp": {
+     "scale": 1.0193937913335123,
+     "rotation": [
+      [
+       0.9936494929890324,
+       -0.011742061182902606,
+       0.1119053576993413
+      ],
+      [
+       0.01085513628607337,
+       0.9999046836377016,
+       0.008531685390129731
+      ],
+      [
+       -0.11199487085956801,
+       -0.007262756953275911,
+       0.9936822436083822
+      ]
+     ],
+     "translation": [
+      -0.0003149940467844681,
+      -0.0016559857920201448,
+      -0.006009562696320617
+     ],
+     "iters": 30
+    },
+    "note": "uses GT; evaluation only"
+   },
+   "measured": {
+    "hand_faces": 636950,
+    "chamfer_mm": 2.368923685704089,
+    "chamfer_fingers_mm": 1.5793558401050156,
+    "chamfer_palm_ridges_mm": 2.5296110130916443,
+    "normal_agreement": 0.9317363730908041,
+    "normal_agreement_fingers": 0.9272592057483068,
+    "fingers": 4
+   }
+  }
+ }
+}

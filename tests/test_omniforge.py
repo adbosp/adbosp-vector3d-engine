@@ -122,6 +122,18 @@ def test_bbox_fit_maps_scaled_copy_back():
     assert np.allclose(fitted.vertices, m.vertices, atol=1e-9) and np.isclose(info["scale"], 1 / 7)
 
 
+def test_align_eval_recovers_similarity():
+    from scipy.spatial.transform import Rotation
+
+    from vector3d.lab import handzoom
+    m = humanoid.hand_mesh(voxel=0.002)
+    R = Rotation.from_euler("xyz", [8, -12, 5], degrees=True).as_matrix()
+    moved = vae_ceiling.Mesh(m.vertices @ (3.0 * R).T + [0.4, -1.0, 2.0], m.faces)
+    back, info = handzoom.align_eval(moved, m)
+    assert np.abs(back.vertices - m.vertices).max() < 1e-3        # metres; hand is ~0.18 m long
+    assert info["note"].startswith("uses GT")
+
+
 def test_model_space_and_self_compare():
     m = humanoid.hand_mesh(voxel=0.001)
     pts, nrm = vae_ceiling.surface_points(m, 5000)
