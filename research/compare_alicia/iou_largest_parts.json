@@ -1,0 +1,30 @@
+{
+ "TripoSG": {
+  "kept_parts": 1,
+  "total_parts": 1,
+  "right": 0.721,
+  "back": 0.803,
+  "mean": 0.762
+ },
+ "TRELLIS": {
+  "kept_parts": 1,
+  "total_parts": 2,
+  "right": 0.727,
+  "back": 0.774,
+  "mean": 0.75
+ },
+ "TRELLIS + 3 views": {
+  "kept_parts": 1,
+  "total_parts": 10,
+  "right": 0.762,
+  "back": 0.818,
+  "mean": 0.79
+ },
+ "Omni": {
+  "kept_parts": 3,
+  "total_parts": 26,
+  "right": 0.737,
+  "back": 0.803,
+  "mean": 0.77
+ }
+}

@@ -1,0 +1,21 @@
+Vector3D Engine: third-party data and models used by the lab
+=============================================================
+
+Datasets (not redistributed in this repository; downloaded by the scripts named below)
+
+HSRD-100: 100 High-Quality 3D Human Scans Dataset
+  Digital Reality Lab, 2025. https://huggingface.co/datasets/digitalrealitylab/HSRD-100
+  Licence: Creative Commons Attribution 4.0 International (CC BY 4.0),
+  https://creativecommons.org/licenses/by/4.0/
+  Used: LOD1 meshes and textures at revision 9cc5e9c138dd310dc88c95c80e5db0a3ecb7971a
+  (scripts/download_hsrd100.py), converted to the engine frame and rendered for training and
+  evaluation (vector3d/lab/hsrd_v1.py). Changes: rotated to +Y up / front +Z, centred, rendered views.
+  Dataset terms: not for surveillance, medical use or biometric identification.
+
+Models (run in their own environments; see research/trellis/LICENCES.md and research/model_matrix.md)
+
+TRELLIS (microsoft/TRELLIS, microsoft/TRELLIS-image-large), MIT.
+MHR (facebookresearch/MHR v1.0.1, code and assets), Apache-2.0.
+TripoSG (VAST-AI-Research/TripoSG), MIT.
+Hi3D v1.0 (hi3d-official/Hi3Dv1.0), Hi3D Open License Agreement 1.0
+  (commercial use requires "Powered by Hi3D 1.0"; separate licence above 200,000 MAU or USD 1M/month).

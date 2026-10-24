@@ -1,0 +1,94 @@
+{
+ "reference": "right/back masks by IS-Net from the held-out turnaround views (perspective renders)",
+ "front": {
+  "TripoSG": {
+   "gen_s": 61,
+   "peak_vram_mb": 5504,
+   "raw_triangles": 442008,
+   "refine": "one view only: nothing beyond the front silhouette to fit",
+   "fit_views": "bounding box fitted on XY; depth Z scaled like X/Y (not observed); IoU front 90%",
+   "faces_output": 440024,
+   "iou": {
+    "right": 0.7212915499656503,
+    "back": 0.8031765250525266,
+    "mean": 0.7622340375090884
+   },
+   "iou_is_heldout": true
+  },
+  "TripoSG + 3 views": {
+   "gen_s": 77,
+   "peak_vram_mb": 5504,
+   "raw_triangles": 442008,
+   "refine": "rejected (mean IoU +11.3%, smoothness -0.045): kept the fitted model",
+   "fit_views": "bounding box fitted on XYZ; IoU front 89%, back 71%, right 64%",
+   "faces_output": 440024,
+   "iou": {
+    "right": 0.728789695989988,
+    "back": 0.7884856968522307,
+    "mean": 0.7586376964211093
+   },
+   "iou_is_heldout": false
+  },
+  "TRELLIS": {
+   "gen_s": 21.652156760000025,
+   "load_s": 36.061697494999976,
+   "peak_vram_mb": 9836.56640625,
+   "faces": 165032,
+   "faces_output": 165032,
+   "iou": {
+    "right": 0.7229250066720043,
+    "back": 0.7736811673072345,
+    "mean": 0.7483030869896194
+   },
+   "iou_is_heldout": true
+  },
+  "TRELLIS + 3 views": {
+   "gen_s": 21.749625597000005,
+   "load_s": 23.76246821400001,
+   "peak_vram_mb": 9861.68310546875,
+   "faces": 165130,
+   "faces_output": 165130,
+   "iou": {
+    "right": 0.0754837677914601,
+    "back": 0.3689505453775283,
+    "mean": 0.2222171565844942
+   },
+   "iou_is_heldout": false
+  },
+  "Omni": {
+   "gen_s": 96,
+   "peak_vram_mb": null,
+   "raw_triangles": 434928,
+   "faces_output": 2176590,
+   "iou": {
+    "right": 0.7366436203645506,
+    "back": 0.8031652173913043,
+    "mean": 0.7699044188779274
+   },
+   "iou_is_heldout": true
+  }
+ },
+ "hoodie": {
+  "TripoSG": {
+   "gen_s": 67,
+   "peak_vram_mb": 5514,
+   "raw_triangles": 492904,
+   "refine": "one view only: nothing beyond the front silhouette to fit",
+   "fit_views": "bounding box fitted on XY; depth Z scaled like X/Y (not observed); IoU front 85%",
+   "faces_output": 477896
+  },
+  "TRELLIS": {
+   "gen_s": 18.520331053,
+   "load_s": 24.567530295999997,
+   "peak_vram_mb": 9869.3447265625,
+   "faces": 194488,
+   "faces_output": 194488
+  },
+  "Omni": {
+   "gen_s": 79,
+   "peak_vram_mb": null,
+   "raw_triangles": 500176,
+   "faces_output": 1632980
+  }
+ }
+}

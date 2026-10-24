@@ -119,14 +119,16 @@ def silhouette(mesh: Mesh, camera: OrthoCamera) -> np.ndarray:
     return render(mesh, camera).mask
 
 
-def shade(mesh: Mesh, r: Render, base=(0.78, 0.80, 0.84)) -> np.ndarray:
-    """RGBA uint8 preview: headlight Lambert plus a key light, two-sided."""
+def shade(mesh: Mesh, r: Render, base=(0.78, 0.80, 0.84), key=None) -> np.ndarray:
+    """RGBA uint8 preview: headlight Lambert plus a key light, two-sided.
+    key: key-light direction as weights on the camera's (right, up, toward); default (0.4, 0.5, 0.6)."""
     v = mesh.vertices[mesh.faces]
     fn = np.cross(v[:, 1] - v[:, 0], v[:, 2] - v[:, 0])
     fn /= np.maximum(np.linalg.norm(fn, axis=1, keepdims=True), 1e-30)
     cam = r.camera
     toward = np.array(cam.toward)
-    key = 0.6 * toward + 0.5 * np.array(cam.up) + 0.4 * np.array(cam.right)
+    kr, ku, kt = (0.4, 0.5, 0.6) if key is None else key
+    key = kt * toward + ku * np.array(cam.up) + kr * np.array(cam.right)
     key /= np.linalg.norm(key)
     n = fn[np.maximum(r.face_id, 0)]
     head = np.abs(n @ toward)
