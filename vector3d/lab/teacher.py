@@ -270,16 +270,48 @@ def skeleton_depth(sk: Skeleton, side: str, keypoints: dict, body: Mesh, cam: Or
                                        "m_per_cm": m_per_cm}
 
 
+MAX_DEPTH_RATIO = 1.0   # depth extent / largest image-plane extent of a close-up (hand ~0.15-0.5, plus a forearm stub)
+
+
+def tidy_part(part: Mesh, cam: OrthoCamera, max_ratio: float = MAX_DEPTH_RATIO, min_fraction: float = 0.05
+              ) -> tuple[Mesh, dict]:
+    """Close-up generations of a hand come back with thin plates scattered in depth (ROPY-PC smoke test,
+    TEACHER_V2_SKELETON.md: placed hand depth median 0.36 m, up to 1.7 m). Keep the pieces with at least
+    min_fraction of the faces, then, if the depth extent is still more than max_ratio x the largest
+    image-plane extent, squash depth about its median to that ratio. Both are reported."""
+    from ..reconstruct.fit import drop_small_parts
+
+    before = np.ptp(cam.project(part.vertices)[:, 2])
+    part, removed = drop_small_parts(part, min_fraction)
+    p = cam.project(part.vertices)
+    pix = 2 * cam.half_size / cam.size
+    planar = float(max(np.ptp(p[:, 0]), np.ptp(p[:, 1])) * pix)
+    depth = float(np.ptp(p[:, 2]))
+    info = {"pieces_removed": removed, "depth_extent_raw": float(before), "depth_extent_after_cleanup": depth,
+            "planar_extent": planar, "max_depth_ratio": max_ratio, "depth_squash": 1.0}
+    if planar > 0 and depth > max_ratio * planar:
+        k = max_ratio * planar / depth
+        toward = np.asarray(cam.toward, float)
+        d = p[:, 2] - np.median(p[:, 2])
+        part = Mesh(part.vertices - np.outer(d * (1 - k), toward), part.faces, part.colors)
+        info["depth_squash"] = k
+    info["depth_extent"] = float(np.ptp(cam.project(part.vertices)[:, 2]))
+    info["label"] = "ESTIMATED (thickness limit is an assumption about hands, not a measurement)"
+    return part, info
+
+
 def place_part(raw: Mesh, crop_rgba: Image.Image, crop_cam: OrthoCamera, body: Mesh, full_cam: OrthoCamera,
                full_region: np.ndarray, target_depth: float | None = None, target_info: dict | None = None,
-               core: np.ndarray | None = None) -> tuple[Mesh, dict]:
+               core: np.ndarray | None = None, tidy: bool = True) -> tuple[Mesh, dict]:
     """Place a close-up generation: scale and X/Y from the crop silhouette (place_front_only with the crop
     camera), then depth shifted so the part's median depth over the hand region matches target_depth
     (skeleton) or, without it, the body's median depth over the same region (v0). With a target, the part's
     own depth is its mid-plane over `core` (the keypoint neighbourhood, default the region), so an arm stub
-    that the region kept does not pull the hand's centre."""
+    that the region kept does not pull the hand's centre. tidy: tidy_part before the depth match."""
     mask = np.asarray(crop_rgba)[..., 3] > 127
     part, info = place_front_only(raw, mask, crop_cam)
+    if tidy:
+        part, info["tidy"] = tidy_part(part, full_cam)
     if target_depth is not None:
         target, source = target_depth, "skeleton: body torso depth + MHR hand-minus-torso depth"
     else:
@@ -332,7 +364,7 @@ Generate = Callable[[Path, Path], Path]   # (input png, output dir) -> raw mesh 
 
 def run(front_png, front_cam: OrthoCamera, keypoints: dict, generate: Generate, out_dir,
         crop_size: int = 1024, load=None, isolation: str = "contour", body: Mesh | None = None,
-        depth: str = "body", progress: Callable[[str], None] | None = None) -> dict:
+        depth: str = "body", progress: Callable[[str], None] | None = None, tidy: bool = True) -> dict:
     """One person: body + both hands. keypoints = {"xy": (133,2), "score": (133,)} in front_png pixels,
     plus "skeleton" (a Skeleton) for depth="skeleton"; without it the hand falls back to the body depth.
     body: an already placed whole-body mesh from the same image (reused so that one change is measured
@@ -348,7 +380,7 @@ def run(front_png, front_cam: OrthoCamera, keypoints: dict, generate: Generate, 
     if img.size != (front_cam.size, front_cam.size):
         raise ValueError(f"image {img.size} does not match the front camera size {front_cam.size}")
     rep = {"run_dir": str(out), "inputs": ["front image", "front camera", "2D keypoints of the front image"],
-           "uses_ground_truth": False, "isolation": isolation, "depth": depth, "steps": {}}
+           "uses_ground_truth": False, "isolation": isolation, "depth": depth, "tidy": tidy, "steps": {}}
     if depth not in ("body", "skeleton"):
         raise ValueError(f"unknown depth mode {depth!r}")
     t0 = time.perf_counter()
@@ -381,7 +413,7 @@ def run(front_png, front_cam: OrthoCamera, keypoints: dict, generate: Generate, 
                 tinfo["fallback"] = "body depth over the hand region"
         part, pinfo = place_part(load(generate(out / f"hand_{side}.png", out / f"hand_{side}")), crop, ccam,
                                  body, front_cam, region, target, tinfo,
-                                 core=region & disc_mask(box, region.shape))
+                                 core=region & disc_mask(box, region.shape), tidy=tidy)
         parts.append((part, region))
         rep["steps"][f"hand_{side}"] = {"status": "success", "box": box.to_dict(), "crop_camera": ccam.to_dict(),
                                         **isolation_info(box, isolation, True), **pinfo, "seconds": time.perf_counter() - t1}
@@ -451,7 +483,7 @@ def score(data_dir, bench_dir) -> dict:
 
 def run_human_v1(data_dir, bench_dir, generate: Generate, keypoints_for: Callable[[Path], dict],
                  size: int = 2048, names=None, load=None, isolation: str = "contour", reuse_body=None,
-                 depth: str = "body") -> dict:
+                 depth: str = "body", tidy: bool = True) -> dict:
     """Teacher on every human_v1 person from a size x size front render (human_v1.render_front).
     keypoints_for(image) -> {"xy", "score"} from that image only (the RTMW anatomy step on the PC).
     Copies body_placed.glb / teacher_placed.glb into bench_dir/<person>/ for human_v1.hand_scores.
@@ -463,7 +495,7 @@ def run_human_v1(data_dir, bench_dir, generate: Generate, keypoints_for: Callabl
     data_dir, bench_dir = Path(data_dir), Path(bench_dir)
     from .mesh_io import load_mesh
 
-    out = {"size": size, "isolation": isolation, "depth": depth, "reuse_body": str(reuse_body) if reuse_body else None,
+    out = {"size": size, "isolation": isolation, "depth": depth, "tidy": tidy, "reuse_body": str(reuse_body) if reuse_body else None,
            "people": {}}
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir() and (p / "gt.glb").is_file()):
         if names and d.name not in names:
@@ -473,7 +505,7 @@ def run_human_v1(data_dir, bench_dir, generate: Generate, keypoints_for: Callabl
         try:
             body = load_mesh(Path(reuse_body) / d.name / "body_placed.glb") if reuse_body else None
             rep = run(png, cam, keypoints_for(png), generate, dest / "teacher_runs", load=load,
-                      isolation=isolation, body=body, depth=depth)
+                      isolation=isolation, body=body, depth=depth, tidy=tidy)
         except Exception as e:  # recorded per person; the batch goes on
             out["people"][d.name] = {"status": "failed", "reason": f"{type(e).__name__}: {e}"}
             continue

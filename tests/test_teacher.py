@@ -292,3 +292,25 @@ def test_run_human_v1_and_scores(scene, tmp_path):
     res = teacher.run_human_v1(tmp_path / "data", tmp_path / "bench2", broken, lambda p: kp, size=1024)
     assert res["people"]["person_00"]["status"] == "failed"
     assert not (tmp_path / "bench2" / "person_00" / "teacher_placed.glb").exists()
+
+
+def test_tidy_part_drops_scattered_plates_and_limits_thickness(scene):
+    """A close-up that came back as the hand plus far plates, and stretched 10x in depth."""
+    _, hand, cam = scene
+    toward = np.asarray(cam.toward)
+    c = hand.vertices.mean(0)
+    stretched = c + (hand.vertices - c) + np.outer((hand.vertices - c) @ toward * 9, toward)
+    plates = [Mesh(c + (hand.vertices[:40] - c) * 0.3 + toward * dz, hand.faces[:8] % 40) for dz in (0.5, -0.8)]
+    v = [stretched] + [p.vertices for p in plates]
+    f, off = [hand.faces], len(stretched)
+    for p in plates:
+        f.append(p.faces + off)
+        off += len(p.vertices)
+    raw = Mesh(np.vstack(v), np.vstack(f))
+    out, info = teacher.tidy_part(raw, cam)
+    assert info["pieces_removed"] >= 2 and info["depth_extent_raw"] > 1.0
+    assert info["depth_extent"] <= teacher.MAX_DEPTH_RATIO * info["planar_extent"] + 1e-9
+    assert info["depth_squash"] < 1.0
+    flat, finfo = teacher.tidy_part(hand, cam)                    # a normal hand is left alone
+    assert finfo["depth_squash"] == 1.0 and finfo["pieces_removed"] == 0
+    assert np.allclose(flat.vertices, hand.vertices)

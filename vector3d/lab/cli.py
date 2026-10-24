@@ -91,6 +91,8 @@ def main(argv: list[str]) -> int:
     te.add_argument("--isolation", choices=("contour", "band", "discs"), default="contour",
                     help="hand isolation in the crop (discs = v0)")
     te.add_argument("--reuse-body", help="earlier teacher bench dir whose body_placed.glb is reused")
+    te.add_argument("--no-tidy", dest="tidy", action="store_false",
+                    help="v0-v3 behaviour: keep scattered pieces and the raw hand depth")
     te.add_argument("--depth", choices=("body", "skeleton"), default="body",
                     help="hand depth: body surface under the hand (v0) or MHR skeleton relative to the torso")
     rp = sub.add_parser("report")
@@ -209,7 +211,7 @@ def main(argv: list[str]) -> int:
                                      teacher.rtmw_keypoints(out / "anatomy"), args.size,
                                      args.people.split(",") if args.people else None,
                                      isolation=args.isolation, reuse_body=args.reuse_body,
-                                     depth=args.depth)
+                                     depth=args.depth, tidy=args.tidy)
             print(json.dumps({k: v["status"] for k, v in b["people"].items()}, indent=1))
         s = teacher.score(args.data, out)
         (out / "teacher_scores.json").write_text(json.dumps(s, indent=1, default=str))
