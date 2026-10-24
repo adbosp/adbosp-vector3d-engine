@@ -5,6 +5,9 @@ Usage:
       --result result.json [--seed 42 --ss-steps 25 --slat-steps 25 --vram-fraction 0.95]
 
 Geometry only: formats=['mesh'] (FlexiCubes), so no renderer, nvdiffrast or Gaussian rasteriser is used.
+TRELLIS imports nvdiffrast (renderer) at package load; it is not installed (non-commercial licence) and is
+replaced by a placeholder that raises on any use (NOT_INSTALLED). open3d (MIT) is installed: TRELLIS's
+text pipeline evaluates it at import time.
 The image must carry a real alpha channel: TRELLIS then uses it and never calls rembg. Several images use
 TRELLIS's own multi-image conditioning (run_multi_image, 'stochastic' mode). The mesh is exported with
 TRELLIS's own Z-up -> Y-up rotation (as in its to_glb), in its normalised [-0.5, 0.5] frame. Peak GPU
@@ -17,6 +20,7 @@ import platform
 import sys
 import time
 import traceback
+import types
 
 
 def main() -> int:
@@ -45,6 +49,7 @@ def main() -> int:
                    gpu_total_mb=torch.cuda.get_device_properties(0).total_memory / 2**20)
         torch.cuda.set_per_process_memory_fraction(a.vram_fraction, 0)
         torch.cuda.reset_peak_memory_stats()
+        res["not_installed_placeholders"] = install_placeholders()
         sys.path.insert(0, a.repo)
         from trellis.pipelines import TrellisImageTo3DPipeline
 
@@ -80,7 +85,7 @@ def main() -> int:
         if not m.success:
             res["reason"] = "TRELLIS produced an empty mesh"
             return _finish(a, res, 1)
-        v = m.vertices.detach().float().cpu().numpy() @ np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]], np.float32)
+        v = to_y_up(m.vertices.detach().float().cpu().numpy())
         f = m.faces.detach().cpu().numpy()
         import trimesh
 
@@ -98,6 +103,58 @@ def main() -> int:
         except Exception:  # noqa: BLE001
             pass
         return _finish(a, res, 1)
+
+
+def to_y_up(v):
+    """TRELLIS mesh frame (Z up, front toward -Y) -> engine frame (+Y up, front toward +Z): the same rotation
+    as TRELLIS's own to_glb. Checked on a real run: the face looks toward +Z, the head is at +Y."""
+    import numpy as np
+
+    return np.asarray(v, np.float32) @ np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]], np.float32)
+
+
+NOT_INSTALLED = {
+    "nvdiffrast": "NVIDIA Source Code License (non-commercial); TRELLIS imports it for its mesh renderer only",
+    "nvdiffrast.torch": "see nvdiffrast",
+}
+
+
+class _NotInstalled(types.ModuleType):
+    """Stands in for a module TRELLIS imports at load but the mesh-only image path never calls.
+    Any real use raises, so nothing can silently run without it (dunder lookups by the import system pass)."""
+
+    def __init__(self, name: str, why: str):
+        super().__init__(name)
+        self._why = why
+
+    def __getattr__(self, attr):
+        if attr.startswith("__"):
+            raise AttributeError(attr)
+        name, why = f"{self.__name__}.{attr}", self._why
+
+        def unavailable(*_a, **_k):       # libraries may take a reference at import (kaolin does); calling raises
+            raise RuntimeError(f"{name} called, but it is deliberately not installed: {why}")
+
+        return unavailable
+
+
+def install_placeholders() -> list[str]:
+    """Register placeholders for NOT_INSTALLED modules that are really absent; returns their names."""
+    import importlib.machinery
+    import importlib.util
+
+    placed = []
+    for name, why in NOT_INSTALLED.items():
+        root = name.split(".")[0]
+        if name in sys.modules or (root not in placed and importlib.util.find_spec(root) is not None):
+            continue
+        mod = _NotInstalled(name, why)
+        mod.__spec__ = importlib.machinery.ModuleSpec(name, None)
+        sys.modules[name] = mod
+        if "." in name:
+            setattr(sys.modules[root], name.split(".", 1)[1], mod)
+        placed.append(name)
+    return placed
 
 
 def _finish(a, res, code: int) -> int:

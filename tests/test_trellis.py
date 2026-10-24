@@ -43,7 +43,35 @@ def test_script_quotes_windows_paths_and_passes_every_view(tmp_path):
     args = shlex.split(s)
     assert [args[i + 1] for i, a in enumerate(args) if a == "--image"] == [
         "/mnt/" + str(p.resolve())[0].lower() + "/" + "/".join(p.resolve().parts[1:]) for p in imgs]
-    assert args[args.index("--ss-steps") + 1] == "25" and args[0] == "~/env/bin/python"
+    assert args[args.index("--ss-steps") + 1] == "25"
+    assert args[0].startswith("LD_LIBRARY_PATH=") and args[1] == "~/env/bin/python"
+
+
+def test_trellis_frame_becomes_y_up_facing_plus_z():
+    from vector3d.lab.backends.trellis_runner import to_y_up
+    head_up_z = [0.0, 0.0, 0.5]           # TRELLIS: up is +Z
+    front_minus_y = [0.0, -0.3, 0.0]      # TRELLIS: the front looks toward -Y
+    up, front = to_y_up([head_up_z, front_minus_y])
+    assert np.allclose(up, [0, 0.5, 0]) and np.allclose(front, [0, 0, 0.3])
+
+
+def test_placeholder_module_raises_only_when_called():
+    import sys
+
+    from vector3d.lab.backends import trellis_runner as tr
+    saved = {k: sys.modules.pop(k) for k in list(sys.modules) if k.split(".")[0] == "nvdiffrast"}
+    try:
+        placed = tr.install_placeholders()
+        if "nvdiffrast.torch" not in placed:          # a real nvdiffrast is installed here: nothing to test
+            pytest.skip("nvdiffrast present")
+        import nvdiffrast.torch as dr               # import succeeds, as TRELLIS and kaolin need
+        ctx = dr.RasterizeCudaContext                # taking a reference succeeds (kaolin does this)
+        with pytest.raises(RuntimeError, match="deliberately not installed"):
+            ctx()
+    finally:
+        for k in [k for k in sys.modules if k.split(".")[0] == "nvdiffrast"]:
+            del sys.modules[k]
+        sys.modules.update(saved)
 
 
 def test_front_only_protocol_finds_either_backend_output(tmp_path):

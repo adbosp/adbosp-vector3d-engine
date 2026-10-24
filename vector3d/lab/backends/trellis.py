@@ -61,7 +61,9 @@ class TrellisBackend(Backend):
 
         q = lambda p: shlex.quote(wsl_path(p))  # noqa: E731 - Windows paths may contain spaces
         imgs = " ".join(f"--image {q(i)}" for i in images)
-        return (f"{self.python} {q(RUNNER)} --repo {self.repo} --weights {self.weights} {imgs} --out {q(out)} "
+        # the env's own lib dir first: open3d needs conda's libgomp (no system copy without sudo)
+        return (f"LD_LIBRARY_PATH=$(dirname {self.python})/../lib:$LD_LIBRARY_PATH "
+                f"{self.python} {q(RUNNER)} --repo {self.repo} --weights {self.weights} {imgs} --out {q(out)} "
                 f"--result {q(result)} --seed {int(seed)} --ss-steps {int(steps)} --slat-steps {int(steps)}")
 
     def _prepare(self, src: Path, dest: Path) -> str:

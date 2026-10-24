@@ -15,7 +15,10 @@ $PY -m pip install -q torch==2.4.0 torchvision==0.19.0 --index-url https://downl
 $PY -m pip install -q xformers==0.0.27.post2 --index-url https://download.pytorch.org/whl/cu121
 # numpy 1.x for the torch 2.4 / spconv / kaolin stack; opencv and plyfile pinned to releases that accept it
 $PY -m pip install -q numpy==1.26.4 opencv-python-headless==4.10.0.84 "plyfile<1.1" pillow imageio tqdm easydict \
-    scipy ninja trimesh transformers huggingface_hub spconv-cu120
+    scipy ninja trimesh transformers huggingface_hub spconv-cu120 rembg==2.0.69 onnxruntime==1.20.1   # rembg: imported by TRELLIS at load, never called (inputs carry alpha)
+# open3d (MIT) is evaluated at import by TRELLIS's text pipeline; it needs libgomp from conda-forge (LD_LIBRARY_PATH is set by backends/trellis.py)
+bin/micromamba install -y -q -n trellis -c conda-forge libgomp
+$PY -m pip install -q open3d==0.18.0 numpy==1.26.4
 $PY -m pip install -q git+https://github.com/EasternJournalist/utils3d.git@9a4eb15e4021b67b12c460c7057d642626897ec8
 $PY -m pip install -q kaolin==0.17.0 -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.4.0_cu121.html
 mkdir -p weights
