@@ -79,6 +79,19 @@ AI_STEPS: tuple[tuple[str, str], ...] = (
     ("export", "Export GLB / OBJ / metadata"),
 )
 
+OMNI_STEPS: tuple[tuple[str, str], ...] = (
+    ("load", "Read input image"),
+    ("segment", "Remove background"),
+    ("frame", "Frame the person (2048 px, front camera)"),
+    ("ai_generate", "Generate the whole body (TripoSG, GPU)"),
+    ("anatomy", "Body and hand keypoints (RTMW + MHR)"),
+    ("hands", "Hand close-ups (TripoSG, GPU)"),
+    ("merge", "Merge hands into the body"),
+    ("color", "Colour from image"),
+    ("validate", "Validate mesh"),
+    ("export", "Export GLB / OBJ / metadata"),
+)
+
 Progress = Callable[[str, str, str], None]  # (step, status: running|done|skipped|error, detail)
 
 
@@ -88,10 +101,13 @@ class GenerateOptions:
     smooth_iterations: int = 10
     tolerance: float = 0.02
     hints: dict | None = None  # see vector3d/reconstruct/hints.py and docs/AI_PLAYBOOK.md
-    mode: str = "auto"         # auto | ai | drawing | photo
+    mode: str = "auto"         # auto | ai | omni | drawing | photo
     ai_profile: str = "balanced"   # ai mode: fast | balanced | quality
     ai_lora: bool = False          # ai mode: TripoSG with the fine-tuned LoRA adapter (lab finetune)
     seed: int = 42
+    # omni mode (experimental, humans): hand isolation contour | band | discs, hand depth body | skeleton
+    omni_isolation: str = "contour"
+    omni_depth: str = "body"
     # photo mode
     depth_backend: str = "auto"    # auto | depth-anything | inflation
     segmenter: str = "auto"        # auto | birefnet | birefnet-lite | isnet | u2net | classic
@@ -117,7 +133,7 @@ def ai_available() -> tuple[bool, str]:
 
 
 def resolve_mode(inputs: dict[str, tuple[str, bytes]], mode: str = "auto") -> str:
-    if mode in ("ai", "drawing", "photo"):
+    if mode in ("ai", "omni", "drawing", "photo"):
         return mode
     if mode != "auto":
         raise ValueError(f"unknown mode {mode!r}")
@@ -127,7 +143,7 @@ def resolve_mode(inputs: dict[str, tuple[str, bytes]], mode: str = "auto") -> st
 
 
 def plan_steps(mode: str) -> tuple[tuple[str, str], ...]:
-    return {"photo": PHOTO_STEPS, "ai": AI_STEPS}.get(mode, STEPS)
+    return {"photo": PHOTO_STEPS, "ai": AI_STEPS, "omni": OMNI_STEPS}.get(mode, STEPS)
 
 
 def _png(arr: np.ndarray) -> bytes:
@@ -172,7 +188,8 @@ def generate(inputs: dict[str, tuple[str, bytes]], options: GenerateOptions | No
         if opts.hints:
             validate_hints(opts.hints)
         mode = resolve_mode(inputs, opts.mode)
-        return {"photo": _generate_photo, "ai": _generate_ai}.get(mode, _generate_drawing)(inputs, opts, run)
+        return {"photo": _generate_photo, "ai": _generate_ai, "omni": _generate_omni}.get(
+            mode, _generate_drawing)(inputs, opts, run)
     except Exception as exc:
         run.report(run.current or "load", "error", str(exc))
         raise
@@ -570,6 +587,159 @@ def _generate_ai(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResult:
         "validation": checks,
     }
     glb = to_glb(mesh, extras={"vector3d": {"geometry_confidence": conf.value, "mode": "ai", "model": rec.model}})
+    obj = to_obj(mesh)
+    done("export", f"GLB {len(glb) / 1024:.0f} KB, OBJ {len(obj) / 1024:.0f} KB")
+    metadata["timings_s"] = timings
+    return GenerateResult(glb, obj, metadata, timings, {"mask.png": _png((mask * 255).astype(np.uint8))})
+
+
+OMNI_SIZE = 2048
+
+
+def frame_person(rgba: np.ndarray, size: int = OMNI_SIZE, margin: float = 0.08) -> np.ndarray:
+    """The cut-out subject centred on a transparent size x size square with a margin: the input format
+    of the teacher (front camera with half_size 1 at the origin)."""
+    ys, xs = np.nonzero(rgba[..., 3] > 0)
+    if not len(xs):
+        raise ValueError("no foreground found; use an image with a clear subject")
+    crop = rgba[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    h, w = crop.shape[:2]
+    inner = int(round(size * (1 - 2 * margin)))
+    k = inner / max(h, w)
+    im = Image.fromarray(crop, "RGBA").resize((max(1, round(w * k)), max(1, round(h * k))), Image.LANCZOS)
+    out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    out.paste(im, ((size - im.width) // 2, (size - im.height) // 2))
+    return np.asarray(out)
+
+
+def front_colors(mesh: Mesh, cam, rgba: np.ndarray) -> np.ndarray:
+    """Vertex colours projected along the front camera (the back repeats the front)."""
+    p = cam.project(mesh.vertices)
+    x = np.clip(p[:, 0].astype(int), 0, rgba.shape[1] - 1)
+    y = np.clip(p[:, 1].astype(int), 0, rgba.shape[0] - 1)
+    return rgba[y, x, :3].astype(np.float64) / 255.0
+
+
+def _generate_omni(inputs, opts: GenerateOptions, run: _Runner) -> GenerateResult:
+    """Omni teacher (experimental, people): TripoSG whole body, RTMW hand keypoints, TripoSG hand close-ups
+    merged into the body (vector3d/lab/teacher.py). Any model that cannot run stops the job or is reported
+    as skipped: never a stand-in mesh."""
+    import json
+    import tempfile
+    from pathlib import Path
+
+    from .lab import teacher
+    from .lab.align import place_front_only
+    from .lab.backends import get_backend
+    from .lab.mesh_io import load_mesh
+    from .lab.render import view_camera
+
+    step, done, timings = run.step, run.done, run.timings
+    if opts.omni_isolation not in ("contour", "band", "discs") or opts.omni_depth not in ("body", "skeleton"):
+        raise ValueError("omni_isolation must be contour|band|discs and omni_depth body|skeleton")
+    step("load")
+    primary = "front" if "front" in inputs else next(iter(inputs))
+    name, data = inputs[primary]
+    if is_svg(data):
+        raise ValueError("Omni mode needs a raster image (PNG/JPG) of a person")
+    rgba = load_image(data)
+    ignored = [v for v in inputs if v != primary]
+    done("load", f"{name}: {rgba.shape[1]}x{rgba.shape[0]} px" + (f"; {', '.join(ignored)} not used by Omni" if ignored else ""))
+
+    step("segment")
+    from .ai.segment import cutout
+
+    mask, alpha, seg_method = cutout(rgba, opts.segmenter)
+    if not mask.any():
+        raise ValueError("no foreground found; use an image with a clear subject")
+    cut = rgba.copy()
+    cut[..., 3] = np.where(mask, np.maximum(alpha, 1), 0)
+    done("segment", f"{seg_method}; subject covers {mask.mean():.0%} of the image")
+
+    step("frame")
+    framed = frame_person(cut)
+    cam = view_camera("front", (0.0, 0.0, 0.0), 1.0, OMNI_SIZE)
+    run_dir = Path(tempfile.mkdtemp(prefix="v3d_omni_", dir=Path("runs").resolve() if Path("runs").is_dir() else None))
+    png = run_dir / "person" / "views" / "front.png"   # <person>/views/ layout: the anatomy step names runs by person
+    png.parent.mkdir(parents=True)
+    Image.fromarray(framed, "RGBA").save(png)
+    done("frame", f"{OMNI_SIZE}x{OMNI_SIZE} px, subject centred with an 8% margin")
+
+    step("ai_generate")
+    backend = get_backend("triposg")
+    ok, why = backend.check()
+    if not ok:
+        raise RuntimeError(f"TripoSG is not available: {why}. Omni needs the local GPU model (docs/LAB.md).")
+    gen = teacher.triposg_generate(opts.ai_profile, opts.seed)
+    run.report("ai_generate", "running", f"TripoSG ({opts.ai_profile}) on the GPU, usually 1-2 minutes")
+    t0 = time.perf_counter()
+    body_raw = load_mesh(gen(png, run_dir / "body"))
+    body, _ = place_front_only(body_raw, framed[..., 3] > 127, cam)
+    done("ai_generate", f"{len(body.faces):,} triangles in {time.perf_counter() - t0:.0f} s")
+
+    step("anatomy")
+    try:
+        kp = teacher.rtmw_keypoints(run_dir / "anatomy")(png)
+        n = {s: teacher.hand_box(kp["xy"], kp["score"], s) is not None for s in ("l", "r")}
+        anatomy = {"status": "success", "hands_found": n, "skeleton": "skeleton" in kp}
+        done("anatomy", f"hands found: left {'yes' if n['l'] else 'no'}, right {'yes' if n['r'] else 'no'}")
+    except Exception as exc:  # blocked or failed: hands are skipped, the body stays TripoSG's own output
+        kp = None
+        anatomy = {"status": "skipped", "reason": f"{type(exc).__name__}: {exc}"}
+        done("anatomy", f"skipped: {exc}", "skipped")
+
+    step("hands")
+    if kp is None:
+        rep = {"steps": {}, "uses_ground_truth": False}
+        merged = body
+        done("hands", "skipped: no keypoints, so no hand close-ups (the model is the whole-body generation only)",
+             "skipped")
+        step("merge")
+        done("merge", "skipped: nothing to merge", "skipped")
+    else:
+        rep = teacher.run(png, cam, kp, gen, run_dir / "teacher", body=body, isolation=opts.omni_isolation,
+                          depth=opts.omni_depth, progress=lambda m: run.report("hands", "running", m))
+        made = [s for s in ("l", "r") if rep["steps"].get(f"hand_{s}", {}).get("status") == "success"]
+        done("hands", f"{len(made)} close-up(s): " + (", ".join({"l": "left", "r": "right"}[s] for s in made) or "none"),
+             "done" if made else "skipped")
+        step("merge")
+        merged = load_mesh(Path(rep["run_dir"]) / "teacher_placed.glb")
+        m = rep["steps"]["merge"]
+        done("merge", f"removed {m['body_faces_removed']:,} body faces, added {len(made)} hand shell(s); not watertight")
+
+    step("color")
+    lo, hi = merged.vertices.min(0), merged.vertices.max(0)
+    to_model = opts.size_m / float((hi - lo).max())
+    mesh = Mesh(merged.vertices * to_model, merged.faces, front_colors(merged, cam, framed))
+    done("color", "vertex colours projected from the front image (back side reuses them)")
+
+    step("validate")
+    checks = validate(mesh)
+    done("validate", f"watertight: {'yes' if checks['watertight'] else 'no'}")
+
+    step("export")
+    metadata = {
+        "generator": "Vector3D Engine",
+        "mode": "omni",
+        "status": "experimental",
+        "units": "m",
+        "scale": {"source": "assumed", "largest_dimension_m": opts.size_m, "confidence": Confidence.ESTIMATED.value},
+        "coordinate_system": {"right_handed": True, "up": "+Y", "front": "+Z", "unit": "meter"},
+        "geometry_confidence": Confidence.ESTIMATED.value if kp is not None else Confidence.AI_GENERATED.value,
+        "method": "omni_teacher: TripoSG body + RTMW hand boxes + TripoSG hand close-ups, merged",
+        "model": {"name": "VAST-AI/TripoSG", "license": "MIT", "profile": opts.ai_profile, "seed": opts.seed},
+        "omni": {"isolation": opts.omni_isolation, "depth": opts.omni_depth, "anatomy": anatomy,
+                 "teacher_steps": rep.get("steps", {}), "uses_ground_truth": False, "run_dir": str(run_dir)},
+        "segmentation": seg_method,
+        "notes": ["Experimental. On the human_v1 benchmark (12 synthetic people, 1 seed) the best Omni setting so far "
+                  "is only slightly better than TripoSG alone on hands (13 of 24 hands better) and slightly worse on "
+                  "the whole body; not a proven improvement.",
+                  "Hands are separate shells merged into the body: the mesh is not watertight.",
+                  "Colours are projected from the front image, so the back repeats the front."],
+        "validation": checks,
+    }
+    (run_dir / "metadata.json").write_text(json.dumps(metadata, indent=1, default=str))
+    glb = to_glb(mesh, extras={"vector3d": {"geometry_confidence": metadata["geometry_confidence"], "mode": "omni"}})
     obj = to_obj(mesh)
     done("export", f"GLB {len(glb) / 1024:.0f} KB, OBJ {len(obj) / 1024:.0f} KB")
     metadata["timings_s"] = timings

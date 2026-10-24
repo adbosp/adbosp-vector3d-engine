@@ -70,7 +70,7 @@ select { padding: 5px 6px; border: 1px solid var(--border); border-radius: 6px; 
 .maps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
 .maps a { display: block; text-decoration: none; color: var(--muted); font-size: 11px; text-align: center; }
 .maps img { width: 100%; aspect-ratio: 1; object-fit: contain; background: #000; border-radius: 6px; border: 1px solid var(--border); display: block; margin-bottom: 2px; }
-.photo-only.off, .ai-only.off, .no-drawing.off { display: none; }
+.photo-only.off, .ai-only.off, .omni-only.off, .no-drawing.off { display: none; }
 input[type=range] { width: 100%; accent-color: var(--accent); }
 .downloads a { font-size: 12px; text-decoration: none; color: var(--accent); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; }
 .hint { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
@@ -145,11 +145,15 @@ ul.warn { padding-left: 18px; margin: 6px 0; color: var(--warn); font-size: 12px
       <button class="btn primary gen" id="genBtn">Generate</button>
       <div class="opts">
         <span>Chế độ</span>
-        <select id="mode"><option value="auto" selected>Tự động</option><option value="ai">AI 3D: TripoSG (GPU)</option><option value="photo">Ảnh chụp (AI depth, CPU)</option><option value="drawing">Bản vẽ hình chiếu</option></select>
+        <select id="mode"><option value="auto" selected>Tự động</option><option value="ai">AI 3D: TripoSG (GPU)</option><option value="omni">Omni người (thử nghiệm, GPU)</option><option value="photo">Ảnh chụp (AI depth, CPU)</option><option value="drawing">Bản vẽ hình chiếu</option></select>
         <span class="ai-only">Chất lượng AI</span>
         <select class="ai-only" id="aiProfile"><option value="fast">Nhanh</option><option value="balanced" selected>Cân bằng</option><option value="quality">Cao</option></select>
         <span class="ai-only lora-only">Bản train lại</span>
         <label class="ai-only lora-only" title="TripoSG + LoRA train trên hình học của engine (lab finetune)"><input type="checkbox" id="aiLora"> Dùng LoRA</label>
+        <span class="omni-only off">Tách bàn tay</span>
+        <select class="omni-only off" id="omniIsolation" title="Cách tách bàn tay trong ảnh cận cảnh"><option value="contour" selected>Theo đường viền</option><option value="band">Đường viền + khung ngón (tay đè lên thân)</option><option value="discs">Hình tròn (bản v0)</option></select>
+        <span class="omni-only off">Độ sâu bàn tay</span>
+        <select class="omni-only off" id="omniDepth"><option value="body" selected>Theo thân</option><option value="skeleton">Theo khung xương MHR</option></select>
         <span class="no-drawing">Tách nền</span>
         <select class="no-drawing" id="segmenter"><option value="auto" selected>Tự động</option><option value="birefnet">BiRefNet (MIT, GPU)</option><option value="birefnet-lite">BiRefNet lite (MIT)</option><option value="isnet">IS-Net (Apache-2.0)</option><option value="classic">Theo màu nền</option></select>
         <span class="photo-only">Độ dày</span>
@@ -356,6 +360,8 @@ const STEP_LABEL = {
   segment: "Tách nền (AI)", depth: "Ước lượng chiều sâu (AI)", normals: "Tạo normal map",
   relief: "Dựng khối từ depth", color: "Tô màu từ ảnh",
   ai_generate: "Sinh hình khối 3D (TripoSG, GPU)", place: "Đặt vị trí và tỉ lệ",
+  frame: "Căn khung người (2048 px)", anatomy: "Điểm khớp thân và tay (RTMW + MHR)",
+  hands: "Dựng bàn tay cận cảnh (TripoSG, GPU)", merge: "Ghép bàn tay vào thân",
   cleanup: "Bỏ mảnh rời", fit_views: "Khớp model theo kích thước các view", refine: "Tinh chỉnh theo silhouette mọi view",
 };
 let AI = { ai: false, ai_reason: "" };
@@ -363,6 +369,8 @@ fetch("/api/capabilities").then((r) => r.json()).then((c) => {
   AI = c;
   const opt = document.querySelector('#mode option[value="ai"]');
   if (!c.ai) { opt.disabled = true; opt.textContent += " (chưa cài)"; opt.title = c.ai_reason; }
+  const omni = document.querySelector('#mode option[value="omni"]');
+  if (!c.ai) { omni.disabled = true; omni.textContent += " (cần TripoSG)"; omni.title = c.ai_reason; }
   document.querySelector('#mode option[value="auto"]').textContent = c.ai ? "Tự động (AI TripoSG)" : "Tự động";
   syncModeUI();
 }).catch(() => {});
@@ -370,11 +378,13 @@ const MAP_LABEL = { mask: "Mask", depth: "Depth", normal: "Normal" };
 function syncModeUI() {
   const svgOnly = Object.values(files).length && Object.values(files).every((f) => f.name.toLowerCase().endsWith(".svg"));
   const m = $("mode").value;
-  const ai = m === "ai" || (m === "auto" && !svgOnly && AI.ai);
+  const omni = m === "omni";
+  const ai = omni || m === "ai" || (m === "auto" && !svgOnly && AI.ai);
   const photo = m === "photo" || (m === "auto" && !svgOnly && !AI.ai);
+  document.querySelectorAll(".omni-only").forEach((el) => el.classList.toggle("off", !omni));
   document.querySelectorAll(".photo-only").forEach((el) => el.classList.toggle("off", !photo));
   document.querySelectorAll(".ai-only").forEach((el) => el.classList.toggle("off", !ai));
-  document.querySelectorAll(".lora-only").forEach((el) => el.classList.toggle("off", !(ai && AI.lora)));
+  document.querySelectorAll(".lora-only").forEach((el) => el.classList.toggle("off", !(ai && !omni && AI.lora)));
   document.querySelectorAll(".photo-only.size").forEach((el) => el.classList.toggle("off", !(photo || ai)));
   document.querySelectorAll(".no-drawing").forEach((el) => el.classList.toggle("off", !(photo || ai)));
 }
@@ -402,7 +412,8 @@ $("genBtn").onclick = async () => {
     const { job } = await api("/api/generate", { views: viewPayload(), options: {
       mode: $("mode").value, resolution: +$("quality").value, smooth_iterations: +$("smooth").value, hints,
       thickness: +$("thickness").value, detail: +$("detail").value, back: $("back").value,
-      size_m: +$("sizeM").value || 1, ai_profile: $("aiProfile").value, ai_lora: $("aiLora").checked, segmenter: $("segmenter").value } });
+      size_m: +$("sizeM").value || 1, ai_profile: $("aiProfile").value, ai_lora: $("aiLora").checked, segmenter: $("segmenter").value,
+      omni_isolation: $("omniIsolation").value, omni_depth: $("omniDepth").value } });
     let snap;
     for (;;) {
       snap = await api(`/api/jobs/${job}`);
@@ -417,6 +428,7 @@ $("genBtn").onclick = async () => {
     const v = snap.metadata.validation;
     $("meshInfo").textContent = `Model đã tạo: ${v.triangles.toLocaleString()} tam giác, ${v.watertight ? "kín nước" : "CHƯA kín"}, độ tin cậy: ${snap.metadata.geometry_confidence}` +
       (snap.metadata.mode === "ai" ? ` (AI: TripoSG, ${Math.round(snap.metadata.model.duration_s)} s, VRAM ${Math.round(snap.metadata.model.peak_vram_mb)} MB)` :
+       snap.metadata.mode === "omni" ? ` (Omni thử nghiệm: thân + ${Object.values(snap.metadata.omni.teacher_steps || {}).filter((x) => x.status === "success" && x.box).length} bàn tay cận cảnh${snap.metadata.omni.anatomy.status !== "success" ? "; bỏ qua bước tay: " + snap.metadata.omni.anatomy.reason : ""})` :
        snap.metadata.mode === "photo" ? ` (AI: ${snap.metadata.depth_backend})` : snap.metadata.units === "m" ? "" : " (đơn vị bản vẽ, chưa có thang đo)");
     $("maps").innerHTML = Object.entries(snap.images || {}).map(([k, url]) =>
       `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${k}">${MAP_LABEL[k] || k}</a>`).join("");

@@ -5,7 +5,7 @@
   GET  /api/capabilities whether the local AI 3D model (TripoSG) can run
   GET  /api/examples     bundled example SVGs, keyed by view
   POST /api/inspect      {"views": {"front": VIEW, ...}, "tolerance": 0.01}
-  POST /api/generate     {"views": {...}, "options": {"mode": "auto|ai|drawing|photo", "resolution": 128,
+  POST /api/generate     {"views": {...}, "options": {"mode": "auto|ai|omni|drawing|photo", "resolution": 128,
                           "smooth_iterations": 10, "hints": {...}, "thickness": 0.6, "detail": 0.7,
                           "back": "symmetric|flat", "size_m": 1.0, "depth_backend": "auto"}}
                          -> {"job": id}; the job runs in a background thread
@@ -143,11 +143,15 @@ def start_job(payload: dict) -> Job:
         ai_profile=str(opts.get("ai_profile", "balanced")),
         segmenter=str(opts.get("segmenter", "auto")),
         ai_lora=bool(opts.get("ai_lora", False)),
+        omni_isolation=str(opts.get("omni_isolation", "contour")),
+        omni_depth=str(opts.get("omni_depth", "body")),
     )
     if options.segmenter not in SEGMENTERS:
         raise ValueError(f"segmenter must be one of {', '.join(SEGMENTERS)}")
     if options.ai_profile not in ("fast", "balanced", "quality"):
         raise ValueError("ai_profile must be fast, balanced or quality")
+    if options.omni_isolation not in ("contour", "band", "discs") or options.omni_depth not in ("body", "skeleton"):
+        raise ValueError("omni_isolation must be contour|band|discs and omni_depth body|skeleton")
     if options.back not in ("symmetric", "flat"):
         raise ValueError("back must be symmetric or flat")
     if options.hints:

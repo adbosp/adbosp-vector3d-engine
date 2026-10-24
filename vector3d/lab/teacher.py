@@ -332,11 +332,12 @@ Generate = Callable[[Path, Path], Path]   # (input png, output dir) -> raw mesh 
 
 def run(front_png, front_cam: OrthoCamera, keypoints: dict, generate: Generate, out_dir,
         crop_size: int = 1024, load=None, isolation: str = "contour", body: Mesh | None = None,
-        depth: str = "body") -> dict:
+        depth: str = "body", progress: Callable[[str], None] | None = None) -> dict:
     """One person: body + both hands. keypoints = {"xy": (133,2), "score": (133,)} in front_png pixels,
     plus "skeleton" (a Skeleton) for depth="skeleton"; without it the hand falls back to the body depth.
     body: an already placed whole-body mesh from the same image (reused so that one change is measured
-    at a time); None generates it. Writes a new run folder with teacher_placed.glb and teacher.json."""
+    at a time); None generates it. progress(message) is told before each generation.
+    Writes a new run folder with teacher_placed.glb and teacher.json."""
     from ..export.writers import to_glb
     from .mesh_io import load_mesh
 
@@ -365,6 +366,8 @@ def run(front_png, front_cam: OrthoCamera, keypoints: dict, generate: Generate, 
             rep["steps"][f"hand_{side}"] = {"status": "skipped", "reason": "too few confident hand keypoints"}
             continue
         t1 = time.perf_counter()
+        if progress:
+            progress(f"close-up of the {'left' if side == 'l' else 'right'} hand")
         region = region_mask(box, alpha.shape, alpha, isolation)
         crop = crop_image(img, box, crop_size, region=region)
         crop.save(out / f"hand_{side}.png")
