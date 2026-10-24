@@ -1,5 +1,7 @@
 # TripoSG LoRA fine-tune on ROPY-PC (RTX 3060): paused
 
+> Historical. The run was restarted on 2026-10-24 and finished; results are in README.md.
+
 Paused 2026-10-23 at about 20:40 local, at the owner's request. Nothing is running.
 
 ## Done
