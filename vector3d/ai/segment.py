@@ -62,7 +62,12 @@ def _session(key: str):
         opts.enable_cpu_mem_arena = False   # the arena grows by GBs per call with BiRefNet on CPU
         opts.enable_mem_pattern = False
         try:
-            _SESSIONS[key] = new_session(MODELS[key][0], sess_opts=opts)
+            try:
+                _SESSIONS[key] = new_session(MODELS[key][0], sess_opts=opts)
+            except TypeError as exc:        # rembg < 2.0.70 (Python 3.10) builds its own SessionOptions
+                if "sess_opts" not in str(exc):
+                    raise
+                _SESSIONS[key] = new_session(MODELS[key][0])
         except Exception as exc:  # noqa: BLE001
             _SESSIONS[key] = exc
     if isinstance(_SESSIONS[key], Exception):
