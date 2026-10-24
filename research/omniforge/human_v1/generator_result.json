@@ -1,0 +1,71 @@
+{
+ "status": "success",
+ "count": 12,
+ "seed": 0,
+ "lod": 1,
+ "source": "MHR v1.0.1 (Apache-2.0)",
+ "people": [
+  {
+   "name": "person_00",
+   "height_m": 1.7231638431549072,
+   "vertices": 18439
+  },
+  {
+   "name": "person_01",
+   "height_m": 1.729852557182312,
+   "vertices": 18439
+  },
+  {
+   "name": "person_02",
+   "height_m": 1.7273540496826172,
+   "vertices": 18439
+  },
+  {
+   "name": "person_03",
+   "height_m": 1.721333384513855,
+   "vertices": 18439
+  },
+  {
+   "name": "person_04",
+   "height_m": 1.783281683921814,
+   "vertices": 18439
+  },
+  {
+   "name": "person_05",
+   "height_m": 1.7155373096466064,
+   "vertices": 18439
+  },
+  {
+   "name": "person_06",
+   "height_m": 1.7988371849060059,
+   "vertices": 18439
+  },
+  {
+   "name": "person_07",
+   "height_m": 1.7837166786193848,
+   "vertices": 18439
+  },
+  {
+   "name": "person_08",
+   "height_m": 1.7244335412979126,
+   "vertices": 18439
+  },
+  {
+   "name": "person_09",
+   "height_m": 1.9191136360168457,
+   "vertices": 18439
+  },
+  {
+   "name": "person_10",
+   "height_m": 1.7196239233016968,
+   "vertices": 18439
+  },
+  {
+   "name": "person_11",
+   "height_m": 1.7077745199203491,
+   "vertices": 18439
+  }
+ ],
+ "duration_s": 3.116514069999999,
+ "output": "bench/human_v1_raw/people.json"
+}

@@ -1,0 +1,404 @@
+{
+ "person_00": {
+  "l": {
+   "placed": {
+    "chamfer_mm": 9.399573200310142,
+    "fscore@5mm": 0.2872550148252688,
+    "gt_points": 4223,
+    "pred_points": 3856
+   },
+   "local": {
+    "chamfer_mm": 8.448706788269485,
+    "fscore@5mm": 0.3811896942017414,
+    "gt_points": 159638,
+    "pred_points": 134322,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 540.9406538628286
+   }
+  },
+  "r": {
+   "placed": {
+    "chamfer_mm": 12.017443098327925,
+    "fscore@5mm": 0.2995962450603952,
+    "gt_points": 4268,
+    "pred_points": 4586
+   },
+   "local": {
+    "chamfer_mm": 9.341583907157593,
+    "fscore@5mm": 0.2755464031081221,
+    "gt_points": 170204,
+    "pred_points": 167743,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 565.7687665854953
+   }
+  }
+ },
+ "person_01": {
+  "l": {
+   "placed": {
+    "chamfer_mm": 34.76819686334831,
+    "fscore@5mm": 0.07810294557713239,
+    "gt_points": 5002,
+    "pred_points": 1456
+   },
+   "local": {
+    "chamfer_mm": 15.406430238248083,
+    "fscore@5mm": 0.2431507516193031,
+    "gt_points": 147238,
+    "pred_points": 107125,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 322.5777178925427
+   }
+  },
+  "r": {
+   "placed": {
+    "chamfer_mm": 11.106175918052056,
+    "fscore@5mm": 0.2765624219927727,
+    "gt_points": 4761,
+    "pred_points": 4556
+   },
+   "local": {
+    "chamfer_mm": 13.2692420735545,
+    "fscore@5mm": 0.2384686397032092,
+    "gt_points": 162135,
+    "pred_points": 125190,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 168.94565609778965
+   }
+  }
+ },
+ "person_02": {
+  "l": {
+   "placed": {
+    "chamfer_mm": 11.374121079381418,
+    "fscore@5mm": 0.27685234549662363,
+    "gt_points": 4041,
+    "pred_points": 3682
+   },
+   "local": {
+    "chamfer_mm": 11.005284076252883,
+    "fscore@5mm": 0.2995490068605376,
+    "gt_points": 167545,
+    "pred_points": 144320,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 163.477319638951
+   }
+  },
+  "r": {
+   "placed": {
+    "chamfer_mm": 10.26901599168065,
+    "fscore@5mm": 0.28553824078941303,
+    "gt_points": 4176,
+    "pred_points": 3845
+   },
+   "local": {
+    "chamfer_mm": 6.567142340407054,
+    "fscore@5mm": 0.5035354773902703,
+    "gt_points": 167967,
+    "pred_points": 176465,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 153.40524355313644
+   }
+  }
+ },
+ "person_03": {
+  "l": {
+   "placed": {
+    "chamfer_mm": 91.84971565635793,
+    "fscore@5mm": 0.0,
+    "gt_points": 5006,
+    "pred_points": 137
+   },
+   "local": {
+    "chamfer_mm": 16.32868844331182,
+    "fscore@5mm": 0.17019698947233497,
+    "gt_points": 148007,
+    "pred_points": 128469,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 280.03555750609513
+   }
+  },
+  "r": {
+   "placed": {
+    "status": "empty",
+    "gt_points": 4664,
+    "pred_points": 0
+   },
+   "local": {
+    "chamfer_mm": 14.293331005233929,
+    "fscore@5mm": 0.24906565631468794,
+    "gt_points": 156685,
+    "pred_points": 200000,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 797.5591960270334
+   }
+  }
+ },
+ "person_04": {
+  "l": {
+   "placed": {
+    "chamfer_mm": 18.177606615388758,
+    "fscore@5mm": 0.1921624669206802,
+    "gt_points": 4484,
+    "pred_points": 4844
+   },
+   "local": {
+    "chamfer_mm": 9.085780158095993,
+    "fscore@5mm": 0.4054906432639598,
+    "gt_points": 160872,
+    "pred_points": 166170,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 210.54826306360405
+   }
+  },
+  "r": {
+   "placed": {
+    "chamfer_mm": 44.574134705560894,
+    "fscore@5mm": 0.0,
+    "gt_points": 4587,
+    "pred_points": 249
+   },
+   "local": {
+    "chamfer_mm": 14.988991117411295,
+    "fscore@5mm": 0.28610403267468065,
+    "gt_points": 163026,
+    "pred_points": 200000,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 629.2395011190323
+   }
+  }
+ },
+ "person_05": {
+  "l": {
+   "placed": {
+    "chamfer_mm": 44.10287769457632,
+    "fscore@5mm": 0.004553215708594195,
+    "gt_points": 4680,
+    "pred_points": 317
+   },
+   "local": {
+    "chamfer_mm": 8.085138998501446,
+    "fscore@5mm": 0.43842167998855003,
+    "gt_points": 160705,
+    "pred_points": 132426,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 186.53922216269586
+   }
+  },
+  "r": {
+   "placed": {
+    "chamfer_mm": 12.064285338178104,
+    "fscore@5mm": 0.340721569439412,
+    "gt_points": 4927,
+    "pred_points": 3741
+   },
+   "local": {
+    "chamfer_mm": 6.6381207291683655,
+    "fscore@5mm": 0.5428754281000443,
+    "gt_points": 157116,
+    "pred_points": 158181,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 124.51332641412115
+   }
+  }
+ },
+ "person_06": {
+  "l": {
+   "placed": {
+    "chamfer_mm": 37.728166811864924,
+    "fscore@5mm": 0.05229822147571728,
+    "gt_points": 4235,
+    "pred_points": 4009
+   },
+   "local": {
+    "chamfer_mm": 8.700568974609263,
+    "fscore@5mm": 0.41799556043389513,
+    "gt_points": 166028,
+    "pred_points": 159316,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 515.2782413635083
+   }
+  },
+  "r": {
+   "placed": {
+    "chamfer_mm": 28.879688951270442,
+    "fscore@5mm": 0.06392415440588933,
+    "gt_points": 4371,
+    "pred_points": 4311
+   },
+   "local": {
+    "chamfer_mm": 8.237150018276022,
+    "fscore@5mm": 0.3759209356442887,
+    "gt_points": 152127,
+    "pred_points": 137968,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 321.79650679544295
+   }
+  }
+ },
+ "person_07": {
+  "l": {
+   "placed": {
+    "chamfer_mm": 13.052013274197773,
+    "fscore@5mm": 0.20006636761577645,
+    "gt_points": 3927,
+    "pred_points": 4752
+   },
+   "local": {
+    "chamfer_mm": 6.608224709566164,
+    "fscore@5mm": 0.5148794397185386,
+    "gt_points": 165130,
+    "pred_points": 149808,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 454.26850953580464
+   }
+  },
+  "r": {
+   "placed": {
+    "chamfer_mm": 22.868632534184023,
+    "fscore@5mm": 0.15712868570088817,
+    "gt_points": 3930,
+    "pred_points": 3646
+   },
+   "local": {
+    "chamfer_mm": 8.688221111346158,
+    "fscore@5mm": 0.4364623116412155,
+    "gt_points": 161206,
+    "pred_points": 149793,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 626.9735280629864
+   }
+  }
+ },
+ "person_08": {
+  "l": {
+   "placed": {
+    "chamfer_mm": 12.368075543435504,
+    "fscore@5mm": 0.30170680059630367,
+    "gt_points": 4964,
+    "pred_points": 6751
+   },
+   "local": {
+    "chamfer_mm": 9.097308510638811,
+    "fscore@5mm": 0.43119303273142384,
+    "gt_points": 166407,
+    "pred_points": 158836,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 174.43693951002103
+   }
+  },
+  "r": {
+   "placed": {
+    "chamfer_mm": 14.997477232159797,
+    "fscore@5mm": 0.16265730645955678,
+    "gt_points": 5091,
+    "pred_points": 6250
+   },
+   "local": {
+    "chamfer_mm": 7.998050116379227,
+    "fscore@5mm": 0.44417121049915087,
+    "gt_points": 159381,
+    "pred_points": 172357,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 378.7284641761898
+   }
+  }
+ },
+ "person_09": {
+  "l": {
+   "placed": {
+    "chamfer_mm": 11.030761996756022,
+    "fscore@5mm": 0.2691559162760595,
+    "gt_points": 4677,
+    "pred_points": 4223
+   },
+   "local": {
+    "chamfer_mm": 7.956164465725646,
+    "fscore@5mm": 0.4017611446089615,
+    "gt_points": 158228,
+    "pred_points": 151308,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 309.8824501764579
+   }
+  },
+  "r": {
+   "placed": {
+    "status": "empty",
+    "gt_points": 4632,
+    "pred_points": 0
+   },
+   "local": {
+    "status": "empty",
+    "pred_faces": 0
+   }
+  }
+ },
+ "person_10": {
+  "l": {
+   "placed": {
+    "chamfer_mm": 12.692742361286241,
+    "fscore@5mm": 0.22365206604233656,
+    "gt_points": 4902,
+    "pred_points": 4742
+   },
+   "local": {
+    "chamfer_mm": 8.076135576272097,
+    "fscore@5mm": 0.3754579599841337,
+    "gt_points": 164385,
+    "pred_points": 158549,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 327.91713156413624
+   }
+  },
+  "r": {
+   "placed": {
+    "chamfer_mm": 15.839902490793374,
+    "fscore@5mm": 0.21124588291112417,
+    "gt_points": 4872,
+    "pred_points": 3057
+   },
+   "local": {
+    "chamfer_mm": 9.342087259745137,
+    "fscore@5mm": 0.32482818286105203,
+    "gt_points": 161257,
+    "pred_points": 132613,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 162.74424397514113
+   }
+  }
+ },
+ "person_11": {
+  "l": {
+   "placed": {
+    "chamfer_mm": 14.285238712921538,
+    "fscore@5mm": 0.28612558119834003,
+    "gt_points": 4551,
+    "pred_points": 5683
+   },
+   "local": {
+    "chamfer_mm": 13.94194834664933,
+    "fscore@5mm": 0.21493610960331658,
+    "gt_points": 163647,
+    "pred_points": 130575,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 1040.1713778861952
+   }
+  },
+  "r": {
+   "placed": {
+    "chamfer_mm": 47.02624164492258,
+    "fscore@5mm": 0.026122061268107337,
+    "gt_points": 4758,
+    "pred_points": 222
+   },
+   "local": {
+    "chamfer_mm": 22.258477919056137,
+    "fscore@5mm": 0.21903990376797805,
+    "gt_points": 161047,
+    "pred_points": 114671,
+    "alignment": "rigid ICP of the cropped region onto GT (evaluation only)",
+    "icp_shift_mm": 179.7350853010929
+   }
+  }
+ }
+}

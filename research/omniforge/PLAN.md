@@ -82,6 +82,7 @@ Mục tiêu: kết quả benchmark vượt đối thủ, với tốc độ sinh 
    - làm thử luồng cận cảnh tay trên bàn tay tổng hợp, so sánh ba cách trên cùng một tay và cùng metric: TripoSG toàn thân, TripoSG cận cảnh, TripoSG cận cảnh + Hi3D;
    - **human_v1**: người tổng hợp sinh từ MHR (Apache-2.0), có GT giữ riêng để đo mọi khẳng định.
 4. Mọi kết quả ghi là quan sát hoặc giả thuyết cho tới khi đo trên human_v1.
+5. **Astra (dựa trên GPT) và Muse:** là dịch vụ đóng, không có trọng số, và điều khoản cấm dùng đầu ra để train. Theo chỉ đạo của Ropy (không có quyền thì bỏ qua hoặc thay bằng model mở tương đương), hai model này bị loại. Vai trò "suy luận hình ảnh" giao cho Qwen3-VL (mở). Model nào thiếu quyền thì thay bằng model mở, và phải chứng minh bằng benchmark trước khi gọi là tương đương: SAM 3D Body → RTMW+MHR (`ANATOMY.md`, chưa được gọi là tương đương). TRELLIS.2 (MIT) vẫn là teacher hình khối tiềm năng, nhưng cần GPU 24 GB trở lên, không chạy trên 3060.
 
 ## 6. Cần Ropy quyết định
 

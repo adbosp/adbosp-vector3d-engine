@@ -32,8 +32,9 @@ def render_rgba(mesh: Mesh, size: int = 1024, margin: float = 1.15) -> Image.Ima
     return Image.fromarray(np.dstack([rgb, (r.face_id >= 0).astype(np.uint8) * 255]), "RGBA")
 
 
-def similarity_icp(src: Mesh, dst: Mesh, iters: int = 30, n: int = 20000, seed: int = 0) -> tuple[Mesh, dict]:
-    """Point-to-point ICP with uniform scale (Umeyama per step) from src onto dst."""
+def similarity_icp(src: Mesh, dst: Mesh, iters: int = 30, n: int = 20000, seed: int = 0,
+                   scale: bool = True) -> tuple[Mesh, dict]:
+    """Point-to-point ICP (Umeyama per step) from src onto dst; scale=False keeps it rigid."""
     rng = np.random.default_rng(seed)
     sp = src.vertices[rng.choice(len(src.vertices), min(n, len(src.vertices)), replace=False)]
     tree = cKDTree(dst.vertices[rng.choice(len(dst.vertices), min(n, len(dst.vertices)), replace=False)])
@@ -43,6 +44,8 @@ def similarity_icp(src: Mesh, dst: Mesh, iters: int = 30, n: int = 20000, seed: 
         _, i = tree.query(cur)
         tgt = tree.data[i]
         s2, R2, t2 = umeyama(cur, tgt)
+        if not scale:
+            s2, t2 = 1.0, tgt.mean(0) - R2 @ cur.mean(0)
         S, R, t = s2 * S, R2 @ R, s2 * (R2 @ t) + t2
     v = src.vertices @ (S * R).T + t
     return Mesh(v, src.faces), {"scale": float(S), "rotation": R.tolist(), "translation": t.tolist(), "iters": iters}

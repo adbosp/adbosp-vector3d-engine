@@ -1,0 +1,103 @@
+{
+ "version": "human_v1",
+ "image_size": 512,
+ "reference_views": [
+  "front",
+  "back",
+  "left",
+  "right"
+ ],
+ "heldout_views": [
+  "az45_el20",
+  "az135_el20",
+  "az225_el-15",
+  "top"
+ ],
+ "license": "bodies sampled from MHR v1.0.1 (Apache-2.0) by vector3d/lab/backends/human_v1_gen.py",
+ "objects": [
+  {
+   "name": "person_00",
+   "category": "human",
+   "triangles": 36874,
+   "height_m": 1.7231638431549072,
+   "gt_sha256": "d3583afad75b74583b5118028b1e0319d7e3076b39da46317a3bbd5f9cc7cc6a"
+  },
+  {
+   "name": "person_01",
+   "category": "human",
+   "triangles": 36874,
+   "height_m": 1.729852557182312,
+   "gt_sha256": "ca1242a79c275e7f5f63d24659fd8e448621a7a73945840908797958eaafbc51"
+  },
+  {
+   "name": "person_02",
+   "category": "human",
+   "triangles": 36874,
+   "height_m": 1.7273540496826172,
+   "gt_sha256": "14e0710f73845d8bcfc7211a71c3ddb69960408fd10336f7cd678fcf0ed24033"
+  },
+  {
+   "name": "person_03",
+   "category": "human",
+   "triangles": 36874,
+   "height_m": 1.721333384513855,
+   "gt_sha256": "7532fe7035279ba0961aff3c437cf7e3369b8859822248c51181838802cf8ae6"
+  },
+  {
+   "name": "person_04",
+   "category": "human",
+   "triangles": 36874,
+   "height_m": 1.783281683921814,
+   "gt_sha256": "8aebdb69d85da7093d31d9aa470b215894c46c98dc37043ecd1eac6e2f606c89"
+  },
+  {
+   "name": "person_05",
+   "category": "human",
+   "triangles": 36874,
+   "height_m": 1.7155373096466064,
+   "gt_sha256": "35e95a2c5912200cce7cae09f257db14805f35f71945644791b1a53282491c23"
+  },
+  {
+   "name": "person_06",
+   "category": "human",
+   "triangles": 36874,
+   "height_m": 1.7988371849060059,
+   "gt_sha256": "71fea0e18b68f787002a946c01ccef94ae86b29ff5283a0f0536a798e98f1bdf"
+  },
+  {
+   "name": "person_07",
+   "category": "human",
+   "triangles": 36874,
+   "height_m": 1.7837166786193848,
+   "gt_sha256": "174f04684a9162f90c00b48ee0dfa0cdb7b5d8a1f678884f4742bdc55a3e9236"
+  },
+  {
+   "name": "person_08",
+   "category": "human",
+   "triangles": 36874,
+   "height_m": 1.7244335412979126,
+   "gt_sha256": "4e4e3813ff6c83105b6f256f6a7775ff7c4c7c536df78b4165f9239f62173726"
+  },
+  {
+   "name": "person_09",
+   "category": "human",
+   "triangles": 36874,
+   "height_m": 1.9191136360168457,
+   "gt_sha256": "53b99d1c4dd991f921ec3b37b606c6ee8e0d1f7eb91c5b75d98df90faa2a6c59"
+  },
+  {
+   "name": "person_10",
+   "category": "human",
+   "triangles": 36874,
+   "height_m": 1.7196239233016968,
+   "gt_sha256": "b5b1d0592ef75b7a3b608530fe5138fe99795315f8d1361e5b7ddb1165789bb4"
+  },
+  {
+   "name": "person_11",
+   "category": "human",
+   "triangles": 36874,
+   "height_m": 1.7077745199203491,
+   "gt_sha256": "c35ee572f21764f236688cab79daba88dcf3f2c15b15a36134d685b1ba1bbda6"
+  }
+ ]
+}

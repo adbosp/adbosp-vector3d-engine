@@ -1,0 +1,5175 @@
+{
+ "benchmark": "synthetic_v1 single-image",
+ "backend": "triposg",
+ "profile": "quality",
+ "seed": 42,
+ "dataset": "human_v1",
+ "rows": [
+  {
+   "object": "person_00",
+   "category": "human",
+   "record": {
+    "backend": "triposg",
+    "model": "VAST-AI/TripoSG",
+    "model_version": "weights:90facf66b8638c8d",
+    "license": "MIT",
+    "status": "success",
+    "quality_profile": "quality",
+    "config": {
+     "name": "quality",
+     "steps": 50,
+     "guidance": 7.0,
+     "faces": -1,
+     "vram_fraction": 0.95,
+     "dtype": "float16",
+     "segmentation": "alpha",
+     "command": [
+      "C:\\ai3d\\triposg-env\\Scripts\\python.exe",
+      "C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_runner.py",
+      "--repo",
+      "C:\\ai3d\\TripoSG",
+      "--weights",
+      "C:\\ai3d\\TripoSG\\pretrained_weights\\TripoSG",
+      "--image",
+      "bench\\human_v1_triposg_base\\person_00\\input_rgba.png",
+      "--out",
+      "bench\\human_v1_triposg_base\\person_00\\raw_triposg.glb",
+      "--result",
+      "bench\\human_v1_triposg_base\\person_00\\runner_result.json",
+      "--seed",
+      "42",
+      "--steps",
+      "50",
+      "--guidance",
+      "7.0",
+      "--faces",
+      "-1",
+      "--vram-fraction",
+      "0.95",
+      "--dtype",
+      "float16"
+     ],
+     "runtime": {
+      "python": "3.10.11",
+      "torch": "2.6.0+cu124",
+      "torch_cuda": "12.4",
+      "platform": "Windows-10-10.0.26300-SP0",
+      "gpu_total_mb": 12287.5,
+      "raw_faces": 422736,
+      "faces": 422736,
+      "vertices": 211370,
+      "vram_after_load_mb": 3789.3115234375
+     }
+    },
+    "seed": 42,
+    "duration_s": 55.476712599993334,
+    "load_s": 6.160839999996824,
+    "peak_vram_mb": 5507.59228515625,
+    "peak_vram_reserved_mb": 7622.0,
+    "device": "NVIDIA GeForce RTX 3060",
+    "output_path": "bench\\human_v1_triposg_base\\person_00\\raw_triposg.glb",
+    "inputs": [
+     {
+      "view": "front",
+      "source": "bench\\human_v1\\person_00\\views\\front.png",
+      "copy": "bench\\human_v1_triposg_base\\person_00\\inputs\\front.png",
+      "sha256": "b7a8c048b0cf06c0dda93df7249c45fdda6dc2d962e3e68382a07e34c9375b63"
+     }
+    ],
+    "reason": "",
+    "warnings": [],
+    "label": "AI_GENERATED",
+    "started_at": "2026-10-24T10:39:37+0700"
+   },
+   "placement": {
+    "rotation": [
+     [
+      1.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "scale": 0.9211040173952048,
+    "mean_ref_iou": 0.7694333854373245,
+    "label": "ESTIMATED",
+    "method": "24 rotations + silhouette box, scored by reference IoU (no ground truth)"
+   },
+   "A": {
+    "ref_iou": {
+     "front": 0.8877883874028824,
+     "back": 0.8877883874028824,
+     "left": 0.6510783834717666,
+     "right": 0.6510783834717666
+    },
+    "ref_iou_mean": 0.7694333854373245,
+    "heldout_iou": {
+     "az45_el20": 0.7763719512195122,
+     "az135_el20": 0.686277281465566,
+     "az225_el-15": 0.7794617817292201,
+     "top": 0.7088068181818182
+    },
+    "heldout_iou_mean": 0.7377294581490291,
+    "chamfer_l1": 0.011156429074022778,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.49295862698372456,
+    "fscore@0.02": 0.8882146946242613,
+    "fscore@0.05": 1.0,
+    "normal_consistency": 0.9984042318014865,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "B": {
+    "ref_iou": {
+     "front": 0.9931366037258437,
+     "back": 0.9931366037258437,
+     "left": 0.9858019639934533,
+     "right": 0.9858019639934533
+    },
+    "ref_iou_mean": 0.9894692838596485,
+    "heldout_iou": {
+     "az45_el20": 0.8032382074809888,
+     "az135_el20": 0.7938971277358179,
+     "az225_el-15": 0.8021027269740445,
+     "top": 0.7935733849956577
+    },
+    "heldout_iou_mean": 0.7982028617966272,
+    "chamfer_l1": 0.007107474491638288,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.7503360987588771,
+    "fscore@0.02": 0.9679479580773401,
+    "fscore@0.05": 1.0,
+    "normal_consistency": 0.9751738444079664,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "refine_seconds": 50.16552970000339,
+   "refine_history": [
+    {
+     "iteration": 0,
+     "mean_iou": 0.7694333854373245,
+     "iou": {
+      "front": 0.8877883874028824,
+      "back": 0.8877883874028824,
+      "left": 0.6510783834717666,
+      "right": 0.6510783834717666
+     }
+    },
+    {
+     "iteration": 1,
+     "mean_iou": 0.8622047015129947,
+     "iou": {
+      "front": 0.9585445777173242,
+      "back": 0.9585445777173242,
+      "left": 0.7658648253086652,
+      "right": 0.7658648253086652
+     }
+    },
+    {
+     "iteration": 2,
+     "mean_iou": 0.9259278124911289,
+     "iou": {
+      "front": 0.9869108300295765,
+      "back": 0.9869108300295765,
+      "left": 0.8649447949526814,
+      "right": 0.8649447949526814
+     }
+    },
+    {
+     "iteration": 3,
+     "mean_iou": 0.9594817674428764,
+     "iou": {
+      "front": 0.9867320631327422,
+      "back": 0.9867320631327422,
+      "left": 0.9322314717530106,
+      "right": 0.9322314717530106
+     }
+    },
+    {
+     "iteration": 4,
+     "mean_iou": 0.9806899726358401,
+     "iou": {
+      "front": 0.9927880053141014,
+      "back": 0.9927880053141014,
+      "left": 0.9685919399575788,
+      "right": 0.9685919399575788
+     }
+    },
+    {
+     "iteration": 5,
+     "mean_iou": 0.9847988506163364,
+     "iou": {
+      "front": 0.9894089834515366,
+      "back": 0.9894089834515366,
+      "left": 0.9801887177811364,
+      "right": 0.9801887177811364
+     }
+    },
+    {
+     "iteration": 6,
+     "mean_iou": 0.9883811414999361,
+     "iou": {
+      "front": 0.9931972789115646,
+      "back": 0.9931972789115646,
+      "left": 0.9835650040883075,
+      "right": 0.9835650040883075
+     }
+    },
+    {
+     "iteration": 7,
+     "mean_iou": 0.9869817476492141,
+     "iou": {
+      "front": 0.989908546199937,
+      "back": 0.989908546199937,
+      "left": 0.9840549490984913,
+      "right": 0.9840549490984913
+     }
+    },
+    {
+     "iteration": 8,
+     "mean_iou": 0.9889153726823071,
+     "iou": {
+      "front": 0.9931662870159453,
+      "back": 0.9931662870159453,
+      "left": 0.9846644583486689,
+      "right": 0.9846644583486689
+     }
+    },
+    {
+     "iteration": 9,
+     "mean_iou": 0.9869455940406877,
+     "iou": {
+      "front": 0.9892235946559113,
+      "back": 0.9892235946559113,
+      "left": 0.9846675934254641,
+      "right": 0.9846675934254641
+     }
+    },
+    {
+     "iteration": 10,
+     "mean_iou": 0.9889133565570482,
+     "iou": {
+      "front": 0.9929156519814036,
+      "back": 0.9929156519814036,
+      "left": 0.9849110611326927,
+      "right": 0.9849110611326927
+     }
+    },
+    {
+     "iteration": 11,
+     "mean_iou": 0.9863137644800908,
+     "iou": {
+      "front": 0.9879165486642122,
+      "back": 0.9879165486642122,
+      "left": 0.9847109802959693,
+      "right": 0.9847109802959693
+     }
+    },
+    {
+     "iteration": 12,
+     "mean_iou": 0.9893290049670906,
+     "iou": {
+      "front": 0.9932616260677001,
+      "back": 0.9932616260677001,
+      "left": 0.9853963838664812,
+      "right": 0.9853963838664812
+     }
+    },
+    {
+     "iteration": 13,
+     "mean_iou": 0.9866280605387944,
+     "iou": {
+      "front": 0.9886646304984413,
+      "back": 0.9886646304984413,
+      "left": 0.9845914905791474,
+      "right": 0.9845914905791474
+     }
+    },
+    {
+     "iteration": 14,
+     "mean_iou": 0.9894692838596485,
+     "iou": {
+      "front": 0.9931366037258437,
+      "back": 0.9931366037258437,
+      "left": 0.9858019639934533,
+      "right": 0.9858019639934533
+     }
+    },
+    {
+     "iteration": 15,
+     "mean_iou": 0.9862515282218972,
+     "iou": {
+      "front": 0.9879499119053612,
+      "back": 0.9879499119053612,
+      "left": 0.9845531445384332,
+      "right": 0.9845531445384332
+     }
+    },
+    {
+     "iteration": 16,
+     "mean_iou": 0.9892816504735051,
+     "iou": {
+      "front": 0.9933251083483597,
+      "back": 0.9933251083483597,
+      "left": 0.9852381925986505,
+      "right": 0.9852381925986505
+     }
+    },
+    {
+     "iteration": 17,
+     "mean_iou": 0.9857012239315409,
+     "iou": {
+      "front": 0.9874524356111828,
+      "back": 0.9874524356111828,
+      "left": 0.983950012251899,
+      "right": 0.983950012251899
+     }
+    },
+    {
+     "iteration": 18,
+     "mean_iou": 0.9888137802466914,
+     "iou": {
+      "front": 0.9930737847496758,
+      "back": 0.9930737847496758,
+      "left": 0.9845537757437071,
+      "right": 0.9845537757437071
+     }
+    }
+   ],
+   "gates": {
+    "accepted": true,
+    "gates": {
+     "readable_mesh": {
+      "status": "pass",
+      "detail": "211370 vertices, 422736 triangles"
+     },
+     "actual_geometry": {
+      "status": "pass",
+      "detail": ""
+     },
+     "finite_coordinates": {
+      "status": "pass",
+      "detail": ""
+     },
+     "validation_report": {
+      "status": "pass",
+      "detail": "validation.json"
+     },
+     "model_version_recorded": {
+      "status": "pass",
+      "detail": {
+       "model": "VAST-AI/TripoSG",
+       "version": "weights:90facf66b8638c8d",
+       "duration_s": 55.476712599993334,
+       "peak_vram_mb": 5507.59228515625
+      }
+     },
+     "runtime_recorded": {
+      "status": "pass",
+      "detail": {
+       "duration_s": 55.476712599993334,
+       "peak_vram_mb": 5507.59228515625
+      }
+     },
+     "previews_rendered": {
+      "status": "pass",
+      "detail": [
+       "preview_front.png",
+       "preview_back.png",
+       "preview_left.png",
+       "preview_right.png"
+      ]
+     },
+     "input_view_comparison": {
+      "status": "pass",
+      "detail": {
+       "front": 0.8877883874028824,
+       "back": 0.8877883874028824,
+       "left": 0.6510783834717666,
+       "right": 0.6510783834717666
+      }
+     },
+     "blender_roundtrip": {
+      "status": "skipped",
+      "detail": "blender not found on PATH"
+     }
+    }
+   },
+   "output_bytes": 7610064
+  },
+  {
+   "object": "person_01",
+   "category": "human",
+   "record": {
+    "backend": "triposg",
+    "model": "VAST-AI/TripoSG",
+    "model_version": "weights:90facf66b8638c8d",
+    "license": "MIT",
+    "status": "success",
+    "quality_profile": "quality",
+    "config": {
+     "name": "quality",
+     "steps": 50,
+     "guidance": 7.0,
+     "faces": -1,
+     "vram_fraction": 0.95,
+     "dtype": "float16",
+     "segmentation": "alpha",
+     "command": [
+      "C:\\ai3d\\triposg-env\\Scripts\\python.exe",
+      "C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_runner.py",
+      "--repo",
+      "C:\\ai3d\\TripoSG",
+      "--weights",
+      "C:\\ai3d\\TripoSG\\pretrained_weights\\TripoSG",
+      "--image",
+      "bench\\human_v1_triposg_base\\person_01\\input_rgba.png",
+      "--out",
+      "bench\\human_v1_triposg_base\\person_01\\raw_triposg.glb",
+      "--result",
+      "bench\\human_v1_triposg_base\\person_01\\runner_result.json",
+      "--seed",
+      "42",
+      "--steps",
+      "50",
+      "--guidance",
+      "7.0",
+      "--faces",
+      "-1",
+      "--vram-fraction",
+      "0.95",
+      "--dtype",
+      "float16"
+     ],
+     "runtime": {
+      "python": "3.10.11",
+      "torch": "2.6.0+cu124",
+      "torch_cuda": "12.4",
+      "platform": "Windows-10-10.0.26300-SP0",
+      "gpu_total_mb": 12287.5,
+      "raw_faces": 419232,
+      "faces": 419232,
+      "vertices": 209616,
+      "vram_after_load_mb": 3789.3115234375
+     }
+    },
+    "seed": 42,
+    "duration_s": 55.44059549999656,
+    "load_s": 2.7761940999989747,
+    "peak_vram_mb": 5505.3271484375,
+    "peak_vram_reserved_mb": 6884.0,
+    "device": "NVIDIA GeForce RTX 3060",
+    "output_path": "bench\\human_v1_triposg_base\\person_01\\raw_triposg.glb",
+    "inputs": [
+     {
+      "view": "front",
+      "source": "bench\\human_v1\\person_01\\views\\front.png",
+      "copy": "bench\\human_v1_triposg_base\\person_01\\inputs\\front.png",
+      "sha256": "0dde0061747006700d7faffd0722440fc6a3a3654a5b0f9771e826d64f72256a"
+     }
+    ],
+    "reason": "",
+    "warnings": [],
+    "label": "AI_GENERATED",
+    "started_at": "2026-10-24T10:41:46+0700"
+   },
+   "placement": {
+    "rotation": [
+     [
+      1.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "scale": 0.917358013134794,
+    "mean_ref_iou": 0.6191659884721755,
+    "label": "ESTIMATED",
+    "method": "24 rotations + silhouette box, scored by reference IoU (no ground truth)"
+   },
+   "A": {
+    "ref_iou": {
+     "front": 0.8805657273257974,
+     "back": 0.8805657273257974,
+     "left": 0.3577662496185536,
+     "right": 0.3577662496185536
+    },
+    "ref_iou_mean": 0.6191659884721755,
+    "heldout_iou": {
+     "az45_el20": 0.46878025714350047,
+     "az135_el20": 0.49232181797314356,
+     "az225_el-15": 0.4666022784643414,
+     "top": 0.4252508361204013
+    },
+    "heldout_iou_mean": 0.4632387974253467,
+    "chamfer_l1": 0.027843252959574995,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.23462113951011715,
+    "fscore@0.02": 0.40134655462184876,
+    "fscore@0.05": 0.8625175483759002,
+    "normal_consistency": 0.9981386390131327,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "B": {
+    "ref_iou": {
+     "front": 0.9902043101035545,
+     "back": 0.9902043101035545,
+     "left": 0.9815415434513021,
+     "right": 0.9815415434513021
+    },
+    "ref_iou_mean": 0.9858729267774283,
+    "heldout_iou": {
+     "az45_el20": 0.7581095266135846,
+     "az135_el20": 0.754172567266842,
+     "az225_el-15": 0.7618318310778578,
+     "top": 0.6438740981931942
+    },
+    "heldout_iou_mean": 0.7294970057878696,
+    "chamfer_l1": 0.010847881590496669,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.6487835487842413,
+    "fscore@0.02": 0.8303284970350081,
+    "fscore@0.05": 0.9935347356767229,
+    "normal_consistency": 0.9446174461717834,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "refine_seconds": 49.89918000000034,
+   "refine_history": [
+    {
+     "iteration": 0,
+     "mean_iou": 0.6191659884721755,
+     "iou": {
+      "front": 0.8805657273257974,
+      "back": 0.8805657273257974,
+      "left": 0.3577662496185536,
+      "right": 0.3577662496185536
+     }
+    },
+    {
+     "iteration": 1,
+     "mean_iou": 0.6818116044421325,
+     "iou": {
+      "front": 0.9333985223815733,
+      "back": 0.9333985223815733,
+      "left": 0.43022468650269174,
+      "right": 0.43022468650269174
+     }
+    },
+    {
+     "iteration": 2,
+     "mean_iou": 0.7292848215259369,
+     "iou": {
+      "front": 0.9634394974652855,
+      "back": 0.9634394974652855,
+      "left": 0.4951301455865884,
+      "right": 0.4951301455865884
+     }
+    },
+    {
+     "iteration": 3,
+     "mean_iou": 0.7679944713381179,
+     "iou": {
+      "front": 0.9752607055691147,
+      "back": 0.9752607055691147,
+      "left": 0.560728237107121,
+      "right": 0.560728237107121
+     }
+    },
+    {
+     "iteration": 4,
+     "mean_iou": 0.8075838316273988,
+     "iou": {
+      "front": 0.9830678680018968,
+      "back": 0.9830678680018968,
+      "left": 0.6320997952529006,
+      "right": 0.6320997952529006
+     }
+    },
+    {
+     "iteration": 5,
+     "mean_iou": 0.8476303050287143,
+     "iou": {
+      "front": 0.9862178859970367,
+      "back": 0.9862178859970367,
+      "left": 0.7090427240603919,
+      "right": 0.7090427240603919
+     }
+    },
+    {
+     "iteration": 6,
+     "mean_iou": 0.8889855401045065,
+     "iou": {
+      "front": 0.9883769780142837,
+      "back": 0.9883769780142837,
+      "left": 0.7895941021947293,
+      "right": 0.7895941021947293
+     }
+    },
+    {
+     "iteration": 7,
+     "mean_iou": 0.9279925905346076,
+     "iou": {
+      "front": 0.9887206470933976,
+      "back": 0.9887206470933976,
+      "left": 0.8672645339758176,
+      "right": 0.8672645339758176
+     }
+    },
+    {
+     "iteration": 8,
+     "mean_iou": 0.9569664475181512,
+     "iou": {
+      "front": 0.9896673387096774,
+      "back": 0.9896673387096774,
+      "left": 0.924265556326625,
+      "right": 0.924265556326625
+     }
+    },
+    {
+     "iteration": 9,
+     "mean_iou": 0.9723891109539107,
+     "iou": {
+      "front": 0.9892268517223046,
+      "back": 0.9892268517223046,
+      "left": 0.9555513701855165,
+      "right": 0.9555513701855165
+     }
+    },
+    {
+     "iteration": 10,
+     "mean_iou": 0.9796555079464762,
+     "iou": {
+      "front": 0.9895608855055834,
+      "back": 0.9895608855055834,
+      "left": 0.969750130387369,
+      "right": 0.969750130387369
+     }
+    },
+    {
+     "iteration": 11,
+     "mean_iou": 0.9829667831142861,
+     "iou": {
+      "front": 0.9899795672740505,
+      "back": 0.9899795672740505,
+      "left": 0.9759539989545217,
+      "right": 0.9759539989545217
+     }
+    },
+    {
+     "iteration": 12,
+     "mean_iou": 0.9848133843287983,
+     "iou": {
+      "front": 0.9902021163428699,
+      "back": 0.9902021163428699,
+      "left": 0.9794246523147266,
+      "right": 0.9794246523147266
+     }
+    },
+    {
+     "iteration": 13,
+     "mean_iou": 0.9842283004607787,
+     "iou": {
+      "front": 0.9900923593618808,
+      "back": 0.9900923593618808,
+      "left": 0.9783642415596766,
+      "right": 0.9783642415596766
+     }
+    },
+    {
+     "iteration": 14,
+     "mean_iou": 0.9858729267774283,
+     "iou": {
+      "front": 0.9902043101035545,
+      "back": 0.9902043101035545,
+      "left": 0.9815415434513021,
+      "right": 0.9815415434513021
+     }
+    },
+    {
+     "iteration": 15,
+     "mean_iou": 0.9848684496062963,
+     "iou": {
+      "front": 0.9895949876929961,
+      "back": 0.9895949876929961,
+      "left": 0.9801419115195962,
+      "right": 0.9801419115195962
+     }
+    },
+    {
+     "iteration": 16,
+     "mean_iou": 0.9855385013492477,
+     "iou": {
+      "front": 0.9899026627880958,
+      "back": 0.9899026627880958,
+      "left": 0.9811743399103994,
+      "right": 0.9811743399103994
+     }
+    },
+    {
+     "iteration": 17,
+     "mean_iou": 0.9850591096561706,
+     "iou": {
+      "front": 0.9892665474060823,
+      "back": 0.9892665474060823,
+      "left": 0.9808516719062589,
+      "right": 0.9808516719062589
+     }
+    },
+    {
+     "iteration": 18,
+     "mean_iou": 0.9855861649827635,
+     "iou": {
+      "front": 0.9895725587766626,
+      "back": 0.9895725587766626,
+      "left": 0.9815997711888645,
+      "right": 0.9815997711888645
+     }
+    }
+   ],
+   "gates": {
+    "accepted": false,
+    "gates": {
+     "readable_mesh": {
+      "status": "pass",
+      "detail": "209616 vertices, 419232 triangles"
+     },
+     "actual_geometry": {
+      "status": "pass",
+      "detail": ""
+     },
+     "finite_coordinates": {
+      "status": "pass",
+      "detail": ""
+     },
+     "validation_report": {
+      "status": "pass",
+      "detail": "validation.json"
+     },
+     "model_version_recorded": {
+      "status": "pass",
+      "detail": {
+       "model": "VAST-AI/TripoSG",
+       "version": "weights:90facf66b8638c8d",
+       "duration_s": 55.44059549999656,
+       "peak_vram_mb": 5505.3271484375
+      }
+     },
+     "runtime_recorded": {
+      "status": "pass",
+      "detail": {
+       "duration_s": 55.44059549999656,
+       "peak_vram_mb": 5505.3271484375
+      }
+     },
+     "previews_rendered": {
+      "status": "pass",
+      "detail": [
+       "preview_front.png",
+       "preview_back.png",
+       "preview_left.png",
+       "preview_right.png"
+      ]
+     },
+     "input_view_comparison": {
+      "status": "fail",
+      "detail": {
+       "front": 0.8805657273257974,
+       "back": 0.8805657273257974,
+       "left": 0.3577662496185536,
+       "right": 0.3577662496185536
+      }
+     },
+     "blender_roundtrip": {
+      "status": "skipped",
+      "detail": "blender not found on PATH"
+     }
+    }
+   },
+   "output_bytes": 7546964
+  },
+  {
+   "object": "person_02",
+   "category": "human",
+   "record": {
+    "backend": "triposg",
+    "model": "VAST-AI/TripoSG",
+    "model_version": "weights:90facf66b8638c8d",
+    "license": "MIT",
+    "status": "success",
+    "quality_profile": "quality",
+    "config": {
+     "name": "quality",
+     "steps": 50,
+     "guidance": 7.0,
+     "faces": -1,
+     "vram_fraction": 0.95,
+     "dtype": "float16",
+     "segmentation": "alpha",
+     "command": [
+      "C:\\ai3d\\triposg-env\\Scripts\\python.exe",
+      "C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_runner.py",
+      "--repo",
+      "C:\\ai3d\\TripoSG",
+      "--weights",
+      "C:\\ai3d\\TripoSG\\pretrained_weights\\TripoSG",
+      "--image",
+      "bench\\human_v1_triposg_base\\person_02\\input_rgba.png",
+      "--out",
+      "bench\\human_v1_triposg_base\\person_02\\raw_triposg.glb",
+      "--result",
+      "bench\\human_v1_triposg_base\\person_02\\runner_result.json",
+      "--seed",
+      "42",
+      "--steps",
+      "50",
+      "--guidance",
+      "7.0",
+      "--faces",
+      "-1",
+      "--vram-fraction",
+      "0.95",
+      "--dtype",
+      "float16"
+     ],
+     "runtime": {
+      "python": "3.10.11",
+      "torch": "2.6.0+cu124",
+      "torch_cuda": "12.4",
+      "platform": "Windows-10-10.0.26300-SP0",
+      "gpu_total_mb": 12287.5,
+      "raw_faces": 443584,
+      "faces": 443584,
+      "vertices": 221792,
+      "vram_after_load_mb": 3789.3115234375
+     }
+    },
+    "seed": 42,
+    "duration_s": 54.50833949999651,
+    "load_s": 2.7686334000027273,
+    "peak_vram_mb": 5529.4892578125,
+    "peak_vram_reserved_mb": 8314.0,
+    "device": "NVIDIA GeForce RTX 3060",
+    "output_path": "bench\\human_v1_triposg_base\\person_02\\raw_triposg.glb",
+    "inputs": [
+     {
+      "view": "front",
+      "source": "bench\\human_v1\\person_02\\views\\front.png",
+      "copy": "bench\\human_v1_triposg_base\\person_02\\inputs\\front.png",
+      "sha256": "f871eb150ddf8cb251716ebfc73377f8c8d9944419cab361a67bfa07cf8382d9"
+     }
+    ],
+    "reason": "",
+    "warnings": [],
+    "label": "AI_GENERATED",
+    "started_at": "2026-10-24T10:43:49+0700"
+   },
+   "placement": {
+    "rotation": [
+     [
+      1.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "scale": 0.9110763753626745,
+    "mean_ref_iou": 0.8229509983991092,
+    "label": "ESTIMATED",
+    "method": "24 rotations + silhouette box, scored by reference IoU (no ground truth)"
+   },
+   "A": {
+    "ref_iou": {
+     "front": 0.8849646539439493,
+     "back": 0.8849646539439493,
+     "left": 0.7609373428542693,
+     "right": 0.7609373428542693
+    },
+    "ref_iou_mean": 0.8229509983991092,
+    "heldout_iou": {
+     "az45_el20": 0.7740072202166065,
+     "az135_el20": 0.8059658601069027,
+     "az225_el-15": 0.7769507259502448,
+     "top": 0.630289403897152
+    },
+    "heldout_iou_mean": 0.7468033025427265,
+    "chamfer_l1": 0.009823797107596718,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.5769906944504614,
+    "fscore@0.02": 0.9420828040011675,
+    "fscore@0.05": 1.0,
+    "normal_consistency": 0.9980920898361271,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "B": {
+    "ref_iou": {
+     "front": 0.9910874992742263,
+     "back": 0.9910874992742263,
+     "left": 0.9860283091328043,
+     "right": 0.9860283091328043
+    },
+    "ref_iou_mean": 0.9885579042035153,
+    "heldout_iou": {
+     "az45_el20": 0.8397750256282381,
+     "az135_el20": 0.8175078948776963,
+     "az225_el-15": 0.8456470844449284,
+     "top": 0.682764505119454
+    },
+    "heldout_iou_mean": 0.7964236275175792,
+    "chamfer_l1": 0.007224374474103425,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.7525479701739851,
+    "fscore@0.02": 0.956766453365372,
+    "fscore@0.05": 1.0,
+    "normal_consistency": 0.9874353330371366,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "refine_seconds": 30.51409799999965,
+   "refine_history": [
+    {
+     "iteration": 0,
+     "mean_iou": 0.8229509983991092,
+     "iou": {
+      "front": 0.8849646539439493,
+      "back": 0.8849646539439493,
+      "left": 0.7609373428542693,
+      "right": 0.7609373428542693
+     }
+    },
+    {
+     "iteration": 1,
+     "mean_iou": 0.910700247088601,
+     "iou": {
+      "front": 0.9565915937455172,
+      "back": 0.9565915937455172,
+      "left": 0.864808900431685,
+      "right": 0.864808900431685
+     }
+    },
+    {
+     "iteration": 2,
+     "mean_iou": 0.9612429350234981,
+     "iou": {
+      "front": 0.98690780306549,
+      "back": 0.98690780306549,
+      "left": 0.9355780669815061,
+      "right": 0.9355780669815061
+     }
+    },
+    {
+     "iteration": 3,
+     "mean_iou": 0.9782942042901863,
+     "iou": {
+      "front": 0.987095280807847,
+      "back": 0.987095280807847,
+      "left": 0.9694931277725256,
+      "right": 0.9694931277725256
+     }
+    },
+    {
+     "iteration": 4,
+     "mean_iou": 0.9874299484465716,
+     "iou": {
+      "front": 0.9923249120562839,
+      "back": 0.9923249120562839,
+      "left": 0.9825349848368592,
+      "right": 0.9825349848368592
+     }
+    },
+    {
+     "iteration": 5,
+     "mean_iou": 0.9855227094776584,
+     "iou": {
+      "front": 0.9881893182805037,
+      "back": 0.9881893182805037,
+      "left": 0.9828561006748131,
+      "right": 0.9828561006748131
+     }
+    },
+    {
+     "iteration": 6,
+     "mean_iou": 0.9885579042035153,
+     "iou": {
+      "front": 0.9910874992742263,
+      "back": 0.9910874992742263,
+      "left": 0.9860283091328043,
+      "right": 0.9860283091328043
+     }
+    },
+    {
+     "iteration": 7,
+     "mean_iou": 0.9854479104201103,
+     "iou": {
+      "front": 0.9874190189726978,
+      "back": 0.9874190189726978,
+      "left": 0.9834768018675226,
+      "right": 0.9834768018675226
+     }
+    },
+    {
+     "iteration": 8,
+     "mean_iou": 0.9882476740608139,
+     "iou": {
+      "front": 0.990283659144962,
+      "back": 0.990283659144962,
+      "left": 0.9862116889766659,
+      "right": 0.9862116889766659
+     }
+    },
+    {
+     "iteration": 9,
+     "mean_iou": 0.9859909950154256,
+     "iou": {
+      "front": 0.9874193828267346,
+      "back": 0.9874193828267346,
+      "left": 0.9845626072041166,
+      "right": 0.9845626072041166
+     }
+    },
+    {
+     "iteration": 10,
+     "mean_iou": 0.9884180785676275,
+     "iou": {
+      "front": 0.9902557856272838,
+      "back": 0.9902557856272838,
+      "left": 0.9865803715079713,
+      "right": 0.9865803715079713
+     }
+    }
+   ],
+   "gates": {
+    "accepted": true,
+    "gates": {
+     "readable_mesh": {
+      "status": "pass",
+      "detail": "221792 vertices, 443584 triangles"
+     },
+     "actual_geometry": {
+      "status": "pass",
+      "detail": ""
+     },
+     "finite_coordinates": {
+      "status": "pass",
+      "detail": ""
+     },
+     "validation_report": {
+      "status": "pass",
+      "detail": "validation.json"
+     },
+     "model_version_recorded": {
+      "status": "pass",
+      "detail": {
+       "model": "VAST-AI/TripoSG",
+       "version": "weights:90facf66b8638c8d",
+       "duration_s": 54.50833949999651,
+       "peak_vram_mb": 5529.4892578125
+      }
+     },
+     "runtime_recorded": {
+      "status": "pass",
+      "detail": {
+       "duration_s": 54.50833949999651,
+       "peak_vram_mb": 5529.4892578125
+      }
+     },
+     "previews_rendered": {
+      "status": "pass",
+      "detail": [
+       "preview_front.png",
+       "preview_back.png",
+       "preview_left.png",
+       "preview_right.png"
+      ]
+     },
+     "input_view_comparison": {
+      "status": "pass",
+      "detail": {
+       "front": 0.8849646539439493,
+       "back": 0.8849646539439493,
+       "left": 0.7609373428542693,
+       "right": 0.7609373428542693
+      }
+     },
+     "blender_roundtrip": {
+      "status": "skipped",
+      "detail": "blender not found on PATH"
+     }
+    }
+   },
+   "output_bytes": 7985300
+  },
+  {
+   "object": "person_03",
+   "category": "human",
+   "record": {
+    "backend": "triposg",
+    "model": "VAST-AI/TripoSG",
+    "model_version": "weights:90facf66b8638c8d",
+    "license": "MIT",
+    "status": "success",
+    "quality_profile": "quality",
+    "config": {
+     "name": "quality",
+     "steps": 50,
+     "guidance": 7.0,
+     "faces": -1,
+     "vram_fraction": 0.95,
+     "dtype": "float16",
+     "segmentation": "alpha",
+     "command": [
+      "C:\\ai3d\\triposg-env\\Scripts\\python.exe",
+      "C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_runner.py",
+      "--repo",
+      "C:\\ai3d\\TripoSG",
+      "--weights",
+      "C:\\ai3d\\TripoSG\\pretrained_weights\\TripoSG",
+      "--image",
+      "bench\\human_v1_triposg_base\\person_03\\input_rgba.png",
+      "--out",
+      "bench\\human_v1_triposg_base\\person_03\\raw_triposg.glb",
+      "--result",
+      "bench\\human_v1_triposg_base\\person_03\\runner_result.json",
+      "--seed",
+      "42",
+      "--steps",
+      "50",
+      "--guidance",
+      "7.0",
+      "--faces",
+      "-1",
+      "--vram-fraction",
+      "0.95",
+      "--dtype",
+      "float16"
+     ],
+     "runtime": {
+      "python": "3.10.11",
+      "torch": "2.6.0+cu124",
+      "torch_cuda": "12.4",
+      "platform": "Windows-10-10.0.26300-SP0",
+      "gpu_total_mb": 12287.5,
+      "raw_faces": 411132,
+      "faces": 411132,
+      "vertices": 205570,
+      "vram_after_load_mb": 3789.3115234375
+     }
+    },
+    "seed": 42,
+    "duration_s": 55.73417690000497,
+    "load_s": 2.761168999997608,
+    "peak_vram_mb": 5502.53173828125,
+    "peak_vram_reserved_mb": 6296.0,
+    "device": "NVIDIA GeForce RTX 3060",
+    "output_path": "bench\\human_v1_triposg_base\\person_03\\raw_triposg.glb",
+    "inputs": [
+     {
+      "view": "front",
+      "source": "bench\\human_v1\\person_03\\views\\front.png",
+      "copy": "bench\\human_v1_triposg_base\\person_03\\inputs\\front.png",
+      "sha256": "8ad4de81c552fb131eaede80d92781ca818e7784712daf87d6036a8070b9d1bc"
+     }
+    ],
+    "reason": "",
+    "warnings": [],
+    "label": "AI_GENERATED",
+    "started_at": "2026-10-24T10:45:32+0700"
+   },
+   "placement": {
+    "rotation": [
+     [
+      1.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "scale": 0.9173146845485247,
+    "mean_ref_iou": 0.5564923198239439,
+    "label": "ESTIMATED",
+    "method": "24 rotations + silhouette box, scored by reference IoU (no ground truth)"
+   },
+   "A": {
+    "ref_iou": {
+     "front": 0.6873798995207557,
+     "back": 0.6873798995207557,
+     "left": 0.42560474012713206,
+     "right": 0.42560474012713206
+    },
+    "ref_iou_mean": 0.5564923198239439,
+    "heldout_iou": {
+     "az45_el20": 0.550646352723915,
+     "az135_el20": 0.4409866729015665,
+     "az225_el-15": 0.5513408490161082,
+     "top": 0.3608000445707282
+    },
+    "heldout_iou_mean": 0.4759434798030795,
+    "chamfer_l1": 0.028538200868966225,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.21388554737703003,
+    "fscore@0.02": 0.42865435353122994,
+    "fscore@0.05": 0.8250701860155114,
+    "normal_consistency": 0.9975332649874732,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "B": {
+    "ref_iou": {
+     "front": 0.9861420302760463,
+     "back": 0.9861420302760463,
+     "left": 0.9370433390051046,
+     "right": 0.9370433390051046
+    },
+    "ref_iou_mean": 0.9615926846405755,
+    "heldout_iou": {
+     "az45_el20": 0.6499693400714693,
+     "az135_el20": 0.5739527764647624,
+     "az225_el-15": 0.6510610959131228,
+     "top": 0.4455016865528873
+    },
+    "heldout_iou_mean": 0.5801212247505604,
+    "chamfer_l1": 0.01663648558139797,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.49246536888275594,
+    "fscore@0.02": 0.6950434396661479,
+    "fscore@0.05": 0.9351788326432483,
+    "normal_consistency": 0.9438662619130348,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "refine_seconds": 77.73599259999901,
+   "refine_history": [
+    {
+     "iteration": 0,
+     "mean_iou": 0.5564923198239439,
+     "iou": {
+      "front": 0.6873798995207557,
+      "back": 0.6873798995207557,
+      "left": 0.42560474012713206,
+      "right": 0.42560474012713206
+     }
+    },
+    {
+     "iteration": 1,
+     "mean_iou": 0.6350590814898001,
+     "iou": {
+      "front": 0.7875906806308648,
+      "back": 0.7875906806308648,
+      "left": 0.4825274823487354,
+      "right": 0.4825274823487354
+     }
+    },
+    {
+     "iteration": 2,
+     "mean_iou": 0.7039472701541081,
+     "iou": {
+      "front": 0.8721802545939306,
+      "back": 0.8721802545939306,
+      "left": 0.5357142857142857,
+      "right": 0.5357142857142857
+     }
+    },
+    {
+     "iteration": 3,
+     "mean_iou": 0.7575305881517813,
+     "iou": {
+      "front": 0.9273243243243243,
+      "back": 0.9273243243243243,
+      "left": 0.5877368519792383,
+      "right": 0.5877368519792383
+     }
+    },
+    {
+     "iteration": 4,
+     "mean_iou": 0.7988196227581804,
+     "iou": {
+      "front": 0.9559656746795754,
+      "back": 0.9559656746795754,
+      "left": 0.6416735708367854,
+      "right": 0.6416735708367854
+     }
+    },
+    {
+     "iteration": 5,
+     "mean_iou": 0.8295491289612095,
+     "iou": {
+      "front": 0.9660347114746849,
+      "back": 0.9660347114746849,
+      "left": 0.6930635464477342,
+      "right": 0.6930635464477342
+     }
+    },
+    {
+     "iteration": 6,
+     "mean_iou": 0.853866434511874,
+     "iou": {
+      "front": 0.9695902866330322,
+      "back": 0.9695902866330322,
+      "left": 0.7381425823907162,
+      "right": 0.7381425823907162
+     }
+    },
+    {
+     "iteration": 7,
+     "mean_iou": 0.8751929062704823,
+     "iou": {
+      "front": 0.9698315339568705,
+      "back": 0.9698315339568705,
+      "left": 0.7805542785840941,
+      "right": 0.7805542785840941
+     }
+    },
+    {
+     "iteration": 8,
+     "mean_iou": 0.8946155248509098,
+     "iou": {
+      "front": 0.9707369942196532,
+      "back": 0.9707369942196532,
+      "left": 0.8184940554821665,
+      "right": 0.8184940554821665
+     }
+    },
+    {
+     "iteration": 9,
+     "mean_iou": 0.9095542800910796,
+     "iou": {
+      "front": 0.9707655967764346,
+      "back": 0.9707655967764346,
+      "left": 0.8483429634057249,
+      "right": 0.8483429634057249
+     }
+    },
+    {
+     "iteration": 10,
+     "mean_iou": 0.9206656307046206,
+     "iou": {
+      "front": 0.9720715458009959,
+      "back": 0.9720715458009959,
+      "left": 0.8692597156082453,
+      "right": 0.8692597156082453
+     }
+    },
+    {
+     "iteration": 11,
+     "mean_iou": 0.9299623966618377,
+     "iou": {
+      "front": 0.9729368898283871,
+      "back": 0.9729368898283871,
+      "left": 0.8869879034952883,
+      "right": 0.8869879034952883
+     }
+    },
+    {
+     "iteration": 12,
+     "mean_iou": 0.9364655038840796,
+     "iou": {
+      "front": 0.9739461683906129,
+      "back": 0.9739461683906129,
+      "left": 0.8989848393775463,
+      "right": 0.8989848393775463
+     }
+    },
+    {
+     "iteration": 13,
+     "mean_iou": 0.9436871469737471,
+     "iou": {
+      "front": 0.9769849442017088,
+      "back": 0.9769849442017088,
+      "left": 0.9103893497457853,
+      "right": 0.9103893497457853
+     }
+    },
+    {
+     "iteration": 14,
+     "mean_iou": 0.9481601325168185,
+     "iou": {
+      "front": 0.9783340286469198,
+      "back": 0.9783340286469198,
+      "left": 0.9179862363867174,
+      "right": 0.9179862363867174
+     }
+    },
+    {
+     "iteration": 15,
+     "mean_iou": 0.9534892305448903,
+     "iou": {
+      "front": 0.9814835440218299,
+      "back": 0.9814835440218299,
+      "left": 0.9254949170679507,
+      "right": 0.9254949170679507
+     }
+    },
+    {
+     "iteration": 16,
+     "mean_iou": 0.9553332822963092,
+     "iou": {
+      "front": 0.9828507795100223,
+      "back": 0.9828507795100223,
+      "left": 0.9278157850825963,
+      "right": 0.9278157850825963
+     }
+    },
+    {
+     "iteration": 17,
+     "mean_iou": 0.9573637455110078,
+     "iou": {
+      "front": 0.983718341219037,
+      "back": 0.983718341219037,
+      "left": 0.9310091498029787,
+      "right": 0.9310091498029787
+     }
+    },
+    {
+     "iteration": 18,
+     "mean_iou": 0.9583122621892657,
+     "iou": {
+      "front": 0.9846941615183392,
+      "back": 0.9846941615183392,
+      "left": 0.9319303628601922,
+      "right": 0.9319303628601922
+     }
+    },
+    {
+     "iteration": 19,
+     "mean_iou": 0.9596875137951808,
+     "iou": {
+      "front": 0.9854741763134461,
+      "back": 0.9854741763134461,
+      "left": 0.9339008512769154,
+      "right": 0.9339008512769154
+     }
+    },
+    {
+     "iteration": 20,
+     "mean_iou": 0.9595741783284306,
+     "iou": {
+      "front": 0.9846324857579547,
+      "back": 0.9846324857579547,
+      "left": 0.9345158708989064,
+      "right": 0.9345158708989064
+     }
+    },
+    {
+     "iteration": 21,
+     "mean_iou": 0.9607210347744388,
+     "iou": {
+      "front": 0.9854842746308501,
+      "back": 0.9854842746308501,
+      "left": 0.9359577949180273,
+      "right": 0.9359577949180273
+     }
+    },
+    {
+     "iteration": 22,
+     "mean_iou": 0.9596161657396206,
+     "iou": {
+      "front": 0.984526488318471,
+      "back": 0.984526488318471,
+      "left": 0.9347058431607702,
+      "right": 0.9347058431607702
+     }
+    },
+    {
+     "iteration": 23,
+     "mean_iou": 0.9615262257366266,
+     "iou": {
+      "front": 0.9863055640604559,
+      "back": 0.9863055640604559,
+      "left": 0.9367468874127974,
+      "right": 0.9367468874127974
+     }
+    },
+    {
+     "iteration": 24,
+     "mean_iou": 0.9600636739321831,
+     "iou": {
+      "front": 0.9843337685064304,
+      "back": 0.9843337685064304,
+      "left": 0.9357935793579358,
+      "right": 0.9357935793579358
+     }
+    },
+    {
+     "iteration": 25,
+     "mean_iou": 0.9615926846405755,
+     "iou": {
+      "front": 0.9861420302760463,
+      "back": 0.9861420302760463,
+      "left": 0.9370433390051046,
+      "right": 0.9370433390051046
+     }
+    },
+    {
+     "iteration": 26,
+     "mean_iou": 0.9601820503129249,
+     "iou": {
+      "front": 0.9844717908830801,
+      "back": 0.9844717908830801,
+      "left": 0.9358923097427696,
+      "right": 0.9358923097427696
+     }
+    },
+    {
+     "iteration": 27,
+     "mean_iou": 0.9612579258711078,
+     "iou": {
+      "front": 0.9857846273680697,
+      "back": 0.9857846273680697,
+      "left": 0.9367312243741458,
+      "right": 0.9367312243741458
+     }
+    },
+    {
+     "iteration": 28,
+     "mean_iou": 0.9602508730346649,
+     "iou": {
+      "front": 0.9846354745499,
+      "back": 0.9846354745499,
+      "left": 0.9358662715194299,
+      "right": 0.9358662715194299
+     }
+    },
+    {
+     "iteration": 29,
+     "mean_iou": 0.9613898938142018,
+     "iou": {
+      "front": 0.9855652899457655,
+      "back": 0.9855652899457655,
+      "left": 0.9372144976826381,
+      "right": 0.9372144976826381
+     }
+    }
+   ],
+   "gates": {
+    "accepted": false,
+    "gates": {
+     "readable_mesh": {
+      "status": "pass",
+      "detail": "205570 vertices, 411132 triangles"
+     },
+     "actual_geometry": {
+      "status": "pass",
+      "detail": ""
+     },
+     "finite_coordinates": {
+      "status": "pass",
+      "detail": ""
+     },
+     "validation_report": {
+      "status": "pass",
+      "detail": "validation.json"
+     },
+     "model_version_recorded": {
+      "status": "pass",
+      "detail": {
+       "model": "VAST-AI/TripoSG",
+       "version": "weights:90facf66b8638c8d",
+       "duration_s": 55.73417690000497,
+       "peak_vram_mb": 5502.53173828125
+      }
+     },
+     "runtime_recorded": {
+      "status": "pass",
+      "detail": {
+       "duration_s": 55.73417690000497,
+       "peak_vram_mb": 5502.53173828125
+      }
+     },
+     "previews_rendered": {
+      "status": "pass",
+      "detail": [
+       "preview_front.png",
+       "preview_back.png",
+       "preview_left.png",
+       "preview_right.png"
+      ]
+     },
+     "input_view_comparison": {
+      "status": "fail",
+      "detail": {
+       "front": 0.6873798995207557,
+       "back": 0.6873798995207557,
+       "left": 0.42560474012713206,
+       "right": 0.42560474012713206
+      }
+     },
+     "blender_roundtrip": {
+      "status": "skipped",
+      "detail": "blender not found on PATH"
+     }
+    }
+   },
+   "output_bytes": 7401212
+  },
+  {
+   "object": "person_04",
+   "category": "human",
+   "record": {
+    "backend": "triposg",
+    "model": "VAST-AI/TripoSG",
+    "model_version": "weights:90facf66b8638c8d",
+    "license": "MIT",
+    "status": "success",
+    "quality_profile": "quality",
+    "config": {
+     "name": "quality",
+     "steps": 50,
+     "guidance": 7.0,
+     "faces": -1,
+     "vram_fraction": 0.95,
+     "dtype": "float16",
+     "segmentation": "alpha",
+     "command": [
+      "C:\\ai3d\\triposg-env\\Scripts\\python.exe",
+      "C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_runner.py",
+      "--repo",
+      "C:\\ai3d\\TripoSG",
+      "--weights",
+      "C:\\ai3d\\TripoSG\\pretrained_weights\\TripoSG",
+      "--image",
+      "bench\\human_v1_triposg_base\\person_04\\input_rgba.png",
+      "--out",
+      "bench\\human_v1_triposg_base\\person_04\\raw_triposg.glb",
+      "--result",
+      "bench\\human_v1_triposg_base\\person_04\\runner_result.json",
+      "--seed",
+      "42",
+      "--steps",
+      "50",
+      "--guidance",
+      "7.0",
+      "--faces",
+      "-1",
+      "--vram-fraction",
+      "0.95",
+      "--dtype",
+      "float16"
+     ],
+     "runtime": {
+      "python": "3.10.11",
+      "torch": "2.6.0+cu124",
+      "torch_cuda": "12.4",
+      "platform": "Windows-10-10.0.26300-SP0",
+      "gpu_total_mb": 12287.5,
+      "raw_faces": 382208,
+      "faces": 382208,
+      "vertices": 191102,
+      "vram_after_load_mb": 3789.3115234375
+     }
+    },
+    "seed": 42,
+    "duration_s": 54.17507600000681,
+    "load_s": 2.7562921999997343,
+    "peak_vram_mb": 5493.4169921875,
+    "peak_vram_reserved_mb": 6746.0,
+    "device": "NVIDIA GeForce RTX 3060",
+    "output_path": "bench\\human_v1_triposg_base\\person_04\\raw_triposg.glb",
+    "inputs": [
+     {
+      "view": "front",
+      "source": "bench\\human_v1\\person_04\\views\\front.png",
+      "copy": "bench\\human_v1_triposg_base\\person_04\\inputs\\front.png",
+      "sha256": "decddc4f1a2ae51d2f9d8fd3b277c4ea3803fc82f52180ead5a938fba2b0aca9"
+     }
+    ],
+    "reason": "",
+    "warnings": [],
+    "label": "AI_GENERATED",
+    "started_at": "2026-10-24T10:48:03+0700"
+   },
+   "placement": {
+    "rotation": [
+     [
+      1.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "scale": 0.9525610840819544,
+    "mean_ref_iou": 0.6835252139466029,
+    "label": "ESTIMATED",
+    "method": "24 rotations + silhouette box, scored by reference IoU (no ground truth)"
+   },
+   "A": {
+    "ref_iou": {
+     "front": 0.8998546423596391,
+     "back": 0.8998546423596391,
+     "left": 0.4671957855335667,
+     "right": 0.4671957855335667
+    },
+    "ref_iou_mean": 0.6835252139466029,
+    "heldout_iou": {
+     "az45_el20": 0.615814268385568,
+     "az135_el20": 0.5849597034624133,
+     "az225_el-15": 0.6119095946020078,
+     "top": 0.4985234403839055
+    },
+    "heldout_iou_mean": 0.5778017517084736,
+    "chamfer_l1": 0.016866230108472755,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.31536984542211655,
+    "fscore@0.02": 0.6360188671828937,
+    "fscore@0.05": 0.9940409461294704,
+    "normal_consistency": 0.9979263347038241,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "B": {
+    "ref_iou": {
+     "front": 0.9899460830954646,
+     "back": 0.9899460830954646,
+     "left": 0.9688882988139493,
+     "right": 0.9688882988139493
+    },
+    "ref_iou_mean": 0.9794171909547069,
+    "heldout_iou": {
+     "az45_el20": 0.7820901331702299,
+     "az135_el20": 0.7893377711465626,
+     "az225_el-15": 0.7805871876517891,
+     "top": 0.6675504038473395
+    },
+    "heldout_iou_mean": 0.7548913739539803,
+    "chamfer_l1": 0.008106069638401363,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.7272587286397812,
+    "fscore@0.02": 0.9330175804768404,
+    "fscore@0.05": 0.9968652037617556,
+    "normal_consistency": 0.9468186100855344,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "refine_seconds": 92.81899290000001,
+   "refine_history": [
+    {
+     "iteration": 0,
+     "mean_iou": 0.6835252139466029,
+     "iou": {
+      "front": 0.8998546423596391,
+      "back": 0.8998546423596391,
+      "left": 0.4671957855335667,
+      "right": 0.4671957855335667
+     }
+    },
+    {
+     "iteration": 1,
+     "mean_iou": 0.7553137778992141,
+     "iou": {
+      "front": 0.9529671422798346,
+      "back": 0.9529671422798346,
+      "left": 0.5576604135185936,
+      "right": 0.5576604135185936
+     }
+    },
+    {
+     "iteration": 2,
+     "mean_iou": 0.815662596823779,
+     "iou": {
+      "front": 0.9765642203277863,
+      "back": 0.9765642203277863,
+      "left": 0.6547609733197716,
+      "right": 0.6547609733197716
+     }
+    },
+    {
+     "iteration": 3,
+     "mean_iou": 0.8619542767324304,
+     "iou": {
+      "front": 0.9786564251086067,
+      "back": 0.9786564251086067,
+      "left": 0.7452521283562541,
+      "right": 0.7452521283562541
+     }
+    },
+    {
+     "iteration": 4,
+     "mean_iou": 0.9031007534646067,
+     "iou": {
+      "front": 0.983581145207213,
+      "back": 0.983581145207213,
+      "left": 0.8226203617220005,
+      "right": 0.8226203617220005
+     }
+    },
+    {
+     "iteration": 5,
+     "mean_iou": 0.9272222212595473,
+     "iou": {
+      "front": 0.9822279743678778,
+      "back": 0.9822279743678778,
+      "left": 0.872216468151217,
+      "right": 0.872216468151217
+     }
+    },
+    {
+     "iteration": 6,
+     "mean_iou": 0.9423460108098122,
+     "iou": {
+      "front": 0.9850571437616741,
+      "back": 0.9850571437616741,
+      "left": 0.8996348778579502,
+      "right": 0.8996348778579502
+     }
+    },
+    {
+     "iteration": 7,
+     "mean_iou": 0.9487085642111721,
+     "iou": {
+      "front": 0.9827537193215199,
+      "back": 0.9827537193215199,
+      "left": 0.9146634091008246,
+      "right": 0.9146634091008246
+     }
+    },
+    {
+     "iteration": 8,
+     "mean_iou": 0.9560363568812147,
+     "iou": {
+      "front": 0.9857744827804708,
+      "back": 0.9857744827804708,
+      "left": 0.9262982309819586,
+      "right": 0.9262982309819586
+     }
+    },
+    {
+     "iteration": 9,
+     "mean_iou": 0.9576391036562362,
+     "iou": {
+      "front": 0.9830353193909143,
+      "back": 0.9830353193909143,
+      "left": 0.9322428879215583,
+      "right": 0.9322428879215583
+     }
+    },
+    {
+     "iteration": 10,
+     "mean_iou": 0.962652893104743,
+     "iou": {
+      "front": 0.9854930157422952,
+      "back": 0.9854930157422952,
+      "left": 0.9398127704671907,
+      "right": 0.9398127704671907
+     }
+    },
+    {
+     "iteration": 11,
+     "mean_iou": 0.9631097052285115,
+     "iou": {
+      "front": 0.9838480260454531,
+      "back": 0.9838480260454531,
+      "left": 0.9423713844115699,
+      "right": 0.9423713844115699
+     }
+    },
+    {
+     "iteration": 12,
+     "mean_iou": 0.9673983020789593,
+     "iou": {
+      "front": 0.9872209538305429,
+      "back": 0.9872209538305429,
+      "left": 0.9475756503273757,
+      "right": 0.9475756503273757
+     }
+    },
+    {
+     "iteration": 13,
+     "mean_iou": 0.9671949783631058,
+     "iou": {
+      "front": 0.9847258237935614,
+      "back": 0.9847258237935614,
+      "left": 0.9496641329326498,
+      "right": 0.9496641329326498
+     }
+    },
+    {
+     "iteration": 14,
+     "mean_iou": 0.9701088617193048,
+     "iou": {
+      "front": 0.9876641085812139,
+      "back": 0.9876641085812139,
+      "left": 0.9525536148573955,
+      "right": 0.9525536148573955
+     }
+    },
+    {
+     "iteration": 15,
+     "mean_iou": 0.9685971875971782,
+     "iou": {
+      "front": 0.9850425323340607,
+      "back": 0.9850425323340607,
+      "left": 0.9521518428602957,
+      "right": 0.9521518428602957
+     }
+    },
+    {
+     "iteration": 16,
+     "mean_iou": 0.9714349845061001,
+     "iou": {
+      "front": 0.9879827509670873,
+      "back": 0.9879827509670873,
+      "left": 0.9548872180451128,
+      "right": 0.9548872180451128
+     }
+    },
+    {
+     "iteration": 17,
+     "mean_iou": 0.9699104831071295,
+     "iou": {
+      "front": 0.9845206128573685,
+      "back": 0.9845206128573685,
+      "left": 0.9553003533568905,
+      "right": 0.9553003533568905
+     }
+    },
+    {
+     "iteration": 18,
+     "mean_iou": 0.9740012280358756,
+     "iou": {
+      "front": 0.9879563894523327,
+      "back": 0.9879563894523327,
+      "left": 0.9600460666194188,
+      "right": 0.9600460666194188
+     }
+    },
+    {
+     "iteration": 19,
+     "mean_iou": 0.9728709929381254,
+     "iou": {
+      "front": 0.9855209914011128,
+      "back": 0.9855209914011128,
+      "left": 0.9602209944751381,
+      "right": 0.9602209944751381
+     }
+    },
+    {
+     "iteration": 20,
+     "mean_iou": 0.9763306157943855,
+     "iou": {
+      "front": 0.9879292865289571,
+      "back": 0.9879292865289571,
+      "left": 0.964731945059814,
+      "right": 0.964731945059814
+     }
+    },
+    {
+     "iteration": 21,
+     "mean_iou": 0.9754285342062089,
+     "iou": {
+      "front": 0.9854619006984608,
+      "back": 0.9854619006984608,
+      "left": 0.965395167713957,
+      "right": 0.965395167713957
+     }
+    },
+    {
+     "iteration": 22,
+     "mean_iou": 0.9782816479296288,
+     "iou": {
+      "front": 0.9885884553206327,
+      "back": 0.9885884553206327,
+      "left": 0.967974840538625,
+      "right": 0.967974840538625
+     }
+    },
+    {
+     "iteration": 23,
+     "mean_iou": 0.9761806742906236,
+     "iou": {
+      "front": 0.9853099134390598,
+      "back": 0.9853099134390598,
+      "left": 0.9670514351421874,
+      "right": 0.9670514351421874
+     }
+    },
+    {
+     "iteration": 24,
+     "mean_iou": 0.9779550681611272,
+     "iou": {
+      "front": 0.9878697662633813,
+      "back": 0.9878697662633813,
+      "left": 0.968040370058873,
+      "right": 0.968040370058873
+     }
+    },
+    {
+     "iteration": 25,
+     "mean_iou": 0.9761562868527306,
+     "iou": {
+      "front": 0.9849073284708408,
+      "back": 0.9849073284708408,
+      "left": 0.9674052452346203,
+      "right": 0.9674052452346203
+     }
+    },
+    {
+     "iteration": 26,
+     "mean_iou": 0.9788411295174472,
+     "iou": {
+      "front": 0.9890304990171834,
+      "back": 0.9890304990171834,
+      "left": 0.9686517600177109,
+      "right": 0.9686517600177109
+     }
+    },
+    {
+     "iteration": 27,
+     "mean_iou": 0.9769462808327585,
+     "iou": {
+      "front": 0.9860935524652339,
+      "back": 0.9860935524652339,
+      "left": 0.9677990092002831,
+      "right": 0.9677990092002831
+     }
+    },
+    {
+     "iteration": 28,
+     "mean_iou": 0.9788813347302789,
+     "iou": {
+      "front": 0.9891883322764743,
+      "back": 0.9891883322764743,
+      "left": 0.9685743371840836,
+      "right": 0.9685743371840836
+     }
+    },
+    {
+     "iteration": 29,
+     "mean_iou": 0.9764546220908501,
+     "iou": {
+      "front": 0.9855337965887555,
+      "back": 0.9855337965887555,
+      "left": 0.9673754475929446,
+      "right": 0.9673754475929446
+     }
+    },
+    {
+     "iteration": 30,
+     "mean_iou": 0.9790184955836406,
+     "iou": {
+      "front": 0.9896299115212635,
+      "back": 0.9896299115212635,
+      "left": 0.9684070796460177,
+      "right": 0.9684070796460177
+     }
+    },
+    {
+     "iteration": 31,
+     "mean_iou": 0.9764302785260524,
+     "iou": {
+      "front": 0.9856930802513976,
+      "back": 0.9856930802513976,
+      "left": 0.967167476800707,
+      "right": 0.967167476800707
+     }
+    },
+    {
+     "iteration": 32,
+     "mean_iou": 0.9792186518646773,
+     "iou": {
+      "front": 0.9897260273972602,
+      "back": 0.9897260273972602,
+      "left": 0.9687112763320942,
+      "right": 0.9687112763320942
+     }
+    },
+    {
+     "iteration": 33,
+     "mean_iou": 0.9763310543373372,
+     "iou": {
+      "front": 0.9855388210034416,
+      "back": 0.9855388210034416,
+      "left": 0.9671232876712329,
+      "right": 0.9671232876712329
+     }
+    },
+    {
+     "iteration": 34,
+     "mean_iou": 0.9794171909547069,
+     "iou": {
+      "front": 0.9899460830954646,
+      "back": 0.9899460830954646,
+      "left": 0.9688882988139493,
+      "right": 0.9688882988139493
+     }
+    },
+    {
+     "iteration": 35,
+     "mean_iou": 0.9763805141635229,
+     "iou": {
+      "front": 0.9859751089771938,
+      "back": 0.9859751089771938,
+      "left": 0.966785919349852,
+      "right": 0.966785919349852
+     }
+    },
+    {
+     "iteration": 36,
+     "mean_iou": 0.9790878244351253,
+     "iou": {
+      "front": 0.9891628113315166,
+      "back": 0.9891628113315166,
+      "left": 0.9690128375387339,
+      "right": 0.9690128375387339
+     }
+    },
+    {
+     "iteration": 37,
+     "mean_iou": 0.9767384881929951,
+     "iou": {
+      "front": 0.9860400480070747,
+      "back": 0.9860400480070747,
+      "left": 0.9674369283789157,
+      "right": 0.9674369283789157
+     }
+    },
+    {
+     "iteration": 38,
+     "mean_iou": 0.9788173050656505,
+     "iou": {
+      "front": 0.9899169256135456,
+      "back": 0.9899169256135456,
+      "left": 0.9677176845177553,
+      "right": 0.9677176845177553
+     }
+    }
+   ],
+   "gates": {
+    "accepted": false,
+    "gates": {
+     "readable_mesh": {
+      "status": "pass",
+      "detail": "191102 vertices, 382208 triangles"
+     },
+     "actual_geometry": {
+      "status": "pass",
+      "detail": ""
+     },
+     "finite_coordinates": {
+      "status": "pass",
+      "detail": ""
+     },
+     "validation_report": {
+      "status": "pass",
+      "detail": "validation.json"
+     },
+     "model_version_recorded": {
+      "status": "pass",
+      "detail": {
+       "model": "VAST-AI/TripoSG",
+       "version": "weights:90facf66b8638c8d",
+       "duration_s": 54.17507600000681,
+       "peak_vram_mb": 5493.4169921875
+      }
+     },
+     "runtime_recorded": {
+      "status": "pass",
+      "detail": {
+       "duration_s": 54.17507600000681,
+       "peak_vram_mb": 5493.4169921875
+      }
+     },
+     "previews_rendered": {
+      "status": "pass",
+      "detail": [
+       "preview_front.png",
+       "preview_back.png",
+       "preview_left.png",
+       "preview_right.png"
+      ]
+     },
+     "input_view_comparison": {
+      "status": "fail",
+      "detail": {
+       "front": 0.8998546423596391,
+       "back": 0.8998546423596391,
+       "left": 0.4671957855335667,
+       "right": 0.4671957855335667
+      }
+     },
+     "blender_roundtrip": {
+      "status": "skipped",
+      "detail": "blender not found on PATH"
+     }
+    }
+   },
+   "output_bytes": 6880512
+  },
+  {
+   "object": "person_05",
+   "category": "human",
+   "record": {
+    "backend": "triposg",
+    "model": "VAST-AI/TripoSG",
+    "model_version": "weights:90facf66b8638c8d",
+    "license": "MIT",
+    "status": "success",
+    "quality_profile": "quality",
+    "config": {
+     "name": "quality",
+     "steps": 50,
+     "guidance": 7.0,
+     "faces": -1,
+     "vram_fraction": 0.95,
+     "dtype": "float16",
+     "segmentation": "alpha",
+     "command": [
+      "C:\\ai3d\\triposg-env\\Scripts\\python.exe",
+      "C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_runner.py",
+      "--repo",
+      "C:\\ai3d\\TripoSG",
+      "--weights",
+      "C:\\ai3d\\TripoSG\\pretrained_weights\\TripoSG",
+      "--image",
+      "bench\\human_v1_triposg_base\\person_05\\input_rgba.png",
+      "--out",
+      "bench\\human_v1_triposg_base\\person_05\\raw_triposg.glb",
+      "--result",
+      "bench\\human_v1_triposg_base\\person_05\\runner_result.json",
+      "--seed",
+      "42",
+      "--steps",
+      "50",
+      "--guidance",
+      "7.0",
+      "--faces",
+      "-1",
+      "--vram-fraction",
+      "0.95",
+      "--dtype",
+      "float16"
+     ],
+     "runtime": {
+      "python": "3.10.11",
+      "torch": "2.6.0+cu124",
+      "torch_cuda": "12.4",
+      "platform": "Windows-10-10.0.26300-SP0",
+      "gpu_total_mb": 12287.5,
+      "raw_faces": 398928,
+      "faces": 398928,
+      "vertices": 199466,
+      "vram_after_load_mb": 3789.3115234375
+     }
+    },
+    "seed": 42,
+    "duration_s": 54.8945911999981,
+    "load_s": 2.757398400004604,
+    "peak_vram_mb": 5499.11572265625,
+    "peak_vram_reserved_mb": 6572.0,
+    "device": "NVIDIA GeForce RTX 3060",
+    "output_path": "bench\\human_v1_triposg_base\\person_05\\raw_triposg.glb",
+    "inputs": [
+     {
+      "view": "front",
+      "source": "bench\\human_v1\\person_05\\views\\front.png",
+      "copy": "bench\\human_v1_triposg_base\\person_05\\inputs\\front.png",
+      "sha256": "6a9e18238d1598dab0e34b5084094ad2fb36f0a8e149cead4cfe97a17ede9dc4"
+     }
+    ],
+    "reason": "",
+    "warnings": [],
+    "label": "AI_GENERATED",
+    "started_at": "2026-10-24T10:50:48+0700"
+   },
+   "placement": {
+    "rotation": [
+     [
+      1.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "scale": 0.9142436560180599,
+    "mean_ref_iou": 0.7467429924678942,
+    "label": "ESTIMATED",
+    "method": "24 rotations + silhouette box, scored by reference IoU (no ground truth)"
+   },
+   "A": {
+    "ref_iou": {
+     "front": 0.9344150192714161,
+     "back": 0.9344150192714161,
+     "left": 0.5590709656643723,
+     "right": 0.5590709656643723
+    },
+    "ref_iou_mean": 0.7467429924678942,
+    "heldout_iou": {
+     "az45_el20": 0.6254382816598106,
+     "az135_el20": 0.6126327557294577,
+     "az225_el-15": 0.6314633551150999,
+     "top": 0.5738278516445067
+    },
+    "heldout_iou_mean": 0.6108405610372187,
+    "chamfer_l1": 0.015204740878559346,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.3418934191284001,
+    "fscore@0.02": 0.684358817298561,
+    "fscore@0.05": 0.9986999098828477,
+    "normal_consistency": 0.9981636591239099,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "B": {
+    "ref_iou": {
+     "front": 0.9912495624781239,
+     "back": 0.9912495624781239,
+     "left": 0.9813937588513942,
+     "right": 0.9813937588513942
+    },
+    "ref_iou_mean": 0.9863216606647591,
+    "heldout_iou": {
+     "az45_el20": 0.7704293911293613,
+     "az135_el20": 0.7590211530485276,
+     "az225_el-15": 0.7714772062343742,
+     "top": 0.7184253690541279
+    },
+    "heldout_iou_mean": 0.7548382798665977,
+    "chamfer_l1": 0.007982893334145544,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.7093935644431981,
+    "fscore@0.02": 0.9309107854976786,
+    "fscore@0.05": 0.999549797408834,
+    "normal_consistency": 0.9787072747113947,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "refine_seconds": 32.867653399996925,
+   "refine_history": [
+    {
+     "iteration": 0,
+     "mean_iou": 0.7467429924678942,
+     "iou": {
+      "front": 0.9344150192714161,
+      "back": 0.9344150192714161,
+      "left": 0.5590709656643723,
+      "right": 0.5590709656643723
+     }
+    },
+    {
+     "iteration": 1,
+     "mean_iou": 0.8220605035715398,
+     "iou": {
+      "front": 0.9794264733810217,
+      "back": 0.9794264733810217,
+      "left": 0.6646945337620579,
+      "right": 0.6646945337620579
+     }
+    },
+    {
+     "iteration": 2,
+     "mean_iou": 0.8820107918682567,
+     "iou": {
+      "front": 0.9883529038400508,
+      "back": 0.9883529038400508,
+      "left": 0.7756686798964625,
+      "right": 0.7756686798964625
+     }
+    },
+    {
+     "iteration": 3,
+     "mean_iou": 0.9355097663647088,
+     "iou": {
+      "front": 0.9911850814663951,
+      "back": 0.9911850814663951,
+      "left": 0.8798344512630227,
+      "right": 0.8798344512630227
+     }
+    },
+    {
+     "iteration": 4,
+     "mean_iou": 0.9695503517886482,
+     "iou": {
+      "front": 0.9921641077912977,
+      "back": 0.9921641077912977,
+      "left": 0.9469365957859986,
+      "right": 0.9469365957859986
+     }
+    },
+    {
+     "iteration": 5,
+     "mean_iou": 0.983367253250373,
+     "iou": {
+      "front": 0.992797271887051,
+      "back": 0.992797271887051,
+      "left": 0.9739372346136952,
+      "right": 0.9739372346136952
+     }
+    },
+    {
+     "iteration": 6,
+     "mean_iou": 0.9856023148295593,
+     "iou": {
+      "front": 0.992037962992452,
+      "back": 0.992037962992452,
+      "left": 0.9791666666666666,
+      "right": 0.9791666666666666
+     }
+    },
+    {
+     "iteration": 7,
+     "mean_iou": 0.986226436907635,
+     "iou": {
+      "front": 0.9919755445166221,
+      "back": 0.9919755445166221,
+      "left": 0.9804773292986481,
+      "right": 0.9804773292986481
+     }
+    },
+    {
+     "iteration": 8,
+     "mean_iou": 0.9863216606647591,
+     "iou": {
+      "front": 0.9912495624781239,
+      "back": 0.9912495624781239,
+      "left": 0.9813937588513942,
+      "right": 0.9813937588513942
+     }
+    },
+    {
+     "iteration": 9,
+     "mean_iou": 0.9860122117065158,
+     "iou": {
+      "front": 0.9912495624781239,
+      "back": 0.9912495624781239,
+      "left": 0.9807748609349077,
+      "right": 0.9807748609349077
+     }
+    },
+    {
+     "iteration": 10,
+     "mean_iou": 0.986240827804817,
+     "iou": {
+      "front": 0.9907451579047801,
+      "back": 0.9907451579047801,
+      "left": 0.9817364977048539,
+      "right": 0.9817364977048539
+     }
+    },
+    {
+     "iteration": 11,
+     "mean_iou": 0.985926179428337,
+     "iou": {
+      "front": 0.9913129256030039,
+      "back": 0.9913129256030039,
+      "left": 0.9805394332536702,
+      "right": 0.9805394332536702
+     }
+    },
+    {
+     "iteration": 12,
+     "mean_iou": 0.9860123293190834,
+     "iou": {
+      "front": 0.9904301656439767,
+      "back": 0.9904301656439767,
+      "left": 0.9815944929941903,
+      "right": 0.9815944929941903
+     }
+    }
+   ],
+   "gates": {
+    "accepted": true,
+    "gates": {
+     "readable_mesh": {
+      "status": "pass",
+      "detail": "199466 vertices, 398928 triangles"
+     },
+     "actual_geometry": {
+      "status": "pass",
+      "detail": ""
+     },
+     "finite_coordinates": {
+      "status": "pass",
+      "detail": ""
+     },
+     "validation_report": {
+      "status": "pass",
+      "detail": "validation.json"
+     },
+     "model_version_recorded": {
+      "status": "pass",
+      "detail": {
+       "model": "VAST-AI/TripoSG",
+       "version": "weights:90facf66b8638c8d",
+       "duration_s": 54.8945911999981,
+       "peak_vram_mb": 5499.11572265625
+      }
+     },
+     "runtime_recorded": {
+      "status": "pass",
+      "detail": {
+       "duration_s": 54.8945911999981,
+       "peak_vram_mb": 5499.11572265625
+      }
+     },
+     "previews_rendered": {
+      "status": "pass",
+      "detail": [
+       "preview_front.png",
+       "preview_back.png",
+       "preview_left.png",
+       "preview_right.png"
+      ]
+     },
+     "input_view_comparison": {
+      "status": "pass",
+      "detail": {
+       "front": 0.9344150192714161,
+       "back": 0.9344150192714161,
+       "left": 0.5590709656643723,
+       "right": 0.5590709656643723
+      }
+     },
+     "blender_roundtrip": {
+      "status": "skipped",
+      "detail": "blender not found on PATH"
+     }
+    }
+   },
+   "output_bytes": 7181516
+  },
+  {
+   "object": "person_06",
+   "category": "human",
+   "record": {
+    "backend": "triposg",
+    "model": "VAST-AI/TripoSG",
+    "model_version": "weights:90facf66b8638c8d",
+    "license": "MIT",
+    "status": "success",
+    "quality_profile": "quality",
+    "config": {
+     "name": "quality",
+     "steps": 50,
+     "guidance": 7.0,
+     "faces": -1,
+     "vram_fraction": 0.95,
+     "dtype": "float16",
+     "segmentation": "alpha",
+     "command": [
+      "C:\\ai3d\\triposg-env\\Scripts\\python.exe",
+      "C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_runner.py",
+      "--repo",
+      "C:\\ai3d\\TripoSG",
+      "--weights",
+      "C:\\ai3d\\TripoSG\\pretrained_weights\\TripoSG",
+      "--image",
+      "bench\\human_v1_triposg_base\\person_06\\input_rgba.png",
+      "--out",
+      "bench\\human_v1_triposg_base\\person_06\\raw_triposg.glb",
+      "--result",
+      "bench\\human_v1_triposg_base\\person_06\\runner_result.json",
+      "--seed",
+      "42",
+      "--steps",
+      "50",
+      "--guidance",
+      "7.0",
+      "--faces",
+      "-1",
+      "--vram-fraction",
+      "0.95",
+      "--dtype",
+      "float16"
+     ],
+     "runtime": {
+      "python": "3.10.11",
+      "torch": "2.6.0+cu124",
+      "torch_cuda": "12.4",
+      "platform": "Windows-10-10.0.26300-SP0",
+      "gpu_total_mb": 12287.5,
+      "raw_faces": 393416,
+      "faces": 393416,
+      "vertices": 196712,
+      "vram_after_load_mb": 3789.3115234375
+     }
+    },
+    "seed": 42,
+    "duration_s": 54.74528899999859,
+    "load_s": 2.7942284000018844,
+    "peak_vram_mb": 5497.740234375,
+    "peak_vram_reserved_mb": 6588.0,
+    "device": "NVIDIA GeForce RTX 3060",
+    "output_path": "bench\\human_v1_triposg_base\\person_06\\raw_triposg.glb",
+    "inputs": [
+     {
+      "view": "front",
+      "source": "bench\\human_v1\\person_06\\views\\front.png",
+      "copy": "bench\\human_v1_triposg_base\\person_06\\inputs\\front.png",
+      "sha256": "3ca9acd4819fa081009004eb95831f6b68360105d582e916db45a832e2b9a9f1"
+     }
+    ],
+    "reason": "",
+    "warnings": [],
+    "label": "AI_GENERATED",
+    "started_at": "2026-10-24T10:52:33+0700"
+   },
+   "placement": {
+    "rotation": [
+     [
+      1.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "scale": 0.9585037403296243,
+    "mean_ref_iou": 0.7790977879494254,
+    "label": "ESTIMATED",
+    "method": "24 rotations + silhouette box, scored by reference IoU (no ground truth)"
+   },
+   "A": {
+    "ref_iou": {
+     "front": 0.9280618686868687,
+     "back": 0.9280618686868687,
+     "left": 0.6301337072119824,
+     "right": 0.6301337072119824
+    },
+    "ref_iou_mean": 0.7790977879494254,
+    "heldout_iou": {
+     "az45_el20": 0.706656747315306,
+     "az135_el20": 0.7002234605266879,
+     "az225_el-15": 0.6989099968857054,
+     "top": 0.6678765880217786
+    },
+    "heldout_iou_mean": 0.6934166981873695,
+    "chamfer_l1": 0.013009426336298573,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.4479945844952593,
+    "fscore@0.02": 0.7654532392894461,
+    "fscore@0.05": 1.0,
+    "normal_consistency": 0.9982453236491996,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "B": {
+    "ref_iou": {
+     "front": 0.9870476312913801,
+     "back": 0.9870476312913801,
+     "left": 0.9798808064584302,
+     "right": 0.9798808064584302
+    },
+    "ref_iou_mean": 0.9834642188749052,
+    "heldout_iou": {
+     "az45_el20": 0.77617678314684,
+     "az135_el20": 0.7781607308933749,
+     "az225_el-15": 0.7737470598878234,
+     "top": 0.7644325030861956
+    },
+    "heldout_iou_mean": 0.7731292692535585,
+    "chamfer_l1": 0.008245516579208306,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.7097654381769587,
+    "fscore@0.02": 0.9216982022289107,
+    "fscore@0.05": 1.0,
+    "normal_consistency": 0.9670459274511338,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "refine_seconds": 71.06134030000248,
+   "refine_history": [
+    {
+     "iteration": 0,
+     "mean_iou": 0.7790977879494254,
+     "iou": {
+      "front": 0.9280618686868687,
+      "back": 0.9280618686868687,
+      "left": 0.6301337072119824,
+      "right": 0.6301337072119824
+     }
+    },
+    {
+     "iteration": 1,
+     "mean_iou": 0.8494446616234919,
+     "iou": {
+      "front": 0.9694500367494328,
+      "back": 0.9694500367494328,
+      "left": 0.729439286497551,
+      "right": 0.729439286497551
+     }
+    },
+    {
+     "iteration": 2,
+     "mean_iou": 0.9048106999317935,
+     "iou": {
+      "front": 0.983613931371289,
+      "back": 0.983613931371289,
+      "left": 0.8260074684922981,
+      "right": 0.8260074684922981
+     }
+    },
+    {
+     "iteration": 3,
+     "mean_iou": 0.9432821127125652,
+     "iou": {
+      "front": 0.9860151101109147,
+      "back": 0.9860151101109147,
+      "left": 0.900549115314216,
+      "right": 0.900549115314216
+     }
+    },
+    {
+     "iteration": 4,
+     "mean_iou": 0.9671612561058236,
+     "iou": {
+      "front": 0.9868107829891269,
+      "back": 0.9868107829891269,
+      "left": 0.9475117292225201,
+      "right": 0.9475117292225201
+     }
+    },
+    {
+     "iteration": 5,
+     "mean_iou": 0.9734269901805304,
+     "iou": {
+      "front": 0.9865899151016208,
+      "back": 0.9865899151016208,
+      "left": 0.9602640652594399,
+      "right": 0.9602640652594399
+     }
+    },
+    {
+     "iteration": 6,
+     "mean_iou": 0.9780214598561052,
+     "iou": {
+      "front": 0.9869415586504133,
+      "back": 0.9869415586504133,
+      "left": 0.9691013610617972,
+      "right": 0.9691013610617972
+     }
+    },
+    {
+     "iteration": 7,
+     "mean_iou": 0.9787284084464349,
+     "iou": {
+      "front": 0.9869753979739508,
+      "back": 0.9869753979739508,
+      "left": 0.9704814189189189,
+      "right": 0.9704814189189189
+     }
+    },
+    {
+     "iteration": 8,
+     "mean_iou": 0.9816488910871992,
+     "iou": {
+      "front": 0.9874855230987003,
+      "back": 0.9874855230987003,
+      "left": 0.9758122590756979,
+      "right": 0.9758122590756979
+     }
+    },
+    {
+     "iteration": 9,
+     "mean_iou": 0.9801508320990917,
+     "iou": {
+      "front": 0.9867562441737118,
+      "back": 0.9867562441737118,
+      "left": 0.9735454200244715,
+      "right": 0.9735454200244715
+     }
+    },
+    {
+     "iteration": 10,
+     "mean_iou": 0.9823324391468983,
+     "iou": {
+      "front": 0.9873902274262554,
+      "back": 0.9873902274262554,
+      "left": 0.9772746508675413,
+      "right": 0.9772746508675413
+     }
+    },
+    {
+     "iteration": 11,
+     "mean_iou": 0.9810875091519318,
+     "iou": {
+      "front": 0.9870747861873834,
+      "back": 0.9870747861873834,
+      "left": 0.9751002321164802,
+      "right": 0.9751002321164802
+     }
+    },
+    {
+     "iteration": 12,
+     "mean_iou": 0.9826887978941095,
+     "iou": {
+      "front": 0.9870422172920484,
+      "back": 0.9870422172920484,
+      "left": 0.9783353784961706,
+      "right": 0.9783353784961706
+     }
+    },
+    {
+     "iteration": 13,
+     "mean_iou": 0.9806905211790597,
+     "iou": {
+      "front": 0.9862472285594935,
+      "back": 0.9862472285594935,
+      "left": 0.9751338137986261,
+      "right": 0.9751338137986261
+     }
+    },
+    {
+     "iteration": 14,
+     "mean_iou": 0.9825259981979965,
+     "iou": {
+      "front": 0.9866928096171772,
+      "back": 0.9866928096171772,
+      "left": 0.9783591867788157,
+      "right": 0.9783591867788157
+     }
+    },
+    {
+     "iteration": 15,
+     "mean_iou": 0.98178066606499,
+     "iou": {
+      "front": 0.986884824327365,
+      "back": 0.986884824327365,
+      "left": 0.976676507802615,
+      "right": 0.976676507802615
+     }
+    },
+    {
+     "iteration": 16,
+     "mean_iou": 0.9828818643686671,
+     "iou": {
+      "front": 0.9861882889538431,
+      "back": 0.9861882889538431,
+      "left": 0.9795754397834912,
+      "right": 0.9795754397834912
+     }
+    },
+    {
+     "iteration": 17,
+     "mean_iou": 0.9813662427221196,
+     "iou": {
+      "front": 0.9862529710284577,
+      "back": 0.9862529710284577,
+      "left": 0.9764795144157815,
+      "right": 0.9764795144157815
+     }
+    },
+    {
+     "iteration": 18,
+     "mean_iou": 0.9828677269877817,
+     "iou": {
+      "front": 0.9859037343865396,
+      "back": 0.9859037343865396,
+      "left": 0.9798317195890237,
+      "right": 0.9798317195890237
+     }
+    },
+    {
+     "iteration": 19,
+     "mean_iou": 0.9814500533597796,
+     "iou": {
+      "front": 0.9862529710284577,
+      "back": 0.9862529710284577,
+      "left": 0.9766471356911015,
+      "right": 0.9766471356911015
+     }
+    },
+    {
+     "iteration": 20,
+     "mean_iou": 0.9829913816711292,
+     "iou": {
+      "front": 0.9863150117254007,
+      "back": 0.9863150117254007,
+      "left": 0.9796677516168576,
+      "right": 0.9796677516168576
+     }
+    },
+    {
+     "iteration": 21,
+     "mean_iou": 0.9822405705840777,
+     "iou": {
+      "front": 0.9865064576238515,
+      "back": 0.9865064576238515,
+      "left": 0.9779746835443038,
+      "right": 0.9779746835443038
+     }
+    },
+    {
+     "iteration": 22,
+     "mean_iou": 0.9832114489816677,
+     "iou": {
+      "front": 0.9862520878838494,
+      "back": 0.9862520878838494,
+      "left": 0.9801708100794859,
+      "right": 0.9801708100794859
+     }
+    },
+    {
+     "iteration": 23,
+     "mean_iou": 0.981800588561507,
+     "iou": {
+      "front": 0.9861588361861331,
+      "back": 0.9861588361861331,
+      "left": 0.9774423409368808,
+      "right": 0.9774423409368808
+     }
+    },
+    {
+     "iteration": 24,
+     "mean_iou": 0.9834642188749052,
+     "iou": {
+      "front": 0.9870476312913801,
+      "back": 0.9870476312913801,
+      "left": 0.9798808064584302,
+      "right": 0.9798808064584302
+     }
+    },
+    {
+     "iteration": 25,
+     "mean_iou": 0.9813358433358449,
+     "iou": {
+      "front": 0.9855914254540787,
+      "back": 0.9855914254540787,
+      "left": 0.9770802612176112,
+      "right": 0.9770802612176112
+     }
+    },
+    {
+     "iteration": 26,
+     "mean_iou": 0.9831229217752,
+     "iou": {
+      "front": 0.9863185277965122,
+      "back": 0.9863185277965122,
+      "left": 0.9799273157538878,
+      "right": 0.9799273157538878
+     }
+    },
+    {
+     "iteration": 27,
+     "mean_iou": 0.9816354375235727,
+     "iou": {
+      "front": 0.9858133264860701,
+      "back": 0.9858133264860701,
+      "left": 0.9774575485610753,
+      "right": 0.9774575485610753
+     }
+    },
+    {
+     "iteration": 28,
+     "mean_iou": 0.9833288264103502,
+     "iou": {
+      "front": 0.9862257184138706,
+      "back": 0.9862257184138706,
+      "left": 0.9804319344068299,
+      "right": 0.9804319344068299
+     }
+    }
+   ],
+   "gates": {
+    "accepted": true,
+    "gates": {
+     "readable_mesh": {
+      "status": "pass",
+      "detail": "196712 vertices, 393416 triangles"
+     },
+     "actual_geometry": {
+      "status": "pass",
+      "detail": ""
+     },
+     "finite_coordinates": {
+      "status": "pass",
+      "detail": ""
+     },
+     "validation_report": {
+      "status": "pass",
+      "detail": "validation.json"
+     },
+     "model_version_recorded": {
+      "status": "pass",
+      "detail": {
+       "model": "VAST-AI/TripoSG",
+       "version": "weights:90facf66b8638c8d",
+       "duration_s": 54.74528899999859,
+       "peak_vram_mb": 5497.740234375
+      }
+     },
+     "runtime_recorded": {
+      "status": "pass",
+      "detail": {
+       "duration_s": 54.74528899999859,
+       "peak_vram_mb": 5497.740234375
+      }
+     },
+     "previews_rendered": {
+      "status": "pass",
+      "detail": [
+       "preview_front.png",
+       "preview_back.png",
+       "preview_left.png",
+       "preview_right.png"
+      ]
+     },
+     "input_view_comparison": {
+      "status": "pass",
+      "detail": {
+       "front": 0.9280618686868687,
+       "back": 0.9280618686868687,
+       "left": 0.6301337072119824,
+       "right": 0.6301337072119824
+      }
+     },
+     "blender_roundtrip": {
+      "status": "skipped",
+      "detail": "blender not found on PATH"
+     }
+    }
+   },
+   "output_bytes": 7082324
+  },
+  {
+   "object": "person_07",
+   "category": "human",
+   "record": {
+    "backend": "triposg",
+    "model": "VAST-AI/TripoSG",
+    "model_version": "weights:90facf66b8638c8d",
+    "license": "MIT",
+    "status": "success",
+    "quality_profile": "quality",
+    "config": {
+     "name": "quality",
+     "steps": 50,
+     "guidance": 7.0,
+     "faces": -1,
+     "vram_fraction": 0.95,
+     "dtype": "float16",
+     "segmentation": "alpha",
+     "command": [
+      "C:\\ai3d\\triposg-env\\Scripts\\python.exe",
+      "C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_runner.py",
+      "--repo",
+      "C:\\ai3d\\TripoSG",
+      "--weights",
+      "C:\\ai3d\\TripoSG\\pretrained_weights\\TripoSG",
+      "--image",
+      "bench\\human_v1_triposg_base\\person_07\\input_rgba.png",
+      "--out",
+      "bench\\human_v1_triposg_base\\person_07\\raw_triposg.glb",
+      "--result",
+      "bench\\human_v1_triposg_base\\person_07\\runner_result.json",
+      "--seed",
+      "42",
+      "--steps",
+      "50",
+      "--guidance",
+      "7.0",
+      "--faces",
+      "-1",
+      "--vram-fraction",
+      "0.95",
+      "--dtype",
+      "float16"
+     ],
+     "runtime": {
+      "python": "3.10.11",
+      "torch": "2.6.0+cu124",
+      "torch_cuda": "12.4",
+      "platform": "Windows-10-10.0.26300-SP0",
+      "gpu_total_mb": 12287.5,
+      "raw_faces": 443376,
+      "faces": 443376,
+      "vertices": 221690,
+      "vram_after_load_mb": 3789.3115234375
+     }
+    },
+    "seed": 42,
+    "duration_s": 55.307306299997435,
+    "load_s": 2.768122100002074,
+    "peak_vram_mb": 5512.0673828125,
+    "peak_vram_reserved_mb": 6598.0,
+    "device": "NVIDIA GeForce RTX 3060",
+    "output_path": "bench\\human_v1_triposg_base\\person_07\\raw_triposg.glb",
+    "inputs": [
+     {
+      "view": "front",
+      "source": "bench\\human_v1\\person_07\\views\\front.png",
+      "copy": "bench\\human_v1_triposg_base\\person_07\\inputs\\front.png",
+      "sha256": "cdacff781ea6ac30162264e91aa50c91ca6df7e47d0bdbe47018af1656396782"
+     }
+    ],
+    "reason": "",
+    "warnings": [],
+    "label": "AI_GENERATED",
+    "started_at": "2026-10-24T10:54:56+0700"
+   },
+   "placement": {
+    "rotation": [
+     [
+      1.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "scale": 0.9560048683550035,
+    "mean_ref_iou": 0.789206281406153,
+    "label": "ESTIMATED",
+    "method": "24 rotations + silhouette box, scored by reference IoU (no ground truth)"
+   },
+   "A": {
+    "ref_iou": {
+     "front": 0.9218132221779508,
+     "back": 0.9218132221779508,
+     "left": 0.6565993406343552,
+     "right": 0.6565993406343552
+    },
+    "ref_iou_mean": 0.789206281406153,
+    "heldout_iou": {
+     "az45_el20": 0.7422762242031994,
+     "az135_el20": 0.6976243864008242,
+     "az225_el-15": 0.7499849424802747,
+     "top": 0.5932236457046238
+    },
+    "heldout_iou_mean": 0.6957772996972305,
+    "chamfer_l1": 0.01141601882029392,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.4893839803841438,
+    "fscore@0.02": 0.86820295430332,
+    "fscore@0.05": 0.9999249943745782,
+    "normal_consistency": 0.9981012640924392,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "B": {
+    "ref_iou": {
+     "front": 0.989060326293158,
+     "back": 0.989060326293158,
+     "left": 0.9869107632440082,
+     "right": 0.9869107632440082
+    },
+    "ref_iou_mean": 0.987985544768583,
+    "heldout_iou": {
+     "az45_el20": 0.8119892598645809,
+     "az135_el20": 0.796385578701598,
+     "az225_el-15": 0.8184254509826523,
+     "top": 0.6601709180370322
+    },
+    "heldout_iou_mean": 0.7717428018964658,
+    "chamfer_l1": 0.00791948464981406,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.7055248966029198,
+    "fscore@0.02": 0.949533919498776,
+    "fscore@0.05": 1.0,
+    "normal_consistency": 0.9718228548046685,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "refine_seconds": 59.76131049999822,
+   "refine_history": [
+    {
+     "iteration": 0,
+     "mean_iou": 0.789206281406153,
+     "iou": {
+      "front": 0.9218132221779508,
+      "back": 0.9218132221779508,
+      "left": 0.6565993406343552,
+      "right": 0.6565993406343552
+     }
+    },
+    {
+     "iteration": 1,
+     "mean_iou": 0.8651825836260776,
+     "iou": {
+      "front": 0.9700823909025407,
+      "back": 0.9700823909025407,
+      "left": 0.7602827763496144,
+      "right": 0.7602827763496144
+     }
+    },
+    {
+     "iteration": 2,
+     "mean_iou": 0.9210007188737142,
+     "iou": {
+      "front": 0.9847202929662836,
+      "back": 0.9847202929662836,
+      "left": 0.8572811447811448,
+      "right": 0.8572811447811448
+     }
+    },
+    {
+     "iteration": 3,
+     "mean_iou": 0.9580442018286439,
+     "iou": {
+      "front": 0.9895127051517648,
+      "back": 0.9895127051517648,
+      "left": 0.926575698505523,
+      "right": 0.926575698505523
+     }
+    },
+    {
+     "iteration": 4,
+     "mean_iou": 0.9748176719621701,
+     "iou": {
+      "front": 0.9892353965489947,
+      "back": 0.9892353965489947,
+      "left": 0.9603999473753454,
+      "right": 0.9603999473753454
+     }
+    },
+    {
+     "iteration": 5,
+     "mean_iou": 0.9801225685693731,
+     "iou": {
+      "front": 0.9906186612576064,
+      "back": 0.9906186612576064,
+      "left": 0.9696264758811395,
+      "right": 0.9696264758811395
+     }
+    },
+    {
+     "iteration": 6,
+     "mean_iou": 0.983322500413959,
+     "iou": {
+      "front": 0.9899623191159241,
+      "back": 0.9899623191159241,
+      "left": 0.9766826817119937,
+      "right": 0.9766826817119937
+     }
+    },
+    {
+     "iteration": 7,
+     "mean_iou": 0.9841218451689064,
+     "iou": {
+      "front": 0.9904022806461831,
+      "back": 0.9904022806461831,
+      "left": 0.9778414096916299,
+      "right": 0.9778414096916299
+     }
+    },
+    {
+     "iteration": 8,
+     "mean_iou": 0.9853810082227589,
+     "iou": {
+      "front": 0.9895249849678788,
+      "back": 0.9895249849678788,
+      "left": 0.981237031477639,
+      "right": 0.981237031477639
+     }
+    },
+    {
+     "iteration": 9,
+     "mean_iou": 0.9858217635322715,
+     "iou": {
+      "front": 0.9904665378646311,
+      "back": 0.9904665378646311,
+      "left": 0.9811769891999118,
+      "right": 0.9811769891999118
+     }
+    },
+    {
+     "iteration": 10,
+     "mean_iou": 0.9872992583977096,
+     "iou": {
+      "front": 0.9897145388948667,
+      "back": 0.9897145388948667,
+      "left": 0.9848839779005525,
+      "right": 0.9848839779005525
+     }
+    },
+    {
+     "iteration": 11,
+     "mean_iou": 0.9861886976433363,
+     "iou": {
+      "front": 0.990436682605529,
+      "back": 0.990436682605529,
+      "left": 0.9819407126811435,
+      "right": 0.9819407126811435
+     }
+    },
+    {
+     "iteration": 12,
+     "mean_iou": 0.9875384140859076,
+     "iou": {
+      "front": 0.9893088723707101,
+      "back": 0.9893088723707101,
+      "left": 0.985767955801105,
+      "right": 0.985767955801105
+     }
+    },
+    {
+     "iteration": 13,
+     "mean_iou": 0.9868591725311681,
+     "iou": {
+      "front": 0.9896851763961398,
+      "back": 0.9896851763961398,
+      "left": 0.9840331686661962,
+      "right": 0.9840331686661962
+     }
+    },
+    {
+     "iteration": 14,
+     "mean_iou": 0.9878467081135589,
+     "iou": {
+      "front": 0.9888716765198697,
+      "back": 0.9888716765198697,
+      "left": 0.9868217397072481,
+      "right": 0.9868217397072481
+     }
+    },
+    {
+     "iteration": 15,
+     "mean_iou": 0.9869082319342378,
+     "iou": {
+      "front": 0.9897797747120618,
+      "back": 0.9897797747120618,
+      "left": 0.984036689156414,
+      "right": 0.984036689156414
+     }
+    },
+    {
+     "iteration": 16,
+     "mean_iou": 0.987985544768583,
+     "iou": {
+      "front": 0.989060326293158,
+      "back": 0.989060326293158,
+      "left": 0.9869107632440082,
+      "right": 0.9869107632440082
+     }
+    },
+    {
+     "iteration": 17,
+     "mean_iou": 0.9868323648260557,
+     "iou": {
+      "front": 0.9896245215575871,
+      "back": 0.9896245215575871,
+      "left": 0.9840402080945243,
+      "right": 0.9840402080945243
+     }
+    },
+    {
+     "iteration": 18,
+     "mean_iou": 0.987600639835291,
+     "iou": {
+      "front": 0.988374297087256,
+      "back": 0.988374297087256,
+      "left": 0.986826982583326,
+      "right": 0.986826982583326
+     }
+    },
+    {
+     "iteration": 19,
+     "mean_iou": 0.986715871161548,
+     "iou": {
+      "front": 0.9895629072047568,
+      "back": 0.9895629072047568,
+      "left": 0.9838688351183393,
+      "right": 0.9838688351183393
+     }
+    },
+    {
+     "iteration": 20,
+     "mean_iou": 0.9875390304180088,
+     "iou": {
+      "front": 0.9886877113154485,
+      "back": 0.9886877113154485,
+      "left": 0.9863903495205691,
+      "right": 0.9863903495205691
+     }
+    }
+   ],
+   "gates": {
+    "accepted": true,
+    "gates": {
+     "readable_mesh": {
+      "status": "pass",
+      "detail": "221690 vertices, 443376 triangles"
+     },
+     "actual_geometry": {
+      "status": "pass",
+      "detail": ""
+     },
+     "finite_coordinates": {
+      "status": "pass",
+      "detail": ""
+     },
+     "validation_report": {
+      "status": "pass",
+      "detail": "validation.json"
+     },
+     "model_version_recorded": {
+      "status": "pass",
+      "detail": {
+       "model": "VAST-AI/TripoSG",
+       "version": "weights:90facf66b8638c8d",
+       "duration_s": 55.307306299997435,
+       "peak_vram_mb": 5512.0673828125
+      }
+     },
+     "runtime_recorded": {
+      "status": "pass",
+      "detail": {
+       "duration_s": 55.307306299997435,
+       "peak_vram_mb": 5512.0673828125
+      }
+     },
+     "previews_rendered": {
+      "status": "pass",
+      "detail": [
+       "preview_front.png",
+       "preview_back.png",
+       "preview_left.png",
+       "preview_right.png"
+      ]
+     },
+     "input_view_comparison": {
+      "status": "pass",
+      "detail": {
+       "front": 0.9218132221779508,
+       "back": 0.9218132221779508,
+       "left": 0.6565993406343552,
+       "right": 0.6565993406343552
+      }
+     },
+     "blender_roundtrip": {
+      "status": "skipped",
+      "detail": "blender not found on PATH"
+     }
+    }
+   },
+   "output_bytes": 7981580
+  },
+  {
+   "object": "person_08",
+   "category": "human",
+   "record": {
+    "backend": "triposg",
+    "model": "VAST-AI/TripoSG",
+    "model_version": "weights:90facf66b8638c8d",
+    "license": "MIT",
+    "status": "success",
+    "quality_profile": "quality",
+    "config": {
+     "name": "quality",
+     "steps": 50,
+     "guidance": 7.0,
+     "faces": -1,
+     "vram_fraction": 0.95,
+     "dtype": "float16",
+     "segmentation": "alpha",
+     "command": [
+      "C:\\ai3d\\triposg-env\\Scripts\\python.exe",
+      "C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_runner.py",
+      "--repo",
+      "C:\\ai3d\\TripoSG",
+      "--weights",
+      "C:\\ai3d\\TripoSG\\pretrained_weights\\TripoSG",
+      "--image",
+      "bench\\human_v1_triposg_base\\person_08\\input_rgba.png",
+      "--out",
+      "bench\\human_v1_triposg_base\\person_08\\raw_triposg.glb",
+      "--result",
+      "bench\\human_v1_triposg_base\\person_08\\runner_result.json",
+      "--seed",
+      "42",
+      "--steps",
+      "50",
+      "--guidance",
+      "7.0",
+      "--faces",
+      "-1",
+      "--vram-fraction",
+      "0.95",
+      "--dtype",
+      "float16"
+     ],
+     "runtime": {
+      "python": "3.10.11",
+      "torch": "2.6.0+cu124",
+      "torch_cuda": "12.4",
+      "platform": "Windows-10-10.0.26300-SP0",
+      "gpu_total_mb": 12287.5,
+      "raw_faces": 380564,
+      "faces": 380564,
+      "vertices": 190282,
+      "vram_after_load_mb": 3789.3115234375
+     }
+    },
+    "seed": 42,
+    "duration_s": 55.01153999999951,
+    "load_s": 5.18856439999945,
+    "peak_vram_mb": 5493.21826171875,
+    "peak_vram_reserved_mb": 6838.0,
+    "device": "NVIDIA GeForce RTX 3060",
+    "output_path": "bench\\human_v1_triposg_base\\person_08\\raw_triposg.glb",
+    "inputs": [
+     {
+      "view": "front",
+      "source": "bench\\human_v1\\person_08\\views\\front.png",
+      "copy": "bench\\human_v1_triposg_base\\person_08\\inputs\\front.png",
+      "sha256": "f895b55a41efadfd4795a54f9390f0cfb8be155c53473a2c6c376c1144b2e329"
+     }
+    ],
+    "reason": "",
+    "warnings": [],
+    "label": "AI_GENERATED",
+    "started_at": "2026-10-24T10:57:12+0700"
+   },
+   "placement": {
+    "rotation": [
+     [
+      1.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "scale": 0.91276938005564,
+    "mean_ref_iou": 0.7817561614812529,
+    "label": "ESTIMATED",
+    "method": "24 rotations + silhouette box, scored by reference IoU (no ground truth)"
+   },
+   "A": {
+    "ref_iou": {
+     "front": 0.9003595105379465,
+     "back": 0.9003595105379465,
+     "left": 0.6631528124245595,
+     "right": 0.6631528124245595
+    },
+    "ref_iou_mean": 0.7817561614812529,
+    "heldout_iou": {
+     "az45_el20": 0.740151017728168,
+     "az135_el20": 0.7440021266697681,
+     "az225_el-15": 0.7367324701961288,
+     "top": 0.592335822032607
+    },
+    "heldout_iou_mean": 0.703305359156668,
+    "chamfer_l1": 0.012615762565438565,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.4896530108185344,
+    "fscore@0.02": 0.7896386025454315,
+    "fscore@0.05": 1.0,
+    "normal_consistency": 0.9976670642321936,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "B": {
+    "ref_iou": {
+     "front": 0.988053263957827,
+     "back": 0.988053263957827,
+     "left": 0.9898007366134668,
+     "right": 0.9898007366134668
+    },
+    "ref_iou_mean": 0.988927000285647,
+    "heldout_iou": {
+     "az45_el20": 0.822720648799341,
+     "az135_el20": 0.7784704131001117,
+     "az225_el-15": 0.8247345874464519,
+     "top": 0.6939375193318899
+    },
+    "heldout_iou_mean": 0.7799657921694486,
+    "chamfer_l1": 0.007302985258452526,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.762271576539781,
+    "fscore@0.02": 0.9423477375745527,
+    "fscore@0.05": 1.0,
+    "normal_consistency": 0.9776584904204555,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "refine_seconds": 39.07752880000044,
+   "refine_history": [
+    {
+     "iteration": 0,
+     "mean_iou": 0.7817561614812529,
+     "iou": {
+      "front": 0.9003595105379465,
+      "back": 0.9003595105379465,
+      "left": 0.6631528124245595,
+      "right": 0.6631528124245595
+     }
+    },
+    {
+     "iteration": 1,
+     "mean_iou": 0.8740998992663417,
+     "iou": {
+      "front": 0.9619066950844074,
+      "back": 0.9619066950844074,
+      "left": 0.7862931034482759,
+      "right": 0.7862931034482759
+     }
+    },
+    {
+     "iteration": 2,
+     "mean_iou": 0.9291804172172653,
+     "iou": {
+      "front": 0.9809036658141518,
+      "back": 0.9809036658141518,
+      "left": 0.8774571686203787,
+      "right": 0.8774571686203787
+     }
+    },
+    {
+     "iteration": 3,
+     "mean_iou": 0.9611916980695342,
+     "iou": {
+      "front": 0.9857050032488629,
+      "back": 0.9857050032488629,
+      "left": 0.9366783928902055,
+      "right": 0.9366783928902055
+     }
+    },
+    {
+     "iteration": 4,
+     "mean_iou": 0.9796173074977151,
+     "iou": {
+      "front": 0.9878073840674019,
+      "back": 0.9878073840674019,
+      "left": 0.9714272309280285,
+      "right": 0.9714272309280285
+     }
+    },
+    {
+     "iteration": 5,
+     "mean_iou": 0.9859177014502721,
+     "iou": {
+      "front": 0.9889623967367086,
+      "back": 0.9889623967367086,
+      "left": 0.9828730061638357,
+      "right": 0.9828730061638357
+     }
+    },
+    {
+     "iteration": 6,
+     "mean_iou": 0.9888797505991122,
+     "iou": {
+      "front": 0.9887609649122807,
+      "back": 0.9887609649122807,
+      "left": 0.9889985362859436,
+      "right": 0.9889985362859436
+     }
+    },
+    {
+     "iteration": 7,
+     "mean_iou": 0.988069733261456,
+     "iou": {
+      "front": 0.9890004454648255,
+      "back": 0.9890004454648255,
+      "left": 0.9871390210580864,
+      "right": 0.9871390210580864
+     }
+    },
+    {
+     "iteration": 8,
+     "mean_iou": 0.9886894209908019,
+     "iou": {
+      "front": 0.9885612520976745,
+      "back": 0.9885612520976745,
+      "left": 0.9888175898839294,
+      "right": 0.9888175898839294
+     }
+    },
+    {
+     "iteration": 9,
+     "mean_iou": 0.9883731512749133,
+     "iou": {
+      "front": 0.9891367670744663,
+      "back": 0.9891367670744663,
+      "left": 0.9876095354753605,
+      "right": 0.9876095354753605
+     }
+    },
+    {
+     "iteration": 10,
+     "mean_iou": 0.988927000285647,
+     "iou": {
+      "front": 0.988053263957827,
+      "back": 0.988053263957827,
+      "left": 0.9898007366134668,
+      "right": 0.9898007366134668
+     }
+    },
+    {
+     "iteration": 11,
+     "mean_iou": 0.9877072632906246,
+     "iou": {
+      "front": 0.9885947186354762,
+      "back": 0.9885947186354762,
+      "left": 0.986819807945773,
+      "right": 0.986819807945773
+     }
+    },
+    {
+     "iteration": 12,
+     "mean_iou": 0.9883149150544545,
+     "iou": {
+      "front": 0.988088310799247,
+      "back": 0.988088310799247,
+      "left": 0.9885415193096619,
+      "right": 0.9885415193096619
+     }
+    },
+    {
+     "iteration": 13,
+     "mean_iou": 0.9875904712722983,
+     "iou": {
+      "front": 0.9887313330593231,
+      "back": 0.9887313330593231,
+      "left": 0.9864496094852734,
+      "right": 0.9864496094852734
+     }
+    },
+    {
+     "iteration": 14,
+     "mean_iou": 0.9883964643273839,
+     "iou": {
+      "front": 0.9877840131398851,
+      "back": 0.9877840131398851,
+      "left": 0.9890089155148828,
+      "right": 0.9890089155148828
+     }
+    }
+   ],
+   "gates": {
+    "accepted": true,
+    "gates": {
+     "readable_mesh": {
+      "status": "pass",
+      "detail": "190282 vertices, 380564 triangles"
+     },
+     "actual_geometry": {
+      "status": "pass",
+      "detail": ""
+     },
+     "finite_coordinates": {
+      "status": "pass",
+      "detail": ""
+     },
+     "validation_report": {
+      "status": "pass",
+      "detail": "validation.json"
+     },
+     "model_version_recorded": {
+      "status": "pass",
+      "detail": {
+       "model": "VAST-AI/TripoSG",
+       "version": "weights:90facf66b8638c8d",
+       "duration_s": 55.01153999999951,
+       "peak_vram_mb": 5493.21826171875
+      }
+     },
+     "runtime_recorded": {
+      "status": "pass",
+      "detail": {
+       "duration_s": 55.01153999999951,
+       "peak_vram_mb": 5493.21826171875
+      }
+     },
+     "previews_rendered": {
+      "status": "pass",
+      "detail": [
+       "preview_front.png",
+       "preview_back.png",
+       "preview_left.png",
+       "preview_right.png"
+      ]
+     },
+     "input_view_comparison": {
+      "status": "pass",
+      "detail": {
+       "front": 0.9003595105379465,
+       "back": 0.9003595105379465,
+       "left": 0.6631528124245595,
+       "right": 0.6631528124245595
+      }
+     },
+     "blender_roundtrip": {
+      "status": "skipped",
+      "detail": "blender not found on PATH"
+     }
+    }
+   },
+   "output_bytes": 6850940
+  },
+  {
+   "object": "person_09",
+   "category": "human",
+   "record": {
+    "backend": "triposg",
+    "model": "VAST-AI/TripoSG",
+    "model_version": "weights:90facf66b8638c8d",
+    "license": "MIT",
+    "status": "success",
+    "quality_profile": "quality",
+    "config": {
+     "name": "quality",
+     "steps": 50,
+     "guidance": 7.0,
+     "faces": -1,
+     "vram_fraction": 0.95,
+     "dtype": "float16",
+     "segmentation": "alpha",
+     "command": [
+      "C:\\ai3d\\triposg-env\\Scripts\\python.exe",
+      "C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_runner.py",
+      "--repo",
+      "C:\\ai3d\\TripoSG",
+      "--weights",
+      "C:\\ai3d\\TripoSG\\pretrained_weights\\TripoSG",
+      "--image",
+      "bench\\human_v1_triposg_base\\person_09\\input_rgba.png",
+      "--out",
+      "bench\\human_v1_triposg_base\\person_09\\raw_triposg.glb",
+      "--result",
+      "bench\\human_v1_triposg_base\\person_09\\runner_result.json",
+      "--seed",
+      "42",
+      "--steps",
+      "50",
+      "--guidance",
+      "7.0",
+      "--faces",
+      "-1",
+      "--vram-fraction",
+      "0.95",
+      "--dtype",
+      "float16"
+     ],
+     "runtime": {
+      "python": "3.10.11",
+      "torch": "2.6.0+cu124",
+      "torch_cuda": "12.4",
+      "platform": "Windows-10-10.0.26300-SP0",
+      "gpu_total_mb": 12287.5,
+      "raw_faces": 325292,
+      "faces": 325292,
+      "vertices": 162648,
+      "vram_after_load_mb": 3789.3115234375
+     }
+    },
+    "seed": 42,
+    "duration_s": 53.83680180000374,
+    "load_s": 2.713385000002745,
+    "peak_vram_mb": 5474.5498046875,
+    "peak_vram_reserved_mb": 6078.0,
+    "device": "NVIDIA GeForce RTX 3060",
+    "output_path": "bench\\human_v1_triposg_base\\person_09\\raw_triposg.glb",
+    "inputs": [
+     {
+      "view": "front",
+      "source": "bench\\human_v1\\person_09\\views\\front.png",
+      "copy": "bench\\human_v1_triposg_base\\person_09\\inputs\\front.png",
+      "sha256": "5683404a460cdda139fa5b6738f45915474c36d83bf193a0a1632f2a57dc4e62"
+     }
+    ],
+    "reason": "",
+    "warnings": [],
+    "label": "AI_GENERATED",
+    "started_at": "2026-10-24T10:59:09+0700"
+   },
+   "placement": {
+    "rotation": [
+     [
+      1.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "scale": 1.0271191745267576,
+    "mean_ref_iou": 0.7382068265076764,
+    "label": "ESTIMATED",
+    "method": "24 rotations + silhouette box, scored by reference IoU (no ground truth)"
+   },
+   "A": {
+    "ref_iou": {
+     "front": 0.9152650628060464,
+     "back": 0.9152650628060464,
+     "left": 0.5611485902093063,
+     "right": 0.5611485902093063
+    },
+    "ref_iou_mean": 0.7382068265076764,
+    "heldout_iou": {
+     "az45_el20": 0.5995901639344262,
+     "az135_el20": 0.6450913106930146,
+     "az225_el-15": 0.6051954318803281,
+     "top": 0.4871620307333204
+    },
+    "heldout_iou_mean": 0.5842597343102723,
+    "chamfer_l1": 0.01383067995334043,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.4673528873917228,
+    "fscore@0.02": 0.8435424482176194,
+    "fscore@0.05": 0.955749832592205,
+    "normal_consistency": 0.9981465626969289,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "B": {
+    "ref_iou": {
+     "front": 0.9689815228063912,
+     "back": 0.9689815228063912,
+     "left": 0.9581630378241808,
+     "right": 0.9581630378241808
+    },
+    "ref_iou_mean": 0.963572280315286,
+    "heldout_iou": {
+     "az45_el20": 0.7302446685402546,
+     "az135_el20": 0.7251819175809675,
+     "az225_el-15": 0.733035138620245,
+     "top": 0.6110659072416599
+    },
+    "heldout_iou_mean": 0.6998819079957818,
+    "chamfer_l1": 0.007380276621959476,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.7848098441971383,
+    "fscore@0.02": 0.9518128066397016,
+    "fscore@0.05": 0.9958831207952605,
+    "normal_consistency": 0.9570999980196117,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "refine_seconds": 70.05471540000144,
+   "refine_history": [
+    {
+     "iteration": 0,
+     "mean_iou": 0.7382068265076764,
+     "iou": {
+      "front": 0.9152650628060464,
+      "back": 0.9152650628060464,
+      "left": 0.5611485902093063,
+      "right": 0.5611485902093063
+     }
+    },
+    {
+     "iteration": 1,
+     "mean_iou": 0.8232783370442041,
+     "iou": {
+      "front": 0.9630378411638025,
+      "back": 0.9630378411638025,
+      "left": 0.6835188329246055,
+      "right": 0.6835188329246055
+     }
+    },
+    {
+     "iteration": 2,
+     "mean_iou": 0.8862138431448363,
+     "iou": {
+      "front": 0.9708419981416752,
+      "back": 0.9708419981416752,
+      "left": 0.8015856881479976,
+      "right": 0.8015856881479976
+     }
+    },
+    {
+     "iteration": 3,
+     "mean_iou": 0.9280340843884148,
+     "iou": {
+      "front": 0.9685868507211751,
+      "back": 0.9685868507211751,
+      "left": 0.8874813180556544,
+      "right": 0.8874813180556544
+     }
+    },
+    {
+     "iteration": 4,
+     "mean_iou": 0.9442586284593437,
+     "iou": {
+      "front": 0.9651281143514626,
+      "back": 0.9651281143514626,
+      "left": 0.9233891425672247,
+      "right": 0.9233891425672247
+     }
+    },
+    {
+     "iteration": 5,
+     "mean_iou": 0.9465226309692445,
+     "iou": {
+      "front": 0.9635292032260924,
+      "back": 0.9635292032260924,
+      "left": 0.9295160587123965,
+      "right": 0.9295160587123965
+     }
+    },
+    {
+     "iteration": 6,
+     "mean_iou": 0.9473819295104475,
+     "iou": {
+      "front": 0.9617173999734149,
+      "back": 0.9617173999734149,
+      "left": 0.9330464590474801,
+      "right": 0.9330464590474801
+     }
+    },
+    {
+     "iteration": 7,
+     "mean_iou": 0.9485435226281651,
+     "iou": {
+      "front": 0.961763662171753,
+      "back": 0.961763662171753,
+      "left": 0.9353233830845771,
+      "right": 0.9353233830845771
+     }
+    },
+    {
+     "iteration": 8,
+     "mean_iou": 0.9509732937782303,
+     "iou": {
+      "front": 0.9618730581446959,
+      "back": 0.9618730581446959,
+      "left": 0.9400735294117647,
+      "right": 0.9400735294117647
+     }
+    },
+    {
+     "iteration": 9,
+     "mean_iou": 0.9525252768819674,
+     "iou": {
+      "front": 0.9647388807265928,
+      "back": 0.9647388807265928,
+      "left": 0.940311673037342,
+      "right": 0.940311673037342
+     }
+    },
+    {
+     "iteration": 10,
+     "mean_iou": 0.95357099932834,
+     "iou": {
+      "front": 0.9643922197000044,
+      "back": 0.9643922197000044,
+      "left": 0.9427497789566756,
+      "right": 0.9427497789566756
+     }
+    },
+    {
+     "iteration": 11,
+     "mean_iou": 0.9547151554932672,
+     "iou": {
+      "front": 0.9670192350604722,
+      "back": 0.9670192350604722,
+      "left": 0.9424110759260623,
+      "right": 0.9424110759260623
+     }
+    },
+    {
+     "iteration": 12,
+     "mean_iou": 0.9551298225794234,
+     "iou": {
+      "front": 0.9663723129069663,
+      "back": 0.9663723129069663,
+      "left": 0.9438873322518803,
+      "right": 0.9438873322518803
+     }
+    },
+    {
+     "iteration": 13,
+     "mean_iou": 0.9565588896873951,
+     "iou": {
+      "front": 0.9669701838957329,
+      "back": 0.9669701838957329,
+      "left": 0.9461475954790574,
+      "right": 0.9461475954790574
+     }
+    },
+    {
+     "iteration": 14,
+     "mean_iou": 0.9567377919095971,
+     "iou": {
+      "front": 0.9662355040142729,
+      "back": 0.9662355040142729,
+      "left": 0.9472400798049213,
+      "right": 0.9472400798049213
+     }
+    },
+    {
+     "iteration": 15,
+     "mean_iou": 0.9577077738555001,
+     "iou": {
+      "front": 0.9673155920700125,
+      "back": 0.9673155920700125,
+      "left": 0.9480999556409877,
+      "right": 0.9480999556409877
+     }
+    },
+    {
+     "iteration": 16,
+     "mean_iou": 0.9591076516890582,
+     "iou": {
+      "front": 0.9664911654470819,
+      "back": 0.9664911654470819,
+      "left": 0.9517241379310345,
+      "right": 0.9517241379310345
+     }
+    },
+    {
+     "iteration": 17,
+     "mean_iou": 0.9593914344793204,
+     "iou": {
+      "front": 0.9684314076193883,
+      "back": 0.9684314076193883,
+      "left": 0.9503514613392526,
+      "right": 0.9503514613392526
+     }
+    },
+    {
+     "iteration": 18,
+     "mean_iou": 0.960100791385633,
+     "iou": {
+      "front": 0.9666235330864308,
+      "back": 0.9666235330864308,
+      "left": 0.953578049684835,
+      "right": 0.953578049684835
+     }
+    },
+    {
+     "iteration": 19,
+     "mean_iou": 0.9599277843363754,
+     "iou": {
+      "front": 0.9678413506632721,
+      "back": 0.9678413506632721,
+      "left": 0.9520142180094787,
+      "right": 0.9520142180094787
+     }
+    },
+    {
+     "iteration": 20,
+     "mean_iou": 0.960821055794653,
+     "iou": {
+      "front": 0.9676727987140561,
+      "back": 0.9676727987140561,
+      "left": 0.9539693128752502,
+      "right": 0.9539693128752502
+     }
+    },
+    {
+     "iteration": 21,
+     "mean_iou": 0.9615807710769291,
+     "iou": {
+      "front": 0.9685419366370258,
+      "back": 0.9685419366370258,
+      "left": 0.9546196055168322,
+      "right": 0.9546196055168322
+     }
+    },
+    {
+     "iteration": 22,
+     "mean_iou": 0.9614099733557329,
+     "iou": {
+      "front": 0.9677621003750669,
+      "back": 0.9677621003750669,
+      "left": 0.9550578463363987,
+      "right": 0.9550578463363987
+     }
+    },
+    {
+     "iteration": 23,
+     "mean_iou": 0.9614900018547701,
+     "iou": {
+      "front": 0.9687611726850197,
+      "back": 0.9687611726850197,
+      "left": 0.9542188310245203,
+      "right": 0.9542188310245203
+     }
+    },
+    {
+     "iteration": 24,
+     "mean_iou": 0.9630652322769131,
+     "iou": {
+      "front": 0.9685461531587883,
+      "back": 0.9685461531587883,
+      "left": 0.9575843113950379,
+      "right": 0.9575843113950379
+     }
+    },
+    {
+     "iteration": 25,
+     "mean_iou": 0.9623997935614836,
+     "iou": {
+      "front": 0.9683326633614722,
+      "back": 0.9683326633614722,
+      "left": 0.9564669237614951,
+      "right": 0.9564669237614951
+     }
+    },
+    {
+     "iteration": 26,
+     "mean_iou": 0.9631535242840807,
+     "iou": {
+      "front": 0.9684318628326487,
+      "back": 0.9684318628326487,
+      "left": 0.9578751857355127,
+      "right": 0.9578751857355127
+     }
+    },
+    {
+     "iteration": 27,
+     "mean_iou": 0.962957906731398,
+     "iou": {
+      "front": 0.9693166592228674,
+      "back": 0.9693166592228674,
+      "left": 0.9565991542399288,
+      "right": 0.9565991542399288
+     }
+    },
+    {
+     "iteration": 28,
+     "mean_iou": 0.963572280315286,
+     "iou": {
+      "front": 0.9689815228063912,
+      "back": 0.9689815228063912,
+      "left": 0.9581630378241808,
+      "right": 0.9581630378241808
+     }
+    },
+    {
+     "iteration": 29,
+     "mean_iou": 0.9624586518126528,
+     "iou": {
+      "front": 0.9693913974656434,
+      "back": 0.9693913974656434,
+      "left": 0.955525906159662,
+      "right": 0.955525906159662
+     }
+    },
+    {
+     "iteration": 30,
+     "mean_iou": 0.9634261476008319,
+     "iou": {
+      "front": 0.9689645946669044,
+      "back": 0.9689645946669044,
+      "left": 0.9578877005347594,
+      "right": 0.9578877005347594
+     }
+    },
+    {
+     "iteration": 31,
+     "mean_iou": 0.9625647461684561,
+     "iou": {
+      "front": 0.96937137761926,
+      "back": 0.96937137761926,
+      "left": 0.9557581147176523,
+      "right": 0.9557581147176523
+     }
+    },
+    {
+     "iteration": 32,
+     "mean_iou": 0.9634860431049237,
+     "iou": {
+      "front": 0.9700793721573174,
+      "back": 0.9700793721573174,
+      "left": 0.9568927140525301,
+      "right": 0.9568927140525301
+     }
+    }
+   ],
+   "gates": {
+    "accepted": true,
+    "gates": {
+     "readable_mesh": {
+      "status": "pass",
+      "detail": "162648 vertices, 325292 triangles"
+     },
+     "actual_geometry": {
+      "status": "pass",
+      "detail": ""
+     },
+     "finite_coordinates": {
+      "status": "pass",
+      "detail": ""
+     },
+     "validation_report": {
+      "status": "pass",
+      "detail": "validation.json"
+     },
+     "model_version_recorded": {
+      "status": "pass",
+      "detail": {
+       "model": "VAST-AI/TripoSG",
+       "version": "weights:90facf66b8638c8d",
+       "duration_s": 53.83680180000374,
+       "peak_vram_mb": 5474.5498046875
+      }
+     },
+     "runtime_recorded": {
+      "status": "pass",
+      "detail": {
+       "duration_s": 53.83680180000374,
+       "peak_vram_mb": 5474.5498046875
+      }
+     },
+     "previews_rendered": {
+      "status": "pass",
+      "detail": [
+       "preview_front.png",
+       "preview_back.png",
+       "preview_left.png",
+       "preview_right.png"
+      ]
+     },
+     "input_view_comparison": {
+      "status": "pass",
+      "detail": {
+       "front": 0.9152650628060464,
+       "back": 0.9152650628060464,
+       "left": 0.5611485902093063,
+       "right": 0.5611485902093063
+      }
+     },
+     "blender_roundtrip": {
+      "status": "skipped",
+      "detail": "blender not found on PATH"
+     }
+    }
+   },
+   "output_bytes": 5856068
+  },
+  {
+   "object": "person_10",
+   "category": "human",
+   "record": {
+    "backend": "triposg",
+    "model": "VAST-AI/TripoSG",
+    "model_version": "weights:90facf66b8638c8d",
+    "license": "MIT",
+    "status": "success",
+    "quality_profile": "quality",
+    "config": {
+     "name": "quality",
+     "steps": 50,
+     "guidance": 7.0,
+     "faces": -1,
+     "vram_fraction": 0.95,
+     "dtype": "float16",
+     "segmentation": "alpha",
+     "command": [
+      "C:\\ai3d\\triposg-env\\Scripts\\python.exe",
+      "C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_runner.py",
+      "--repo",
+      "C:\\ai3d\\TripoSG",
+      "--weights",
+      "C:\\ai3d\\TripoSG\\pretrained_weights\\TripoSG",
+      "--image",
+      "bench\\human_v1_triposg_base\\person_10\\input_rgba.png",
+      "--out",
+      "bench\\human_v1_triposg_base\\person_10\\raw_triposg.glb",
+      "--result",
+      "bench\\human_v1_triposg_base\\person_10\\runner_result.json",
+      "--seed",
+      "42",
+      "--steps",
+      "50",
+      "--guidance",
+      "7.0",
+      "--faces",
+      "-1",
+      "--vram-fraction",
+      "0.95",
+      "--dtype",
+      "float16"
+     ],
+     "runtime": {
+      "python": "3.10.11",
+      "torch": "2.6.0+cu124",
+      "torch_cuda": "12.4",
+      "platform": "Windows-10-10.0.26300-SP0",
+      "gpu_total_mb": 12287.5,
+      "raw_faces": 397608,
+      "faces": 397608,
+      "vertices": 198806,
+      "vram_after_load_mb": 3789.3115234375
+     }
+    },
+    "seed": 42,
+    "duration_s": 52.473566499997105,
+    "load_s": 2.8484814999974333,
+    "peak_vram_mb": 5530.8564453125,
+    "peak_vram_reserved_mb": 8294.0,
+    "device": "NVIDIA GeForce RTX 3060",
+    "output_path": "bench\\human_v1_triposg_base\\person_10\\raw_triposg.glb",
+    "inputs": [
+     {
+      "view": "front",
+      "source": "bench\\human_v1\\person_10\\views\\front.png",
+      "copy": "bench\\human_v1_triposg_base\\person_10\\inputs\\front.png",
+      "sha256": "3aaad1e0f311cda4564499da315fe2062f53c89995911d72890c6b14b9707fd4"
+     }
+    ],
+    "reason": "",
+    "warnings": [],
+    "label": "AI_GENERATED",
+    "started_at": "2026-10-24T11:01:29+0700"
+   },
+   "placement": {
+    "rotation": [
+     [
+      1.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "scale": 0.9169296997863351,
+    "mean_ref_iou": 0.8451983968918895,
+    "label": "ESTIMATED",
+    "method": "24 rotations + silhouette box, scored by reference IoU (no ground truth)"
+   },
+   "A": {
+    "ref_iou": {
+     "front": 0.9297712188067782,
+     "back": 0.9297712188067782,
+     "left": 0.7606255749770009,
+     "right": 0.7606255749770009
+    },
+    "ref_iou_mean": 0.8451983968918895,
+    "heldout_iou": {
+     "az45_el20": 0.8032378580323786,
+     "az135_el20": 0.795151213971319,
+     "az225_el-15": 0.8037159466545082,
+     "top": 0.7778458844133099
+    },
+    "heldout_iou_mean": 0.7949877257678789,
+    "chamfer_l1": 0.007329479604282301,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.7673588493989639,
+    "fscore@0.02": 0.9645138798890646,
+    "fscore@0.05": 0.997669581777633,
+    "normal_consistency": 0.9981045287774077,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "B": {
+    "ref_iou": {
+     "front": 0.9907695814024159,
+     "back": 0.9907695814024159,
+     "left": 0.9890616252530038,
+     "right": 0.9890616252530038
+    },
+    "ref_iou_mean": 0.9899156033277099,
+    "heldout_iou": {
+     "az45_el20": 0.8624962109730221,
+     "az135_el20": 0.8259328607730373,
+     "az225_el-15": 0.8653183687076342,
+     "top": 0.7942608250064054
+    },
+    "heldout_iou_mean": 0.8370020663650247,
+    "chamfer_l1": 0.005460024645268961,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.893455042639452,
+    "fscore@0.02": 0.9903293348479112,
+    "fscore@0.05": 0.9981214777708203,
+    "normal_consistency": 0.983153406668079,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "refine_seconds": 35.1842528000052,
+   "refine_history": [
+    {
+     "iteration": 0,
+     "mean_iou": 0.8451983968918895,
+     "iou": {
+      "front": 0.9297712188067782,
+      "back": 0.9297712188067782,
+      "left": 0.7606255749770009,
+      "right": 0.7606255749770009
+     }
+    },
+    {
+     "iteration": 1,
+     "mean_iou": 0.9196076448978527,
+     "iou": {
+      "front": 0.9764398895738002,
+      "back": 0.9764398895738002,
+      "left": 0.8627754002219052,
+      "right": 0.8627754002219052
+     }
+    },
+    {
+     "iteration": 2,
+     "mean_iou": 0.9600126321954681,
+     "iou": {
+      "front": 0.9901140684410646,
+      "back": 0.9901140684410646,
+      "left": 0.9299111959498714,
+      "right": 0.9299111959498714
+     }
+    },
+    {
+     "iteration": 3,
+     "mean_iou": 0.9802991883836691,
+     "iou": {
+      "front": 0.9919336427973517,
+      "back": 0.9919336427973517,
+      "left": 0.9686647339699863,
+      "right": 0.9686647339699863
+     }
+    },
+    {
+     "iteration": 4,
+     "mean_iou": 0.9873930211150406,
+     "iou": {
+      "front": 0.9920118680817072,
+      "back": 0.9920118680817072,
+      "left": 0.9827741741483741,
+      "right": 0.9827741741483741
+     }
+    },
+    {
+     "iteration": 5,
+     "mean_iou": 0.9898159698664876,
+     "iou": {
+      "front": 0.9915592563020418,
+      "back": 0.9915592563020418,
+      "left": 0.9880726834309335,
+      "right": 0.9880726834309335
+     }
+    },
+    {
+     "iteration": 6,
+     "mean_iou": 0.989106387883278,
+     "iou": {
+      "front": 0.991409130649637,
+      "back": 0.991409130649637,
+      "left": 0.9868036451169189,
+      "right": 0.9868036451169189
+     }
+    },
+    {
+     "iteration": 7,
+     "mean_iou": 0.9898057765329611,
+     "iou": {
+      "front": 0.9908068682571037,
+      "back": 0.9908068682571037,
+      "left": 0.9888046848088184,
+      "right": 0.9888046848088184
+     }
+    },
+    {
+     "iteration": 8,
+     "mean_iou": 0.9891820156716851,
+     "iou": {
+      "front": 0.9902805725350241,
+      "back": 0.9902805725350241,
+      "left": 0.9880834588083459,
+      "right": 0.9880834588083459
+     }
+    },
+    {
+     "iteration": 9,
+     "mean_iou": 0.9899156033277099,
+     "iou": {
+      "front": 0.9907695814024159,
+      "back": 0.9907695814024159,
+      "left": 0.9890616252530038,
+      "right": 0.9890616252530038
+     }
+    },
+    {
+     "iteration": 10,
+     "mean_iou": 0.988691294871674,
+     "iou": {
+      "front": 0.9893411220270835,
+      "back": 0.9893411220270835,
+      "left": 0.9880414677162644,
+      "right": 0.9880414677162644
+     }
+    },
+    {
+     "iteration": 11,
+     "mean_iou": 0.9894724928252446,
+     "iou": {
+      "front": 0.990054661402976,
+      "back": 0.990054661402976,
+      "left": 0.9888903242475132,
+      "right": 0.9888903242475132
+     }
+    },
+    {
+     "iteration": 12,
+     "mean_iou": 0.9883036212645476,
+     "iou": {
+      "front": 0.9894161829976101,
+      "back": 0.9894161829976101,
+      "left": 0.9871910595314851,
+      "right": 0.9871910595314851
+     }
+    },
+    {
+     "iteration": 13,
+     "mean_iou": 0.9890697846387042,
+     "iou": {
+      "front": 0.9897169310161645,
+      "back": 0.9897169310161645,
+      "left": 0.9884226382612438,
+      "right": 0.9884226382612438
+     }
+    }
+   ],
+   "gates": {
+    "accepted": true,
+    "gates": {
+     "readable_mesh": {
+      "status": "pass",
+      "detail": "198806 vertices, 397608 triangles"
+     },
+     "actual_geometry": {
+      "status": "pass",
+      "detail": ""
+     },
+     "finite_coordinates": {
+      "status": "pass",
+      "detail": ""
+     },
+     "validation_report": {
+      "status": "pass",
+      "detail": "validation.json"
+     },
+     "model_version_recorded": {
+      "status": "pass",
+      "detail": {
+       "model": "VAST-AI/TripoSG",
+       "version": "weights:90facf66b8638c8d",
+       "duration_s": 52.473566499997105,
+       "peak_vram_mb": 5530.8564453125
+      }
+     },
+     "runtime_recorded": {
+      "status": "pass",
+      "detail": {
+       "duration_s": 52.473566499997105,
+       "peak_vram_mb": 5530.8564453125
+      }
+     },
+     "previews_rendered": {
+      "status": "pass",
+      "detail": [
+       "preview_front.png",
+       "preview_back.png",
+       "preview_left.png",
+       "preview_right.png"
+      ]
+     },
+     "input_view_comparison": {
+      "status": "pass",
+      "detail": {
+       "front": 0.9297712188067782,
+       "back": 0.9297712188067782,
+       "left": 0.7606255749770009,
+       "right": 0.7606255749770009
+      }
+     },
+     "blender_roundtrip": {
+      "status": "skipped",
+      "detail": "blender not found on PATH"
+     }
+    }
+   },
+   "output_bytes": 7157756
+  },
+  {
+   "object": "person_11",
+   "category": "human",
+   "record": {
+    "backend": "triposg",
+    "model": "VAST-AI/TripoSG",
+    "model_version": "weights:90facf66b8638c8d",
+    "license": "MIT",
+    "status": "success",
+    "quality_profile": "quality",
+    "config": {
+     "name": "quality",
+     "steps": 50,
+     "guidance": 7.0,
+     "faces": -1,
+     "vram_fraction": 0.95,
+     "dtype": "float16",
+     "segmentation": "alpha",
+     "command": [
+      "C:\\ai3d\\triposg-env\\Scripts\\python.exe",
+      "C:\\adbosp-vector3d-engine\\vector3d\\lab\\backends\\triposg_runner.py",
+      "--repo",
+      "C:\\ai3d\\TripoSG",
+      "--weights",
+      "C:\\ai3d\\TripoSG\\pretrained_weights\\TripoSG",
+      "--image",
+      "bench\\human_v1_triposg_base\\person_11\\input_rgba.png",
+      "--out",
+      "bench\\human_v1_triposg_base\\person_11\\raw_triposg.glb",
+      "--result",
+      "bench\\human_v1_triposg_base\\person_11\\runner_result.json",
+      "--seed",
+      "42",
+      "--steps",
+      "50",
+      "--guidance",
+      "7.0",
+      "--faces",
+      "-1",
+      "--vram-fraction",
+      "0.95",
+      "--dtype",
+      "float16"
+     ],
+     "runtime": {
+      "python": "3.10.11",
+      "torch": "2.6.0+cu124",
+      "torch_cuda": "12.4",
+      "platform": "Windows-10-10.0.26300-SP0",
+      "gpu_total_mb": 12287.5,
+      "raw_faces": 412304,
+      "faces": 412304,
+      "vertices": 206146,
+      "vram_after_load_mb": 3789.3115234375
+     }
+    },
+    "seed": 42,
+    "duration_s": 55.581732500002545,
+    "load_s": 4.981858400002238,
+    "peak_vram_mb": 5503.05029296875,
+    "peak_vram_reserved_mb": 7936.0,
+    "device": "NVIDIA GeForce RTX 3060",
+    "output_path": "bench\\human_v1_triposg_base\\person_11\\raw_triposg.glb",
+    "inputs": [
+     {
+      "view": "front",
+      "source": "bench\\human_v1\\person_11\\views\\front.png",
+      "copy": "bench\\human_v1_triposg_base\\person_11\\inputs\\front.png",
+      "sha256": "dcd59e0eeb17ff3457fe436d1d334fe0dcd71fdb7f1e74da27ce0d45f8030011"
+     }
+    ],
+    "reason": "",
+    "warnings": [],
+    "label": "AI_GENERATED",
+    "started_at": "2026-10-24T11:03:15+0700"
+   },
+   "placement": {
+    "rotation": [
+     [
+      1.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0
+     ]
+    ],
+    "scale": 0.8977728527647346,
+    "mean_ref_iou": 0.7040199534608823,
+    "label": "ESTIMATED",
+    "method": "24 rotations + silhouette box, scored by reference IoU (no ground truth)"
+   },
+   "A": {
+    "ref_iou": {
+     "front": 0.8899110515413671,
+     "back": 0.8899110515413671,
+     "left": 0.5181288553803975,
+     "right": 0.5181288553803975
+    },
+    "ref_iou_mean": 0.7040199534608823,
+    "heldout_iou": {
+     "az45_el20": 0.6083052405761569,
+     "az135_el20": 0.6313064223168053,
+     "az225_el-15": 0.6103193809566491,
+     "top": 0.5930856219709209
+    },
+    "heldout_iou_mean": 0.610754166455133,
+    "chamfer_l1": 0.01884966663062731,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.32139247939026283,
+    "fscore@0.02": 0.5757262223187147,
+    "fscore@0.05": 0.9852756247938498,
+    "normal_consistency": 0.9979460452895123,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "B": {
+    "ref_iou": {
+     "front": 0.9863484456775332,
+     "back": 0.9863484456775332,
+     "left": 0.986311924942211,
+     "right": 0.986311924942211
+    },
+    "ref_iou_mean": 0.9863301853098722,
+    "heldout_iou": {
+     "az45_el20": 0.7466953485472004,
+     "az135_el20": 0.780126963632451,
+     "az225_el-15": 0.747361077408396,
+     "top": 0.7041233657391888
+    },
+    "heldout_iou_mean": 0.744576688831809,
+    "chamfer_l1": 0.009510295964111928,
+    "units": "fraction of GT bbox diagonal",
+    "samples": 20000,
+    "fscore@0.01": 0.6813982551959239,
+    "fscore@0.02": 0.8858286391601287,
+    "fscore@0.05": 0.9939463680265607,
+    "normal_consistency": 0.9700010365597069,
+    "non_manifold_edges": 0,
+    "watertight": true
+   },
+   "refine_seconds": 51.414071300001524,
+   "refine_history": [
+    {
+     "iteration": 0,
+     "mean_iou": 0.7040199534608823,
+     "iou": {
+      "front": 0.8899110515413671,
+      "back": 0.8899110515413671,
+      "left": 0.5181288553803975,
+      "right": 0.5181288553803975
+     }
+    },
+    {
+     "iteration": 1,
+     "mean_iou": 0.785640990036774,
+     "iou": {
+      "front": 0.9516028827037774,
+      "back": 0.9516028827037774,
+      "left": 0.6196790973697707,
+      "right": 0.6196790973697707
+     }
+    },
+    {
+     "iteration": 2,
+     "mean_iou": 0.8448054719683654,
+     "iou": {
+      "front": 0.9722595777951525,
+      "back": 0.9722595777951525,
+      "left": 0.7173513661415784,
+      "right": 0.7173513661415784
+     }
+    },
+    {
+     "iteration": 3,
+     "mean_iou": 0.8960745603865532,
+     "iou": {
+      "front": 0.9793720565149137,
+      "back": 0.9793720565149137,
+      "left": 0.8127770642581928,
+      "right": 0.8127770642581928
+     }
+    },
+    {
+     "iteration": 4,
+     "mean_iou": 0.9396585978380623,
+     "iou": {
+      "front": 0.9833123425692695,
+      "back": 0.9833123425692695,
+      "left": 0.896004853106855,
+      "right": 0.896004853106855
+     }
+    },
+    {
+     "iteration": 5,
+     "mean_iou": 0.9664709701158398,
+     "iou": {
+      "front": 0.983257804632427,
+      "back": 0.983257804632427,
+      "left": 0.9496841355992526,
+      "right": 0.9496841355992526
+     }
+    },
+    {
+     "iteration": 6,
+     "mean_iou": 0.9791029125323224,
+     "iou": {
+      "front": 0.9836978756884343,
+      "back": 0.9836978756884343,
+      "left": 0.9745079493762104,
+      "right": 0.9745079493762104
+     }
+    },
+    {
+     "iteration": 7,
+     "mean_iou": 0.9828650430029424,
+     "iou": {
+      "front": 0.9841984324341339,
+      "back": 0.9841984324341339,
+      "left": 0.9815316535717511,
+      "right": 0.9815316535717511
+     }
+    },
+    {
+     "iteration": 8,
+     "mean_iou": 0.983747204882566,
+     "iou": {
+      "front": 0.9843592648539778,
+      "back": 0.9843592648539778,
+      "left": 0.9831351449111543,
+      "right": 0.9831351449111543
+     }
+    },
+    {
+     "iteration": 9,
+     "mean_iou": 0.9847734985674921,
+     "iou": {
+      "front": 0.9850722766352785,
+      "back": 0.9850722766352785,
+      "left": 0.9844747204997057,
+      "right": 0.9844747204997057
+     }
+    },
+    {
+     "iteration": 10,
+     "mean_iou": 0.9850582653589303,
+     "iou": {
+      "front": 0.9851061149946471,
+      "back": 0.9851061149946471,
+      "left": 0.9850104157232135,
+      "right": 0.9850104157232135
+     }
+    },
+    {
+     "iteration": 11,
+     "mean_iou": 0.9854215029573447,
+     "iou": {
+      "front": 0.9856967329321698,
+      "back": 0.9856967329321698,
+      "left": 0.9851462729825197,
+      "right": 0.9851462729825197
+     }
+    },
+    {
+     "iteration": 12,
+     "mean_iou": 0.9848678690237276,
+     "iou": {
+      "front": 0.9848570708978718,
+      "back": 0.9848570708978718,
+      "left": 0.9848786671495835,
+      "right": 0.9848786671495835
+     }
+    },
+    {
+     "iteration": 13,
+     "mean_iou": 0.9863301853098722,
+     "iou": {
+      "front": 0.9863484456775332,
+      "back": 0.9863484456775332,
+      "left": 0.986311924942211,
+      "right": 0.986311924942211
+     }
+    },
+    {
+     "iteration": 14,
+     "mean_iou": 0.9853266082041439,
+     "iou": {
+      "front": 0.9849214593760821,
+      "back": 0.9849214593760821,
+      "left": 0.9857317570322055,
+      "right": 0.9857317570322055
+     }
+    },
+    {
+     "iteration": 15,
+     "mean_iou": 0.9853194215139255,
+     "iou": {
+      "front": 0.9855743487983873,
+      "back": 0.9855743487983873,
+      "left": 0.9850644942294636,
+      "right": 0.9850644942294636
+     }
+    },
+    {
+     "iteration": 16,
+     "mean_iou": 0.9852688626307091,
+     "iou": {
+      "front": 0.9848933089947756,
+      "back": 0.9848933089947756,
+      "left": 0.9856444162666426,
+      "right": 0.9856444162666426
+     }
+    },
+    {
+     "iteration": 17,
+     "mean_iou": 0.9855754958748568,
+     "iou": {
+      "front": 0.9856391522060908,
+      "back": 0.9856391522060908,
+      "left": 0.985511839543623,
+      "right": 0.985511839543623
+     }
+    }
+   ],
+   "gates": {
+    "accepted": true,
+    "gates": {
+     "readable_mesh": {
+      "status": "pass",
+      "detail": "206146 vertices, 412304 triangles"
+     },
+     "actual_geometry": {
+      "status": "pass",
+      "detail": ""
+     },
+     "finite_coordinates": {
+      "status": "pass",
+      "detail": ""
+     },
+     "validation_report": {
+      "status": "pass",
+      "detail": "validation.json"
+     },
+     "model_version_recorded": {
+      "status": "pass",
+      "detail": {
+       "model": "VAST-AI/TripoSG",
+       "version": "weights:90facf66b8638c8d",
+       "duration_s": 55.581732500002545,
+       "peak_vram_mb": 5503.05029296875
+      }
+     },
+     "runtime_recorded": {
+      "status": "pass",
+      "detail": {
+       "duration_s": 55.581732500002545,
+       "peak_vram_mb": 5503.05029296875
+      }
+     },
+     "previews_rendered": {
+      "status": "pass",
+      "detail": [
+       "preview_front.png",
+       "preview_back.png",
+       "preview_left.png",
+       "preview_right.png"
+      ]
+     },
+     "input_view_comparison": {
+      "status": "pass",
+      "detail": {
+       "front": 0.8899110515413671,
+       "back": 0.8899110515413671,
+       "left": 0.5181288553803975,
+       "right": 0.5181288553803975
+      }
+     },
+     "blender_roundtrip": {
+      "status": "skipped",
+      "detail": "blender not found on PATH"
+     }
+    }
+   },
+   "output_bytes": 7422188
+  }
+ ]
+}
