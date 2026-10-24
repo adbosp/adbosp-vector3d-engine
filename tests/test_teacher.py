@@ -126,6 +126,26 @@ def test_run_places_hand_without_gt(scene, tmp_path):
     assert rep["steps"]["merge"]["body_faces_removed"] > 0
 
 
+def test_failed_hand_generation_keeps_the_body_hand(scene, tmp_path):
+    body, hand, cam = scene
+    png = tmp_path / "front.png"
+    Image.fromarray(shade(body, render(body, cam)), "RGBA").save(png)
+
+    def generate(image, out):
+        if image.name.startswith("hand_"):
+            raise RuntimeError("TripoSG failed: no surface")
+        out.mkdir(parents=True, exist_ok=True)
+        f = out / "raw.npz"
+        m = canonical(body)
+        np.savez(f, v=m.vertices, f=m.faces)
+        return f
+
+    load = lambda f: Mesh(np.load(f)["v"], np.load(f)["f"])  # noqa: E731
+    rep = teacher.run(png, cam, keypoints_for(hand, cam), generate, tmp_path / "runs", crop_size=256, load=load)
+    assert rep["steps"]["hand_l"]["status"] == "failed" and "no surface" in rep["steps"]["hand_l"]["reason"]
+    assert rep["steps"]["merge"]["body_faces_removed"] == 0         # nothing cut, nothing substituted
+
+
 def test_contour_isolation_follows_the_silhouette_and_cuts_the_arm(scene):
     """v0 discs vs contour against the true hand pixels: contour must be closer and must not keep the arm."""
     body, hand, cam = scene

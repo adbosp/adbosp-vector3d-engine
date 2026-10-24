@@ -411,8 +411,13 @@ def run(front_png, front_cam: OrthoCamera, keypoints: dict, generate: Generate, 
                              else (None, {"reason": "no skeleton from the anatomy step"}))
             if target is None:
                 tinfo["fallback"] = "body depth over the hand region"
-        part, pinfo = place_part(load(generate(out / f"hand_{side}.png", out / f"hand_{side}")), crop, ccam,
-                                 body, front_cam, region, target, tinfo,
+        try:
+            raw_part = load(generate(out / f"hand_{side}.png", out / f"hand_{side}"))
+        except RuntimeError as e:      # close-up generation failed: the body keeps its own hand, nothing substituted
+            rep["steps"][f"hand_{side}"] = {"status": "failed", "reason": str(e), "box": box.to_dict(),
+                                            "kept": "the body's own hand", "seconds": time.perf_counter() - t1}
+            continue
+        part, pinfo = place_part(raw_part, crop, ccam, body, front_cam, region, target, tinfo,
                                  core=region & disc_mask(box, region.shape), tidy=tidy)
         parts.append((part, region))
         rep["steps"][f"hand_{side}"] = {"status": "success", "box": box.to_dict(), "crop_camera": ccam.to_dict(),

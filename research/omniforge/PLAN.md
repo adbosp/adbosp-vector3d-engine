@@ -84,6 +84,15 @@ Mục tiêu: kết quả benchmark vượt đối thủ, với tốc độ sinh 
 4. Mọi kết quả ghi là quan sát hoặc giả thuyết cho tới khi đo trên human_v1.
 5. **Astra (dựa trên GPT) và Muse:** là dịch vụ đóng, không có trọng số, và điều khoản cấm dùng đầu ra để train. Theo chỉ đạo của Ropy (không có quyền thì bỏ qua hoặc thay bằng model mở tương đương), hai model này bị loại. Vai trò "suy luận hình ảnh" giao cho Qwen3-VL (mở). Model nào thiếu quyền thì thay bằng model mở, và phải chứng minh bằng benchmark trước khi gọi là tương đương: SAM 3D Body → RTMW+MHR (`ANATOMY.md`, chưa được gọi là tương đương). TRELLIS.2 (MIT) vẫn là teacher hình khối tiềm năng, nhưng cần GPU 24 GB trở lên, không chạy trên 3060.
 
+## 5c. Kiến trúc chốt lại (Ropy, 2026-10-24)
+
+- **Lõi của Omni vẫn là TripoSG.** Dữ liệu và tri thức từ TRELLIS (cùng các teacher khác) được **chưng cất và nạp vào** TripoSG, ví dụ LoRA train trên đầu ra của TRELLIS. TRELLIS không thay TripoSG làm bộ sinh.
+- **Tiêu chí:** Omni chỉ được gọi là nâng cấp khi **vượt TripoSG gốc** trên cùng đầu vào (human_v1 front_only, bộ Alicia) với tốc độ tương đương (một lượt TripoSG). Luồng nhiều lượt (teacher) chỉ dùng để tạo dữ liệu train, không làm chế độ mặc định.
+- **Thứ tự việc:**
+  1. Đo TRELLIS so với TripoSG trên cùng đầu vào (`research/trellis/`). Chỉ chưng cất phần mà TRELLIS thật sự hơn.
+  2. Tạo dữ liệu teacher từ TRELLIS (giấy phép MIT; đầu ra được phép dùng để train) và lọc qua trọng tài.
+  3. Train LoRA cho TripoSG, đo lại bằng đúng metric, rồi mới đưa vào chế độ Omni.
+
 ## 6. Cần Ropy quyết định
 
 1. **Tải Hi3D để chạy thử (GĐ 1):** khoảng 7,2 GB từ `hi3d-official/Hi3Dv1.0`, cộng DINOv2-large (khoảng 1,2 GB) và CLIP ViT-L/14 (khoảng 1,7 GB), cài trong WSL2 Ubuntu-24.04. Ổ C còn 85 GB.

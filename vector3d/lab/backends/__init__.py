@@ -2,9 +2,10 @@
 reports why it cannot; none of them ever returns a stand-in mesh."""
 from .base import Backend, GenerationRecord
 from .sam3d_body import SAM3DBodyBackend
+from .trellis import TrellisBackend
 from .triposg import TripoSGBackend
 
-BACKENDS = {"triposg": TripoSGBackend, "sam3d_body": SAM3DBodyBackend}
+BACKENDS = {"triposg": TripoSGBackend, "sam3d_body": SAM3DBodyBackend, "trellis": TrellisBackend}
 
 
 def get_backend(name: str, **kw) -> Backend:

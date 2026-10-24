@@ -146,6 +146,15 @@ PROTOCOLS = {
 }
 PROTOCOL_FILES = {"multiview_oracle": "A_placed.glb", "front_only": "raw_triposg.glb",
                   "body_front_only_hires": "body_placed.glb", "teacher_front_only": "teacher_placed.glb"}
+RAW_OUTPUTS = ("raw_triposg.glb", "raw_trellis.glb")      # raw model output of each lab backend
+
+
+def protocol_file(run_dir: Path, protocol: str) -> Path:
+    """The file a protocol scores in one benchmark run folder (front_only: whichever backend's raw output)."""
+    if protocol == "front_only":
+        found = [run_dir / f for f in RAW_OUTPUTS if (run_dir / f).is_file()]
+        return found[0] if found else run_dir / RAW_OUTPUTS[0]
+    return run_dir / PROTOCOL_FILES[protocol]
 
 
 def render_front(obj_dir, size: int = 2048):
@@ -178,7 +187,7 @@ def placed_mesh(run_dir: Path, obj_dir: Path, protocol: str) -> Mesh:
     if protocol == "front_only":
         cams = dataset.load_cameras(obj_dir)
         front = dataset.load_masks(obj_dir, ["front"])["front"]
-        return place_front_only(load_mesh(run_dir / "raw_triposg.glb"), front, cams["front"])[0]
+        return place_front_only(load_mesh(protocol_file(run_dir, protocol)), front, cams["front"])[0]
     raise ValueError(f"unknown protocol {protocol!r}; choose from {sorted(PROTOCOLS)}")
 
 
@@ -191,7 +200,7 @@ def hand_scores(bench_dir, data_dir, protocol: str = "front_only") -> dict:
     out = {"protocol": protocol, "protocol_description": PROTOCOLS[protocol], "density_per_m2": DENSITY}
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir()):
         run = bench_dir / d.name
-        if not (run / PROTOCOL_FILES[protocol]).is_file():
+        if not protocol_file(run, protocol).is_file():
             out[d.name] = {"status": "missing"}
             continue
         gt, pred = load_mesh(d / "gt.glb"), placed_mesh(run, d, protocol)
@@ -214,7 +223,7 @@ def body_scores(bench_dir, data_dir, protocol: str = "front_only") -> dict:
     out = {"protocol": protocol, "protocol_description": PROTOCOLS[protocol]}
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir()):
         run = bench_dir / d.name
-        if not (run / PROTOCOL_FILES[protocol]).is_file():
+        if not protocol_file(run, protocol).is_file():
             out[d.name] = {"status": "missing"}
             continue
         cams = dataset.load_cameras(d)
