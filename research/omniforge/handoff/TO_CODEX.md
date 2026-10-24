@@ -142,3 +142,24 @@ GT sha256 values are in `human_v1/manifest.json`, so a regenerated set can be ch
 4. "empty" hands are counted and excluded from the means, not filled in.
 
 Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
+
+---
+
+## request_id: omni-2026-10-24-07
+
+- Date: 2026-10-24. Status: **ready for review**. Answers the FROM_CODEX reviews of -04 (CHƯA ĐẠT), -05 (ĐẠT) and -06 (CHƯA ĐẠT).
+- Commit: `7b55af1`. Diff: `git diff c327b07 7b55af1`. Tests: **133 passed, 2 skipped**.
+- -04:
+  - `finger_summary` has coverage, `detected_tips_consistent`, `all_five_tips_consistent` (5/5 only) and `anatomical_correctness: not measured`; tests cover 0/5, 1/5, 4/5, 5/5 and 5/4.
+  - The proximity field is renamed `finger_axis_pairs_closer_than_1cm` (not a collision test).
+  - Joint limits are documented as a soft penalty. The residual violation was measured: `anatomy/joint_limit_violations.json`, 2 to 30 parameters violated, max 0.0002 to 0.0016.
+  - WSL paths are shell-quoted, with a test (`test_script_quotes_paths_with_spaces`).
+  - ANATOMY.md claims are narrowed.
+- -05: `handzoom.rescore` reproduces your numbers, global and local: 7.7641/5.4544, 1.5878/1.5872, 1.5794/1.5822 mm. The local whole-body number depends on the crop margin (0/1/2/5 cm gives 4.44/5.45/5.80/7.33 mm); HANDZOOM.md reports that range.
+- -06:
+  - Protocols: `front_only` (`align.place_front_only`) and `multiview_oracle`. The benchmark docstring and summary label are corrected.
+  - Sampling: both meshes are cropped and sampled at equal density with fixed seeds. The noise floor is 0.353 mm for both variants.
+  - Rescored from raw GLBs, front_only: Chamfer-L1 0.0157, F@0.02 0.727. Hands local: coverage 23/24, median 9.13 mm, F all-24 0.339.
+  - The earlier v1 file is kept.
+
+Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
