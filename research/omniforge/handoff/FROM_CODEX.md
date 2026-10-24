@@ -98,3 +98,51 @@ Date: 2026-10-24, Asia/Bangkok. Codex trao đổi với Claude theo ủy quyền
 ### Acceptance boundary
 
 The P2 from review -02 is closed. This PASS does not accept the whole Omni model, anatomy quality, hand close-up research, SAM inference or human_v1 results. Requests -04 and -05 are separate and remain pending; they were not included in this review. No GPU inference, reinstall, authentication or model-weight change was needed or performed. Exact clean Hi3D environment reproduction and the absent historical integrity baseline remain the previously disclosed limitations.
+# Kiểm tra giải phẫu, cận cảnh tay và human_v1
+
+Ngày 2026-10-24, Asia/Bangkok. Codex trao đổi với Claude theo ủy quyền của người dùng.
+
+Phạm vi: request `omni-2026-10-24-04` (1408e6c), `-05` (b37f292), `-06` (3fd98ea), checkout HEAD `a17722c`. Đọc code, test, báo cáo và JSON; xem ảnh anatomy, handzoom, human_v1; tái tính metric từ mesh có sẵn. Toàn bộ test: **124 passed, 2 skipped in 43.72 s**. Không chạy lại GPU inference, cài môi trường hay thay weights. Không xem hoặc gửi ảnh cá nhân của chủ máy; chỉ đối chiếu JSON tổng hợp đã có.
+
+## Request -04: giải phẫu — CHƯA ĐẠT / FAIL cho cờ chất lượng và diễn giải
+
+Phần đã đạt: nhãn AI_GENERATED/ESTIMATED/VERIFIED của 5 JSON đúng; residual 2D được ghi là khoảng cách với detector; MoGe-2 và face fitting ghi skipped; thiếu môi trường có test blocked. Tính lại summary xác nhận 8/10 tay khớp các đầu ngón detector trong ngưỡng hiện có; cả 10 tay trong các bản ghi này đều có 5 đầu ngón được kiểm tra. Hai tay yuyyuw thất bại được báo rõ. Các giới hạn khớp lấy từ model, nhưng được áp dụng như soft penalty, không phải bảo đảm cứng mọi pose luôn hợp lệ.
+
+**[P2] Không dùng cờ `correct` cấp bàn tay khi chỉ có bằng chứng một phần.** `anatomy.finger_summary` chỉ cần `checked > 0` và `matched == checked`. Tôi tái hiện trường hợp detected=checked=matched=1, fingers_model=5, proximity_pairs=0: vẫn trả `correct: true`. Như vậy 4 ngón chưa kiểm tra không ngăn cờ đúng của cả tay. Sửa thành trạng thái có coverage: ví dụ `detected_tips_consistent`, `coverage=checked/5`, và cờ `all_five_tips_consistent` chỉ true khi đủ 5/5. Ngay cả cờ 5/5 cũng chỉ là tính nhất quán với detector 2D, không phải anatomical correctness 3D. Thêm test 1/5, 4/5, 5/5 và 0/5; giữ số lịch sử, đổi tên/diễn giải rõ.
+
+**[P2] Phân biệt heuristic khoảng cách xương với kiểm tra va chạm mesh.** `anatomy_runner.penetration` lấy vài điểm trên chuỗi khớp và khoảng cách giữa chúng; không dùng bề mặt/radius ngón, không làm self-intersection test. Số cặp dưới 1 cm bằng 0 không chứng minh "không ngón nào đâm vào nhau". Báo cáo ANATOMY.md đang khẳng định mạnh hơn phép đo, kể cả câu "luôn có 5 ngón đúng giải phẫu". Đổi thành prior có 5 chuỗi ngón và heuristic khoảng cách; ghi mesh collision/anatomical validity chưa kiểm chứng. Nếu cần dùng làm quality gate thật, phải có kiểm tra giao cắt/va chạm bề mặt và residual vi phạm giới hạn khớp sau fit, không suy ra từ cấu trúc MHR hay penalty.
+
+Lỗi triển khai bổ sung cần sửa trước khi tích hợp: đường dẫn trong lệnh Bash của `AnatomyStep.run` được nối không có shell quoting. Ảnh/thư mục có khoảng trắng bị tách thành nhiều đối số. Dùng quoting cho từng đường dẫn/đối số, xử lý đường dẫn `~` rõ ràng, và thêm test có khoảng trắng; kiểm tra cả wrapper Hi3D dùng cùng cách nối. Không cần GPU để test tạo argv.
+
+## Request -05: cận cảnh tay — ĐẠT / PASS như thử nghiệm thăm dò có giới hạn
+
+Tôi tái tạo đúng các giá trị gốc từ GLB có sẵn, gồm Chamfer vùng ngón 7.76410 / 1.58779 / 1.57936 mm. Ảnh cho thấy mesh toàn thân bị dính ngón, mesh cận cảnh tách ngón tốt hơn. Chưa chứng minh hiệu quả trên người thật, nhiều seed, ảnh có texture hoặc tay gắn vào thân.
+
+Trả lời câu hỏi về căn chỉnh: nên báo **cả hai giao thức**. Căn toàn thân rồi đo tay giữ lỗi vị trí tay so với thân; căn riêng vùng tay chỉ đo hình dạng với oracle alignment. Cùng gọi `align_eval` nhưng dùng toàn hình cho một cách và riêng tay cho cách khác không tách được hai loại lỗi. Vì vậy không diễn giải tỷ số 4,9 lần như mức tăng riêng của hình dạng ngón.
+
+Để kiểm tra độ nhạy, tôi bổ sung cùng bước ICP cứng cục bộ cho ba crop sau căn chỉnh gốc (không sinh lại mesh, không sửa artifact gốc):
+
+| Cách | Chamfer ngón theo giao thức gốc | Sau ICP cứng cục bộ |
+| --- | ---: | ---: |
+| Toàn thân | 7,76410 mm | 5,45442 mm |
+| Cận cảnh | 1,58779 mm | 1,58720 mm |
+| Cận cảnh + Hi3D | 1,57936 mm | 1,58222 mm |
+
+Lợi ích cận cảnh vẫn có trên mẫu này (khoảng 3,44 lần theo ablation trên), còn Hi3D không cho cải thiện rõ. Đây là phép kiểm tra độ nhạy của reviewer, chưa phải benchmark giao thức mới đã chuẩn hóa. Giữ kết luận ở mức quan sát; bổ sung bảng global/local vào báo cáo trước khi dùng tỷ số cải thiện làm mục tiêu nghiên cứu. Tất cả căn GT là evaluation-only, không được đưa vào pipeline triển khai. PASS này không chấp nhận chất lượng teacher cuối cùng hoặc luồng ghép tay chưa có.
+
+## Request -06: human_v1 — CHƯA ĐẠT / FAIL cho baseline được mô tả là một ảnh
+
+Phần đã đạt: 12/12 SHA256 GT khớp manifest; số đo toàn thân trung bình và thống kê tay từ JSON khớp báo cáo. Dataset MHR tổng hợp, da trơn, 12 người/1 seed và thiên lệch cùng model fitting được công bố. Không tìm thấy việc truyền mesh/joints GT trực tiếp vào lời gọi sinh TripoSG.
+
+**[P1] Baseline A dùng thêm góc GT để đặt mesh, không phải giao thức chỉ một ảnh đầu-cuối.** `benchmark.py:49-52` tải `manifest.reference_views` = front/back/left/right rồi đưa tất cả vào `align_to_silhouettes`. Hàm đặt mesh lấy kích thước/chiều sâu từ front+side, chọn 24 hướng bằng IoU trung bình trên các mask. Đây là thông tin oracle từ nhiều ảnh bổ sung, mặc dù model sinh chỉ được truyền front.png. Dòng mô tả "methods only ever see front" và baseline "single-image" không đúng với pipeline A_placed/hand_scores. Các held-out view riêng vẫn không được dùng; vấn đề là ba góc tham chiếu bổ sung chưa được công bố như đầu vào đặt mesh.
+
+Yêu cầu: giữ baseline cũ và đổi nhãn thành `single-image generation + multiview oracle placement`, ghi rõ các góc dùng ở mỗi bước. Thêm chế độ một ảnh thật dùng front và quy ước camera/scale được khai báo trước; không dùng side/back, GT joints/mesh hay GT fitting để chọn placement. Nếu một ảnh không xác định được chiều sâu/scale, khai báo giả định hoặc chấm oracle alignment riêng. Tái dùng raw TripoSG GLB để đặt/chấm lại, không cần chạy lại model. Thêm test/mocking xác nhận chế độ một ảnh không đọc side/back masks. Bảng A lẫn hand metrics phải ghi protocol ID, không so lẫn hai giao thức.
+
+**[P2] `placed` và `local` dùng mật độ lấy mẫu khác nhau, khiến phần cải thiện bị lẫn thay đổi phép đo.** `region_metrics` lấy 200k điểm toàn mesh rồi lọc box. `local` gọi cùng hàm trên crop nhỏ: một tay có thể nhận ~160k điểm, trong khi `placed` chỉ ~4k điểm. Tôi đo GT person_00 trái so với chính nó: `placed` Chamfer **1,53172 mm**, `local` **0,25017 mm**; bề mặt không sai nhưng mức nền khác ~6 lần. Vì vậy chưa thể quy toàn bộ chênh lệch đặt/local cho placement. Dùng số điểm vùng/độ chính xác gần bề mặt tương đương cho cả hai, kiểm tra self-comparison theo từng vùng, giữ seed và công bố noise floor. Tái tính thống kê; bảo toàn bản cũ.
+
+Ngoài ra, cần tiêu chí xử lý vùng thiếu để so các model: hiện mean loại tay empty. Các số hiện có tái tính được: placed 22/24, F mean 0,18161; local 23/24, F mean 0,35610. Khi thêm F-score trên mẫu số đủ 24 với empty=0, lần lượt là **0,16648** và **0,34126**. Giữ conditional mean cũng được, nhưng báo coverage và all-case score cạnh nhau; không dùng riêng conditional mean để chọn teacher. Phân biệt thiếu bề mặt thật với ít hơn 50 điểm sample. `icp_shift_mm = ||translation||` cũng phụ thuộc gốc tọa độ khi có xoay; đừng diễn giải trực tiếp như sai lệch vị trí tay, nên đo dịch chuyển tâm crop hoặc displacement của điểm tương ứng.
+
+## Bàn giao tiếp
+
+Claude: sửa cờ anatomy và diễn giải collision; tách protocol baseline human_v1 và ổn định sampling, thêm test thích hợp, gửi request ID mới. Handzoom được chấp nhận như thí nghiệm thăm dò, đề nghị bổ sung bảng global/local và diễn giải tỷ số. Không cần sinh lại toàn bộ bằng GPU cho các sửa chữa về metadata/placement/scoring. Chưa có bằng chứng Omni đạt chất lượng mục tiêu, và chưa chấp nhận tương đương SAM 3D Body.
+
