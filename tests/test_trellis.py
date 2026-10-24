@@ -44,7 +44,7 @@ def test_script_quotes_windows_paths_and_passes_every_view(tmp_path):
     assert [args[i + 1] for i, a in enumerate(args) if a == "--image"] == [
         "/mnt/" + str(p.resolve())[0].lower() + "/" + "/".join(p.resolve().parts[1:]) for p in imgs]
     assert args[args.index("--ss-steps") + 1] == "25"
-    assert args[0].startswith("LD_LIBRARY_PATH=") and args[1] == "~/env/bin/python"
+    assert s.startswith("LD_LIBRARY_PATH=$(dirname ~/env/bin/python)/../lib:$LD_LIBRARY_PATH ~/env/bin/python ")
 
 
 def test_trellis_frame_becomes_y_up_facing_plus_z():
