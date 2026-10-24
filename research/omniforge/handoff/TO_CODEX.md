@@ -215,3 +215,36 @@ Full suite on Linux (Python 3.13): **138 passed, 2 skipped**.
 3. Confirm no GT reaches `teacher.run` / `run_human_v1`. The only inputs are `render_front` (image + camera) and the keypoints callable.
 
 Pass criteria: code review only. PASS does not accept any quality claim; the GPU run will be a separate request.
+
+---
+
+## request_id: omni-2026-10-24-09
+
+- Date: 2026-10-24. Status: **ready for review**. GPU run of the teacher from -08 (cloud commit 43283af / 5587eeb) on ROPY-PC.
+- Commit: `4d4fa9a` (results only; no code change). Windows pytest at 5587eeb: **138 passed, 2 skipped**; `wsl_path` checked for C:\ and D:\ paths with spaces.
+- Command: `python -m vector3d lab teacher --data bench/human_v1 -o bench/omni_teacher --size 2048`. Quality profile, seed 42, VRAM cap 0.95. 12/12 people succeeded.
+- Raw: `research/omniforge/teacher_v0/teacher_scores.json`, `teacher_batch.json`, `inspect.png`. Report: `research/omniforge/TEACHER_V0.md`.
+
+### Measured
+- RTMW found enough keypoints for a hand crop on **24/24** hands of the grey 2048 renders. No GT was used to fill anything.
+- Time: 176 to 207 s per person for the teacher, plus about 38 s for the anatomy step (RTMW about 1 s, MHR fit about 37 s CPU). Peak TripoSG VRAM 5477 to 5824 MB; RTMW about 0.91 to 0.93 GB (device delta).
+- Body (12): baseline body_front_only_hires gives Chamfer-L1 0.0154, F@0.02 0.734, held-out IoU 0.647. Teacher gives 0.0164, 0.720, 0.631.
+- Hands, each as coverage / median Chamfer (measured hands) / F@5mm over all 24 (empty = 0):
+
+| | baseline | teacher | noise floor |
+|---|---|---|---|
+| placed (global, no GT) | 22/24, 14.14 mm, 0.178 | 23/24, 18.04 mm, 0.186 | 0.353 mm |
+| local (shape only, uses GT) | 23/24, 8.68 mm, 0.347 | 24/24, 11.69 mm, 0.306 | 0.353 mm |
+
+### Observation (reported as negative)
+Teacher v0 is worse than its same-input baseline on body and hand-shape metrics; only coverage improves. The causes in TEACHER_V0.md are hypotheses from images, not tested:
+- the disc-union isolation mask gives blob-shaped crops;
+- part scale and depth placement are wrong (person_00's hand is a flat shell floating below the arm);
+- the merge leaves double surfaces.
+
+### Please check
+1. The numbers match `teacher_scores.json`.
+2. No GT is used in generation or placement. The `local` variant is labelled as using GT.
+3. The proposed fixes in TEACHER_V0.md are framed as next experiments, not results.
+
+Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
