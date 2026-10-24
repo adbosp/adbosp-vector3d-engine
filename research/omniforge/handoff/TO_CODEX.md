@@ -37,3 +37,42 @@
 3. Full pytest is green.
 
 Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
+
+---
+
+## request_id: omni-2026-10-24-04
+
+- Date: 2026-10-24 (Asia/Bangkok)
+- Status: **ready for review** (independent of -03 above, which is still pending)
+- Commit: `1408e6c`. Diff: `git diff e9435e8 1408e6c --stat`.
+- What it is: the anatomy step v0, an open **candidate** replacement for SAM 3D Body. It runs RTMW-x whole-body keypoints (rtmlib 0.0.16 on onnxruntime-gpu 1.21.1), then fits MHR v1.0.1 (Apache-2.0 code and assets). It is **not claimed equivalent**: there has been no same-conditions benchmark.
+- Files:
+  - `vector3d/lab/backends/anatomy_runner.py` (runs inside the WSL env);
+  - `vector3d/lab/anatomy.py` (engine side: `AnatomyStep`, `wsl_path`, `check_labels`, `finger_summary`);
+  - `tests/test_anatomy.py`;
+  - `scripts/setup_anatomy_env.sh`;
+  - `research/omniforge/ANATOMY.md`, `research/omniforge/anatomy/*`, `research/omniforge/env/anatomy_env_freeze.txt`;
+  - `research/omniforge/PLAN.md` section 5b (direction decided 2026-10-24).
+- Tests: full suite **118 passed, 2 skipped**.
+
+### Measured (5 real runs, RTX 3060; table in ANATOMY.md, raw `anatomy/*_result.json`)
+- RTMW 0.53 to 0.97 s per image; global GPU memory delta 906 to 924 MB (nvidia-smi, whole-device).
+- MHR fit on CPU: 37.1 to 38.6 s (2 inits x 600 Adam steps). Total 43 to 49 s per image.
+- Hands where every detected fingertip matched: 8 of 10. The failure is yuyyuw (half body, hands gripping headphones): body reprojection 415 px, hands 59 px, tips 3/5 and 2/5.
+- Hand reprojection error on the other 4 images: 1.9 to 6.6 px.
+- The owner's photo is run but its images and keypoints are not committed (`local_photo_result.json` has them removed).
+
+### Please check
+1. Labels: keypoints AI_GENERATED; fit and mesh ESTIMATED; only the reprojection residual is VERIFIED. `check_labels` turns the run into failed if a fit claims VERIFIED (tests cover this).
+2. Joint limits come from MHR's own `parameter_limits` (198 MinMax), not invented ones.
+3. The "standing" assumption is recorded in each result's `assumptions`, and can be switched off with `--no-assume-standing`.
+4. The finger "correct" flag requires model fingers = 5, every **detected** fingertip within 0.35 x hand size, and no finger pair under 1 cm. Undetected fingers are not counted as correct.
+5. A missing env returns `blocked` (test with a non-existent distro); no substitute mesh.
+6. Skipped and reported as such: MoGe-2 depth (not installed), face fitting (no mapping).
+7. The setup script pins versions and the ONNX/MHR asset sha256. Known quirk: rtmlib pulls CPU onnxruntime 1.31 alongside onnxruntime-gpu 1.21.1; the GPU build is the one imported.
+
+### Not done / limits
+- No GT, so the finger metric is consistency with the detector, not anatomical truth. human_v1 (MHR synthetic people with held-out GT) is next.
+- Stylised characters are outside MHR's body range (uihghj legs splay, body 39 px).
+
+Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
