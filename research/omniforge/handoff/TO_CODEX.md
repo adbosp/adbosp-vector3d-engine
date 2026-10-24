@@ -321,3 +321,60 @@ Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
 3. The defect is reported with measurements, not hidden.
 
 Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
+
+---
+
+## request_id: omni-2026-10-24-12 (session handoff: work paused by Ropy)
+
+- Date: 2026-10-24. Status: **ready for review**; work is **paused** at Ropy's request ("tạm thời ngưng").
+- Commits since -11: `965246c`, `46b889b`, `cfd79e5`, `dd0fba7`, `b4ef2d1`, plus this one with `research/omniforge/DATA_HSRD100.md`. Tests: **164 passed, 2 skipped**. Note: `cfd79e5` was pushed with one failing test, which `dd0fba7` fixed.
+- Please also give verdicts on the pending requests -04 to -11, if not already given; FROM_CODEX.md shows only -01 to -03 in this checkout.
+
+### State: Omni is NOT an upgrade yet
+- On human_v1 and on the Alicia set, nothing beats plain TripoSG on both detail and speed. Owner's rule (PLAN 5c, memory): TripoSG stays the core; teachers are only distilled in if they beat TripoSG under the same measurements.
+
+### Alicia comparison (`research/compare_alicia/`, IS-Net masks for all methods, quality profile, seed 42)
+- Front-only held-out silhouette IoU, mean of right and back:
+  - TripoSG 0.762 (61 s, 5504 MB)
+  - TRELLIS v1 0.750 (21.7 s gen + 36 s load, 9837 MB)
+  - Omni 0.770 (about 397 s for the whole run, VRAM not recorded)
+- The 3-view variants saw the reference views, so their IoU is not held-out. TRELLIS + 3 views had 9 floating fragments: 0.222 raw, 0.790 after removing parts under 5% of faces.
+- Visual: TripoSG has the best face and hair detail. TRELLIS has a coarser, voxel-stepped face and lumpy hands; it caught the phone but put the hood up wrongly. Omni's hand close-ups are patchy.
+
+### TRELLIS v1 (`vector3d/lab/backends/trellis.py`, `scripts/setup_trellis_env.sh`)
+- Runs on the RTX 3060 in WSL, geometry only. Orientation was verified and tested.
+- nvdiffrast is not installed (non-commercial). A placeholder module raises on any call.
+- Judged too weak by Ropy; distillation from it is parked.
+
+### Segmentation fix (`965246c`)
+- The `[ai]` extra pinned rembg>=2.0.86 (Python 3.11+), so on the Python 3.10 venv auto segmentation silently fell back to background colour. On the outdoor hoodie photo that kept trees and pavement as foreground.
+- Now rembg 2.0.57 to 2.0.69 is used on 3.10, with a session-compat fallback. IS-Net runs on the CPU, because onnxruntime here is the CPU build.
+
+### HSRD-100 (`research/omniforge/DATA_HSRD100.md`, NOTICE)
+- CC BY 4.0. LOD1 only, 7.76 GB, each file verified by SHA256; stored outside the repo.
+- hsrd_v1 is split by person (8 train / 2 test): 240 augmented train samples with GT-scan pairs, 20 test poses.
+- Not yet run through any model.
+
+### Teacher candidates (not run yet; licence status)
+- Fit 12 GB:
+  - Direct3D-S2 (MIT; 512 ≥10 GB but lower quality, 1024 about 24 GB). The clone failed when C: filled up; not installed.
+  - Hi3D v1.0 refiner (installed; Hi3D Open License).
+- Need a rented GPU (Ropy has to approve the cost): Step1X-3D (Apache-2.0, about 27 GB), TRELLIS.2 (MIT, 24 GB; needs DINOv3 licence; default RMBG-2.0 is CC BY-NC).
+- Excluded:
+  - Hunyuan3D (outputs may not train other models);
+  - PSHuman (SMPL-X/PIXIE non-commercial);
+  - UltraShape (Hunyuan3D-2.1 base);
+  - PartPacker (NVIDIA non-commercial);
+  - SPAR3D (Stability community licence).
+
+### Incident
+- Drive C: filled to 0 bytes, and the WSL ext4 disk went read-only with I/O errors in the middle of a git clone.
+- Freed 9.4 GB of pip cache, then ran `wsl --shutdown`. The journal recovered (1 orphan inode) and the filesystem is read-write again.
+- Model cleanup follows, with an inventory in `research/cleanup/`.
+
+### Please check
+1. The commits above match their descriptions, and tests are green at HEAD.
+2. The licence exclusions and the nvdiffrast placeholder are acceptable.
+3. The conclusions are no stronger than one character (Alicia) and the stated data support.
+
+Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
