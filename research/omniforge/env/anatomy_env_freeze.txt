@@ -1,0 +1,48 @@
+﻿coloredlogs==15.0.1
+exceptiongroup @ file:///home/conda/feedstock_root/build_artifacts/exceptiongroup_1763918002538/work
+filelock @ file:///home/conda/feedstock_root/build_artifacts/filelock_1792380786489/work
+flatbuffers==25.12.19
+fsspec @ file:///home/conda/feedstock_root/build_artifacts/fsspec_1790256769698/work
+gmpy2 @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_gmpy2_1791166959/work
+humanfriendly==10.0
+Jinja2 @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_jinja2_1764517220/work
+MarkupSafe @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_markupsafe_1791548971/work
+mhr==1.0.1
+mpmath @ file:///home/conda/feedstock_root/build_artifacts/mpmath_1773661943568/work
+networkx @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_networkx_1790068597/work
+numpy @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_numpy_1791675329/work/dist/numpy-2.5.4-cp312-cp312-linux_x86_64.whl#sha256=178b27cd788a1fd47a724c4a529ca6054a72d95a6db1aea709048b7bbad60010
+nvidia-cublas-cu12==12.9.2.10
+nvidia-cuda-nvrtc-cu12==12.9.86
+nvidia-cuda-runtime-cu12==12.9.79
+nvidia-cudnn-cu12==9.27.0.42
+nvidia-cufft-cu12==11.4.1.4
+nvidia-curand-cu12==10.3.10.19
+nvidia-nvjitlink-cu12==12.9.86
+onnxruntime==1.31.0
+onnxruntime-gpu==1.21.1
+opencv-contrib-python==5.0.0.93
+opencv-python==5.0.0.93
+opencv-python-headless==5.0.0.93
+optree @ file:///home/conda/feedstock_root/build_artifacts/optree_1788504417687/work
+packaging @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_packaging_1785888127/work
+pathspec @ file:///home/conda/feedstock_root/build_artifacts/pathspec_1777271521463/work
+pillow @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pillow_1792416406/work
+protobuf==7.36.2
+pybind11 @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pybind11_1786199539/work
+pybind11-global @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pybind11-global_1786199539/work
+pymomentum-cpu @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pymomentum-cpu_1792629888/work
+PyOpenGL @ file:///home/conda/feedstock_root/build_artifacts/pyopengl_1756496243621/work
+PySide6==6.11.2
+rtmlib==0.0.16
+scikit_build_core @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_scikit-build-core_1790997173/work
+scipy @ file:///home/conda/feedstock_root/build_artifacts/scipy-split_1790021766768/work/dist/scipy-1.18.1-cp312-cp312-linux_x86_64.whl#sha256=5427e6f5dacc86646c62e72b896a4efa5c4e687b425a987f6d57f83b9f8d8441
+setuptools==84.2.1
+shiboken6==6.11.2
+sympy @ file:///home/conda/feedstock_root/build_artifacts/sympy_1771952240620/work
+tomli @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_tomli_1791394576/work
+torch @ file:///home/conda/feedstock_root/build_artifacts/libtorch_1791585345187/work
+tqdm==4.70.1
+trimesh @ file:///home/conda/feedstock_root/build_artifacts/trimesh_1777614965847/work
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_typing_extensions_1783002732/work
+usd-core==26.8
+wheel==0.48.0

@@ -62,6 +62,27 @@ Một model duy nhất cho người dùng (OmniForge 3D), giữ tốc độ củ
 | **4** | Train LoRA chuyên gia "human" (hoặc student refine, tùy G1) | 3060 | Benchmark Human trước và sau, cùng seed |
 | **5** | Ghép OmniForge 3D v0: định tuyến, kiểm tra, render khả vi, agent | 3060 | Thắng TripoSG gốc trên benchmark Human ở metric vùng tay và mặt mà không thua toàn thân |
 
+## 5b. Hướng đã chốt (2026-10-24, Ropy giao toàn quyền về kỹ thuật)
+
+Mục tiêu: kết quả benchmark vượt đối thủ, với tốc độ sinh tương đương.
+
+1. **Bỏ InstantMesh.** Độ phân giải thấp của từng góc nhìn là giới hạn do kiến trúc, nên tinh chỉnh không đáng chi phí.
+2. **Hai tầng:**
+   - (a) **Pipeline teacher chậm, tự dựng:**
+     - TripoSG dựng toàn thân;
+     - giải phẫu MHR (RTMW+MHR bây giờ, SAM 3D Body khi được duyệt; xem `ANATOMY.md`);
+     - **dựng riêng tay và mặt ở khung cận cảnh**: cắt quanh các khớp MHR, chạy TripoSG trên từng vùng ở chế độ đầy khung, rồi căn mỗi vùng theo MHR;
+     - ghép các vùng vào thân, giữ trong visual hull;
+     - Hi3D thêm chi tiết bề mặt;
+     - bộ trọng tài neuro-symbolic kiểm tra: nằm trong hull, 5 ngón khớp MHR, kín nước.
+   - (b) **Về sau:** chưng cất các kết quả đã được trọng tài chấp nhận vào một student nhanh (TripoSG + LoRA theo vùng), để một lượt chạy tiến gần chất lượng của pipeline.
+3. **Thứ tự việc:**
+   - sửa `invoke_runner` (xong, request `-03`);
+   - hoàn thành RTMW+MHR (v0 xong, `ANATOMY.md`);
+   - làm thử luồng cận cảnh tay trên bàn tay tổng hợp, so sánh ba cách trên cùng một tay và cùng metric: TripoSG toàn thân, TripoSG cận cảnh, TripoSG cận cảnh + Hi3D;
+   - **human_v1**: người tổng hợp sinh từ MHR (Apache-2.0), có GT giữ riêng để đo mọi khẳng định.
+4. Mọi kết quả ghi là quan sát hoặc giả thuyết cho tới khi đo trên human_v1.
+
 ## 6. Cần Ropy quyết định
 
 1. **Tải Hi3D để chạy thử (GĐ 1):** khoảng 7,2 GB từ `hi3d-official/Hi3Dv1.0`, cộng DINOv2-large (khoảng 1,2 GB) và CLIP ViT-L/14 (khoảng 1,7 GB), cài trong WSL2 Ubuntu-24.04. Ổ C còn 85 GB.

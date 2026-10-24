@@ -1,0 +1,169 @@
+{
+ "status": "success",
+ "python": "3.12.15",
+ "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+ "labels": {
+  "keypoints_2d": "AI_GENERATED",
+  "fit": "ESTIMATED",
+  "mesh": "ESTIMATED",
+  "reprojection": "VERIFIED"
+ },
+ "skipped": {
+  "face_fit": "no face-landmark to MHR mapping yet",
+  "depth_constraint": "MoGe-2 not installed in the anatomy env"
+ },
+ "image_size": [
+  2400,
+  1700
+ ],
+ "rtmw_load_s": 0.5894901550000213,
+ "rtmw_s": 0.5606257740000729,
+ "rtmw_gpu_used_delta_mb": 906.0,
+ "rtmw_providers": [
+  [
+   "CUDAExecutionProvider",
+   "CPUExecutionProvider"
+  ],
+  [
+   "CUDAExecutionProvider",
+   "CPUExecutionProvider"
+  ]
+ ],
+ "persons_detected": 1,
+ "mhr_load_s": 2.28463934399997,
+ "joint_limits_used": 198,
+ "assumptions": [
+  "standing: torso and leg joints kept near one depth plane (weight 1e-6 per cm^2)"
+ ],
+ "priors": {
+  "root_tilt": 0.001,
+  "body_pose": 1e-05,
+  "fingers": 1e-06,
+  "proportions": 0.0001,
+  "identity": 1e-05,
+  "finger_penetration": 0.001,
+  "finger_penetration_margin_cm": 1.2
+ },
+ "fit_s": 37.05417919799993,
+ "fit_history": [
+  {
+   "step": 0,
+   "loss": 0.022244112566113472,
+   "data": 0.022185737267136574,
+   "limit": 0.0
+  },
+  {
+   "step": 50,
+   "loss": 0.003049724968150258,
+   "data": 0.002721695229411125,
+   "limit": 5.628047802019864e-05
+  },
+  {
+   "step": 100,
+   "loss": 0.002766865771263838,
+   "data": 0.002469700062647462,
+   "limit": 5.585527105722576e-06
+  },
+  {
+   "step": 150,
+   "loss": 0.0026707861106842756,
+   "data": 0.0023430895525962114,
+   "limit": 6.426056643249467e-06
+  },
+  {
+   "step": 200,
+   "loss": 0.0020919865928590298,
+   "data": 0.001760586746968329,
+   "limit": 6.182779088703683e-06
+  },
+  {
+   "step": 250,
+   "loss": 0.001052865874953568,
+   "data": 0.0006999003817327321,
+   "limit": 4.573635692395328e-07
+  },
+  {
+   "step": 300,
+   "loss": 0.0009386359597556293,
+   "data": 0.0006251184968277812,
+   "limit": 3.412339992792113e-07
+  },
+  {
+   "step": 350,
+   "loss": 0.0009267172426916659,
+   "data": 0.0006179190240800381,
+   "limit": 4.117203786790924e-07
+  },
+  {
+   "step": 400,
+   "loss": 0.0009054387337528169,
+   "data": 0.0006033050012774765,
+   "limit": 3.325663726627681e-07
+  },
+  {
+   "step": 450,
+   "loss": 0.0008975545642897487,
+   "data": 0.0005976487882435322,
+   "limit": 7.67203687246365e-07
+  },
+  {
+   "step": 500,
+   "loss": 0.0008910218602977693,
+   "data": 0.0005886033177375793,
+   "limit": 3.644082084974798e-07
+  },
+  {
+   "step": 550,
+   "loss": 0.0009125859942287207,
+   "data": 0.0005957369576208293,
+   "limit": 6.956244305911241e-06
+  },
+  {
+   "step": 599,
+   "loss": 0.000892521464265883,
+   "data": 0.0005706051015295088,
+   "limit": 2.4473813482472906e-06
+  }
+ ],
+ "fit_init_losses": [
+  0.0005706051015295088,
+  0.0006672031013295054
+ ],
+ "reprojection": {
+  "label": "VERIFIED",
+  "units": "pixels",
+  "note": "distance between projected fitted joints and detected keypoints",
+  "body_mean_px": 55.646712451121104,
+  "hands_mean_px": 5.662463023697235,
+  "person_extent_px": 1341.9045448303223
+ },
+ "hands": {
+  "left": {
+   "fingers_model": 5,
+   "fingers_detected": 5,
+   "fingertips_matched": 5,
+   "fingertips_checked": 5,
+   "hand_size_px": 68.95570018303492,
+   "min_fingertip_separation_cm": 2.3002026081085205,
+   "finger_pairs_closer_than_1cm": 0,
+   "label": "ESTIMATED"
+  },
+  "right": {
+   "fingers_model": 5,
+   "fingers_detected": 5,
+   "fingertips_matched": 5,
+   "fingertips_checked": 5,
+   "hand_size_px": 69.33532546710013,
+   "min_fingertip_separation_cm": 1.9435149431228638,
+   "finger_pairs_closer_than_1cm": 0,
+   "label": "ESTIMATED"
+  }
+ },
+ "vertices": 18439,
+ "faces": 36874,
+ "mesh_path": "/mnt/c/adbosp-vector3d-engine/bench/omni_anatomy/runs/run_20261024_102349_d56a9c/mhr_fit.glb",
+ "units": "metres, +Y up, person faces +Z",
+ "torch": "2.14.1",
+ "onnxruntime": "1.21.1",
+ "note": "owner photo: images and keypoints not committed"
+}
