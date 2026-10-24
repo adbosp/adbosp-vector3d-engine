@@ -102,3 +102,43 @@ Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
 4. Each conclusion is stated as an observation on one synthetic hand and one seed, with the limits listed: the hand sits beside the body rather than attached, untextured renders.
 
 Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
+
+---
+
+## request_id: omni-2026-10-24-06
+
+- Date: 2026-10-24 (Asia/Bangkok)
+- Status: **ready for review** (independent; -04 and -05 still pending)
+- Commit: `3fd98ea`. Diff: `git diff c479d04 3fd98ea --stat`.
+- What it is: **human_v1**, 12 synthetic people sampled from MHR v1.0.1 (Apache-2.0) with held-out GT, in the synthetic_v1 layout plus `joints.json`, and hand-region metrics. Plus the baseline: base TripoSG whole-body (quality profile, seed 42).
+- Files:
+  - `vector3d/lab/backends/human_v1_gen.py` (WSL anatomy env);
+  - `vector3d/lab/human_v1.py` (`build`, `hand_region`, `region_metrics`, `region_metrics_local`, `crop_box`, `hand_scores`);
+  - `handzoom.similarity_icp(scale=False)`, the rigid option;
+  - `tests/test_human_v1.py` (5 tests);
+  - `research/omniforge/HUMAN_V1.md`, `research/omniforge/human_v1/*`;
+  - PLAN.md item 5 (Astra/Muse dropped).
+- Tests: **124 passed, 2 skipped**.
+
+### Measured
+- A metrics, mean over 12 people: Chamfer-L1 0.0155, F@0.02 0.732, held-out IoU 0.641, normal consistency 0.998; 52.5 to 55.7 s and 5475 to 5531 MB per person.
+- Hands (24):
+  - placed: 22 measured, 2 empty, Chamfer median 14.64 mm, F@5mm mean 0.182;
+  - local (shape only, rigid ICP of the crop, uses GT): 23 measured, 1 empty, Chamfer median 9.09 mm, F@5mm mean 0.356.
+
+### Reproduce
+```powershell
+wsl -d Ubuntu-24.04 -- bash -lc "cd /mnt/c/adbosp-vector3d-engine && ~/micromamba/envs/anatomy/bin/python vector3d/lab/backends/human_v1_gen.py --assets ~/ai3d/mhr/assets --out-dir bench/human_v1_raw --result bench/human_v1_raw_result.json --count 12"
+.venv\Scripts\python -c "from vector3d.lab import human_v1; human_v1.build(r'bench\human_v1_raw', r'bench\human_v1', size=512)"
+.venv\Scripts\python -m vector3d lab benchmark --data bench/human_v1 -o bench/human_v1_triposg_base --profile quality
+.venv\Scripts\python -c "from vector3d.lab import human_v1; human_v1.hand_scores(r'bench\human_v1_triposg_base', r'bench\human_v1')"
+```
+GT sha256 values are in `human_v1/manifest.json`, so a regenerated set can be checked byte for byte.
+
+### Please check
+1. Methods only see `views/front.png`. GT, joints and held-out views are used for scoring only.
+2. `local` is labelled evaluation-only (uses GT) and kept separate from `placed`, which uses no GT.
+3. The limits are stated: MHR skin has no cloth or face wrinkles; untextured renders; anatomy-step bias, because the people come from the same model MHR fits.
+4. "empty" hands are counted and excluded from the means, not filled in.
+
+Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
