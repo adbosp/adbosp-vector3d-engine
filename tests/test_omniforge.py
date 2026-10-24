@@ -1,7 +1,9 @@
 """OmniForge pieces that run without a GPU: SAM 3D Body blocked path, hand probe, VAE-gate helpers."""
 import json
+import sys
 
 import numpy as np
+import pytest
 from PIL import Image
 
 from vector3d.lab import humanoid, vae_ceiling
@@ -52,6 +54,53 @@ def test_hand_probe_has_four_separate_fingers():
 def test_fused_fingers_count_as_one_region():
     p = humanoid.HandParams(gap=-0.004)            # fingers overlap: one solid slab
     assert humanoid.count_fingers(humanoid.hand_mesh(p, voxel=0.001), p, voxel=0.001) < 4
+
+
+def test_reference_params_are_not_reported_as_measurements():
+    gt = humanoid.hand_mesh(voxel=0.001)
+    flat = humanoid.hand_mesh(humanoid.HandParams(ridge=0.0, crease=0.0), voxel=0.001)
+    measured = vae_ceiling.compare_hand(flat, gt, n=5000)
+    assert not {"crease_depth_mm", "ridge_amplitude_mm", "finger_gap_mm"} & set(measured)
+    ref = vae_ceiling.reference_params(humanoid.HandParams())
+    assert ref["ridge_amplitude_mm"] == 0.5         # describes the GT generator, whatever the prediction
+    assert measured["chamfer_palm_ridges_mm"] > vae_ceiling.compare_hand(gt, gt, n=5000)["chamfer_palm_ridges_mm"]
+
+
+def _child(code: str) -> list[str]:
+    return [sys.executable, "-c", code]
+
+
+def test_invoke_rejects_child_that_dies_before_writing(tmp_path):
+    rr = vae_ceiling.invoke(_child("import sys; sys.exit(1)"), tmp_path / "r.json", tmp_path / "m.glb")
+    assert rr["status"] == "failed" and rr["returncode"] == 1 and "no result file" in rr["reason"]
+
+
+def test_invoke_refuses_stale_success(tmp_path):
+    (tmp_path / "r.json").write_text(json.dumps({"status": "success"}))
+    with pytest.raises(FileExistsError):
+        vae_ceiling.invoke(_child("pass"), tmp_path / "r.json", tmp_path / "m.glb")
+
+
+def test_invoke_rejects_nonzero_exit_even_with_success_json(tmp_path):
+    res, mesh = tmp_path / "r.json", tmp_path / "m.glb"
+    code = (f"import json,sys; open(r'{mesh}','w').write('x'); "
+            f"json.dump({{'status':'success'}}, open(r'{res}','w')); sys.exit(3)")
+    rr = vae_ceiling.invoke(_child(code), res, mesh)
+    assert rr["status"] == "failed" and rr["returncode"] == 3
+
+
+def test_invoke_accepts_fresh_success(tmp_path):
+    res, mesh = tmp_path / "r.json", tmp_path / "m.glb"
+    code = f"import json; open(r'{mesh}','w').write('x'); json.dump({{'status':'success','duration_s':1}}, open(r'{res}','w'))"
+    rr = vae_ceiling.invoke(_child(code), res, mesh)
+    assert rr["status"] == "success" and rr["duration_s"] == 1
+
+
+def test_bbox_fit_maps_scaled_copy_back():
+    m = humanoid.hand_mesh(voxel=0.002)
+    moved = vae_ceiling.Mesh(m.vertices * 7.0 + 1.5, m.faces)
+    fitted, info = vae_ceiling.bbox_fit(moved, m)
+    assert np.allclose(fitted.vertices, m.vertices, atol=1e-9) and np.isclose(info["scale"], 1 / 7)
 
 
 def test_model_space_and_self_compare():

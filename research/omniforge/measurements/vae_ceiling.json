@@ -1,4 +1,11 @@
 {
+ "schema": "v2",
+ "schema_migration": "v1 -> v2 on 2026-10-24: GT generator parameters moved from each row to reference_params (they were inputs, never recovered measurements); measured metrics moved under measured; reference renamed noise_floor. No values changed or added. Raw runner JSON files untouched. Finger counts are from the fixed one-slice counter (re-run on the same GLBs before v1 was committed).",
+ "reference_params": {
+  "crease_depth_mm": 1.2,
+  "ridge_amplitude_mm": 0.5,
+  "finger_gap_mm": 4.0
+ },
  "hand_params": {
   "gap": 0.004,
   "radius": 0.0085,
@@ -8,6 +15,7 @@
  },
  "gt_half": 0.9913,
  "n_points": 200000,
+ "octree_depth": 9,
  "runs": {
   "closeup_t2048": {
    "runner": {
@@ -31,16 +39,15 @@
     "faces": 778756,
     "output_path": "bench\\omni_vae_ceiling\\closeup_t2048.glb"
    },
-   "hand_faces": 778756,
-   "chamfer_mm": 1.4214610316813265,
-   "chamfer_fingers_mm": 1.5071075631723163,
-   "chamfer_palm_ridges_mm": 1.5616357060425718,
-   "normal_agreement": 0.9666130628508307,
-   "normal_agreement_fingers": 0.9325994053427975,
-   "fingers": 4,
-   "crease_depth_mm": 1.2,
-   "ridge_amplitude_mm": 0.5,
-   "finger_gap_mm": 4.0
+   "measured": {
+    "hand_faces": 778756,
+    "chamfer_mm": 1.4214610316813265,
+    "chamfer_fingers_mm": 1.5071075631723163,
+    "chamfer_palm_ridges_mm": 1.5616357060425718,
+    "normal_agreement": 0.9666130628508307,
+    "normal_agreement_fingers": 0.9325994053427975,
+    "fingers": 4
+   }
   },
   "closeup_t4096": {
    "runner": {
@@ -64,16 +71,15 @@
     "faces": 778868,
     "output_path": "bench\\omni_vae_ceiling\\closeup_t4096.glb"
    },
-   "hand_faces": 778868,
-   "chamfer_mm": 1.4229273742855693,
-   "chamfer_fingers_mm": 1.5071189922915635,
-   "chamfer_palm_ridges_mm": 1.5608530841033637,
-   "normal_agreement": 0.9661366593171632,
-   "normal_agreement_fingers": 0.9314156899657079,
-   "fingers": 4,
-   "crease_depth_mm": 1.2,
-   "ridge_amplitude_mm": 0.5,
-   "finger_gap_mm": 4.0
+   "measured": {
+    "hand_faces": 778868,
+    "chamfer_mm": 1.4229273742855693,
+    "chamfer_fingers_mm": 1.5071189922915635,
+    "chamfer_palm_ridges_mm": 1.5608530841033637,
+    "normal_agreement": 0.9661366593171632,
+    "normal_agreement_fingers": 0.9314156899657079,
+    "fingers": 4
+   }
   },
   "in_body_t2048": {
    "runner": {
@@ -97,16 +103,15 @@
     "faces": 690250,
     "output_path": "bench\\omni_vae_ceiling\\in_body_t2048.glb"
    },
-   "hand_faces": 5733,
-   "chamfer_mm": 12.35062984339392,
-   "chamfer_fingers_mm": 11.586579805888647,
-   "chamfer_palm_ridges_mm": 16.03176232537493,
-   "normal_agreement": 0.627901553832706,
-   "normal_agreement_fingers": 0.6040936449019166,
-   "fingers": 4,
-   "crease_depth_mm": 1.2,
-   "ridge_amplitude_mm": 0.5,
-   "finger_gap_mm": 4.0
+   "measured": {
+    "hand_faces": 5733,
+    "chamfer_mm": 12.35062984339392,
+    "chamfer_fingers_mm": 11.586579805888647,
+    "chamfer_palm_ridges_mm": 16.03176232537493,
+    "normal_agreement": 0.627901553832706,
+    "normal_agreement_fingers": 0.6040936449019166,
+    "fingers": 4
+   }
   },
   "in_body_t4096": {
    "runner": {
@@ -130,16 +135,15 @@
     "faces": 690614,
     "output_path": "bench\\omni_vae_ceiling\\in_body_t4096.glb"
    },
-   "hand_faces": 5673,
-   "chamfer_mm": 12.439744039197487,
-   "chamfer_fingers_mm": 11.909445010644042,
-   "chamfer_palm_ridges_mm": 16.008518348474293,
-   "normal_agreement": 0.6186306487824159,
-   "normal_agreement_fingers": 0.594089533640531,
-   "fingers": 5,
-   "crease_depth_mm": 1.2,
-   "ridge_amplitude_mm": 0.5,
-   "finger_gap_mm": 4.0
+   "measured": {
+    "hand_faces": 5673,
+    "chamfer_mm": 12.439744039197487,
+    "chamfer_fingers_mm": 11.909445010644042,
+    "chamfer_palm_ridges_mm": 16.008518348474293,
+    "normal_agreement": 0.6186306487824159,
+    "normal_agreement_fingers": 0.594089533640531,
+    "fingers": 5
+   }
   },
   "in_body_t2048_d10": {
    "runner": {
@@ -155,21 +159,17 @@
     "input_points": 200000,
     "reason": "OutOfMemoryError: CUDA out of memory. Tried to allocate 492.00 MiB. GPU 0 has a total capacity of 12.00 GiB of which 410.74 MiB is free. 10.80 GiB allowed; Of the allocated memory 9.56 GiB is allocated by PyTorch, and 825.57 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)"
    },
-   "reason": "OutOfMemoryError: CUDA out of memory. Tried to allocate 492.00 MiB. GPU 0 has a total capacity of 12.00 GiB of which 410.74 MiB is free. 10.80 GiB allowed; Of the allocated memory 9.56 GiB is allocated by PyTorch, and 825.57 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)"
+   "reason": "OutOfMemoryError: CUDA out of memory. Tried to allocate 492.00 MiB. GPU 0 has a total capacity of 12.00 GiB of which 410.74 MiB is free. 10.80 GiB allowed; Of the allocated memory 9.56 GiB is allocated by PyTorch, and 825.57 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+   "octree_depth": 10
   }
  },
- "reference": {
-  "input_hand": {
-   "hand_faces": 395484,
-   "chamfer_mm": 0.3991167246897171,
-   "chamfer_fingers_mm": 0.3985665181838531,
-   "chamfer_palm_ridges_mm": 0.4034591375725687,
-   "normal_agreement": 0.9970258846210505,
-   "normal_agreement_fingers": 0.9951457979476256,
-   "fingers": 4,
-   "crease_depth_mm": 1.2,
-   "ridge_amplitude_mm": 0.5,
-   "finger_gap_mm": 4.0
-  }
+ "noise_floor": {
+  "hand_faces": 395484,
+  "chamfer_mm": 0.3991167246897171,
+  "chamfer_fingers_mm": 0.3985665181838531,
+  "chamfer_palm_ridges_mm": 0.4034591375725687,
+  "normal_agreement": 0.9970258846210505,
+  "normal_agreement_fingers": 0.9951457979476256,
+  "fingers": 4
  }
 }

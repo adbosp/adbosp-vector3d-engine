@@ -13,7 +13,7 @@ Một model duy nhất cho người dùng (OmniForge 3D), giữ tốc độ củ
 ## 2. Giới hạn kỹ thuật phải nói trước
 
 1. **Không thể copy layer giữa các kiến trúc khác nhau.** TripoSG là VAE dạng tập vector cộng DiT rectified-flow 1,5B. Hi3D v1.0 là VAE thưa (Sparc3D) cộng hai transformer 512/1024. TRELLIS.2 dùng O-Voxel. Trọng số của chúng không nạp được vào TripoSG. Chỉ còn hai đường: **chưng cất đầu ra** (teacher tạo mesh hoặc nhãn, student học theo) và **chưng cất đặc trưng** (student khớp feature ẩn của teacher, khó hơn nhiều).
-2. **Trần chi tiết của TripoSG nằm ở VAE, không ở DiT.** LoRA hiện tại chỉ chỉnh DiT. Nếu VAE của TripoSG không tái tạo nổi một bàn tay chi tiết từ chính mesh chuẩn, thì train DiT bao lâu cũng không ra ngón tay. Đây là cổng kiểm tra quan trọng nhất (Giai đoạn 1, bước G1).
+2. **Giả thuyết: một phần trần chi tiết của TripoSG có thể nằm ở VAE và lưới trích xuất, không chỉ ở DiT.** LoRA hiện tại chỉ chỉnh DiT. Nếu VAE không tái tạo được một bàn tay chi tiết từ chính mesh chuẩn, thì fine-tune riêng DiT khó có khả năng tạo ra chi tiết đó. Đây là cổng kiểm tra G1. Kết quả đầu tiên trên một mẫu tổng hợp nằm trong `MEASUREMENTS.md`; đó là bằng chứng ban đầu, chưa phải chứng minh.
 3. **Đang tự làm mất chi tiết:** profile `balanced` giảm mesh từ khoảng 1.013.704 mặt xuống 50.000 mặt (`research/triposg_rtx3060/summary.json`, crate). Ngón tay và nếp vải bị mất ngay ở bước này. Phải đo lại với `--faces -1` trước khi đổ lỗi cho model.
 4. Student nhỏ không chắc giữ được toàn bộ năng lực của teacher. Nó có thể nhanh hơn nhưng kém hơn. Mỗi bước đều phải có benchmark trước và sau.
 5. Model đóng (Seedance, Meshy, Astra, Muse, Opus 5.5) **không có trọng số**. Chỉ dùng được đầu ra qua API, và điều khoản thường cấm dùng đầu ra để train model cạnh tranh. Ví dụ, điều khoản của Anthropic cấm dùng đầu ra của Claude để train model AI cạnh tranh. Vì vậy Opus 5.5 được dùng làm **bộ điều phối (agent)**, không làm teacher cho trọng số.
@@ -56,7 +56,7 @@ Một model duy nhất cho người dùng (OmniForge 3D), giữ tốc độ củ
 | **0** | Benchmark Human: 10–20 người có mesh chuẩn, gồm cảnh cận tay và mặt. Thêm metric vùng (Chamfer riêng vùng tay và mặt, đếm ngón) | 3060 | Có bộ dữ liệu được phép dùng (cần Ropy quyết định, mục 6) |
 | **0b** | Thắng nhanh: chạy TripoSG `--faces -1` và lưới marching cubes dày hơn, đo lại | 3060 | Bao nhiêu chi tiết mất là do giảm mặt, không phải do model |
 | **1** | Hi3D chạy thử trên 3060 qua WSL2 Ubuntu 24.04 (đã có sẵn), 512³ có offload, cấp lên 1024³ nếu được | 3060 | Chạy được không, thời gian, VRAM đỉnh, tay và mặt có thêm chi tiết thật không (ảnh và metric vùng) |
-| **G1** | Đưa mesh chi tiết của Hi3D qua VAE TripoSG (encode rồi decode) và đo phần chi tiết còn lại | 3060 | Nếu VAE làm mất ngón thì LoRA trên DiT là vô ích: giữ Hi3D (hoặc student của nó) làm tầng refine riêng |
+| **G1** | Đưa mesh chi tiết của Hi3D qua VAE TripoSG (encode rồi decode) và đo phần chi tiết còn lại | 3060 | Nếu VAE làm mất ngón ở tỉ lệ toàn thân (đã thấy trên 1 mẫu tổng hợp), ưu tiên thử dựng đa tỉ lệ và tầng refine riêng trước khi đầu tư vào LoRA trên DiT; cần kiểm tra thêm bằng scan thật và latent sample |
 | **2** | Lớp tri giác: MoGe-2, Qwen3-VL bản nhỏ, SAM 3D Body | 3060 | Đếm ngón đúng trên benchmark |
 | **3** | Tạo dữ liệu teacher: ảnh người → TripoSG → Hi3D (và TRELLIS.2 nếu có GPU thuê) → cổng chất lượng → target đã chọn | 3060 hoặc GPU thuê | Tỷ lệ mẫu qua cổng, có xem mẫu bằng mắt |
 | **4** | Train LoRA chuyên gia "human" (hoặc student refine, tùy G1) | 3060 | Benchmark Human trước và sau, cùng seed |

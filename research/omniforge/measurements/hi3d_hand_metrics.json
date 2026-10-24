@@ -1,40 +1,60 @@
 {
- "coarse_in_body_vae": {
-  "hand_faces": 5733,
-  "chamfer_mm": 12.35062836203039,
-  "chamfer_fingers_mm": 11.586579806205526,
-  "chamfer_palm_ridges_mm": 16.031762386418787,
-  "normal_agreement": 0.6279003730690577,
-  "normal_agreement_fingers": 0.6040936324317632,
-  "fingers": 4,
+ "reference_params": {
   "crease_depth_mm": 1.2,
   "ridge_amplitude_mm": 0.5,
   "finger_gap_mm": 4.0
  },
+ "alignment_note": "Hi3D outputs bbox-fitted onto the coarse mesh; Chamfer is approximate",
+ "finger_count_note": "one-slice heuristic (humanoid.count_fingers)",
+ "coarse_in_body_vae": {
+  "measured": {
+   "hand_faces": 5733,
+   "chamfer_mm": 12.35062836203039,
+   "chamfer_fingers_mm": 11.586579806205526,
+   "chamfer_palm_ridges_mm": 16.031762386418787,
+   "normal_agreement": 0.6279003730690577,
+   "normal_agreement_fingers": 0.6040936324317632,
+   "fingers": 4
+  }
+ },
  "hi3d_512": {
-  "hand_faces": 484192,
-  "chamfer_mm": 11.692062148109365,
-  "chamfer_fingers_mm": 11.219851393705557,
-  "chamfer_palm_ridges_mm": 15.630287168641004,
-  "normal_agreement": 0.6443865279193509,
-  "normal_agreement_fingers": 0.6044365018514101,
-  "fingers": 4,
-  "crease_depth_mm": 1.2,
-  "ridge_amplitude_mm": 0.5,
-  "finger_gap_mm": 4.0,
-  "bbox_scale_applied": 0.09645944141655091
+  "alignment": {
+   "scale": 0.09645944141655091,
+   "translation": [
+    -0.03018388006454624,
+    0.0764964424163919,
+    -0.009745181020943659
+   ],
+   "method": "bbox fit (approximate)"
+  },
+  "measured": {
+   "hand_faces": 484192,
+   "chamfer_mm": 11.692062148109363,
+   "chamfer_fingers_mm": 11.219851393705557,
+   "chamfer_palm_ridges_mm": 15.630287168641004,
+   "normal_agreement": 0.644386527919351,
+   "normal_agreement_fingers": 0.6044365018514106,
+   "fingers": 4
+  }
  },
  "hi3d_1024": {
-  "hand_faces": 997263,
-  "chamfer_mm": 11.724505759752915,
-  "chamfer_fingers_mm": 11.340781027164454,
-  "chamfer_palm_ridges_mm": 15.764176755623103,
-  "normal_agreement": 0.6359150163549441,
-  "normal_agreement_fingers": 0.6059764686519808,
-  "fingers": 5,
-  "crease_depth_mm": 1.2,
-  "ridge_amplitude_mm": 0.5,
-  "finger_gap_mm": 4.0,
-  "bbox_scale_applied": 0.10375625901554628
+  "alignment": {
+   "scale": 0.10375625901554628,
+   "translation": [
+    -0.027026328189604407,
+    0.06642817991270024,
+    -0.010446090258944874
+   ],
+   "method": "bbox fit (approximate)"
+  },
+  "measured": {
+   "hand_faces": 997263,
+   "chamfer_mm": 11.724505759752914,
+   "chamfer_fingers_mm": 11.340781027164452,
+   "chamfer_palm_ridges_mm": 15.764176755623103,
+   "normal_agreement": 0.635915016354944,
+   "normal_agreement_fingers": 0.6059764686519807,
+   "fingers": 5
+  }
  }
 }
