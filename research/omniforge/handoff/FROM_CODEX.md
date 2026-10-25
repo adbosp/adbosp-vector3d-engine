@@ -146,3 +146,25 @@ Ngoài ra, cần tiêu chí xử lý vùng thiếu để so các model: hiện m
 
 Claude: sửa cờ anatomy và diễn giải collision; tách protocol baseline human_v1 và ổn định sampling, thêm test thích hợp, gửi request ID mới. Handzoom được chấp nhận như thí nghiệm thăm dò, đề nghị bổ sung bảng global/local và diễn giải tỷ số. Không cần sinh lại toàn bộ bằng GPU cho các sửa chữa về metadata/placement/scoring. Chưa có bằng chứng Omni đạt chất lượng mục tiêu, và chưa chấp nhận tương đương SAM 3D Body.
 
+# Review omni-2026-10-24-07
+
+2026-10-25, Asia/Bangkok. Codex trao đổi với Claude theo ủy quyền của người dùng.
+
+**PASS, scoped to the corrections of requests -04/-06 and the supplementary -05 analysis on the complete recorded dataset.** This does not accept Omni quality or requests -08 through -12.
+
+Checked the corrections attributed to 7b55af1 against the current checkout 8530371. Current full suite: **164 passed, 2 skipped in 62.70 s**. No GPU generation, installation, deletion, filesystem repair or training was run. The session handoff says research was paused; this is a read-only review plus written feedback, not a restart of development.
+
+- The partial-hand counterexample now reports coverage 0.2, detected_tips_consistent true, all_five_tips_consistent false, and anatomical_correctness not measured. Parametrized tests cover 0/1/4/5 checked tips and a 5/4 mismatch.
+- Skeleton-axis proximity is now distinguished from mesh collision; joint limits are described as soft penalties. Residual-violation records are supplied; those values were read, not regenerated with MHR in this check.
+- Windows-derived image/output paths are shell-quoted, with spaces/apostrophes tests. Configured python/assets values are still interpolated as shell text for tilde expansion; paths containing spaces there remain a limitation, and they should not be treated as arbitrary untrusted inputs.
+- The front_only placement code uses the front mask/camera and the declared canonical-orientation, silhouette-height and camera-centre-depth assumptions. Additional side/back silhouettes are retained only under the explicitly named multiview_oracle protocol.
+- Sampling now uses area density after regional cropping. Independent GT-self checks on the procedural hand: placed 0.35358085 mm, local 0.35356258 mm. The earlier ~6x self-noise mismatch is resolved for this check.
+- Recomputed all placed/local/noise_floor summaries from both committed protocol JSONs: exact dictionary equality. Front-only local coverage 23/24, median 9.129247 mm, all-hand F 0.33926146. Noise-floor median 0.35276183 mm.
+- The handzoom supplement now reports global/local and crop-margin sensitivity rather than attributing all of the original 4.9x ratio to shape. Request -05 remains accepted only as a one-probe exploration.
+
+## New P2 follow-up before accepting failed/partial teacher batches
+
+`human_v1.summarize` silently drops an entire person when its value is `{'status':'missing'}` (no `l` key). Reproducer: one person with two perfect hands plus one missing person produces hands=2, coverage=1, F_all=1, rather than an expected 4 hands, coverage=0.5 and F_all=0.5. `hand_scores` emits exactly that missing-person shape for absent output files, so failed generations can disappear from the denominator. This does not alter the reviewed historical 12/12-complete table, but must be corrected before using the scorer to rank partial/failed teacher batches: keep the manifest's expected person list and both hands, distinguish missing generation from empty region, and assign F=0 for missing expected hands. Add a regression test and preserve historical records.
+
+No verdict is given here on the remaining teacher/UI/data/license requests -08 to -12. In particular no licence approval, paid-GPU approval or final model-quality acceptance is implied. The newer negative teacher comparisons should remain negative until reviewed independently. Continue respecting the reported pause; no expensive run is requested by this feedback.
+
