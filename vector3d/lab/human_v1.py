@@ -67,16 +67,33 @@ def region_metrics(pred: Mesh, gt: Mesh, box: tuple[np.ndarray, np.ndarray], see
             "gt_points": int(gin.sum()), "pred_points": int(pin.sum()), "density_per_m2": density}
 
 
-def summarize(scores: dict, variant: str) -> dict:
-    """Coverage and statistics over all hands; an empty hand counts as F = 0 in fscore_all."""
-    rows = [v[s][variant] for v in scores.values() if isinstance(v, dict) and "l" in v for s in ("l", "r")]
+def summarize(scores: dict, variant: str, expected=None) -> dict:
+    """Coverage and statistics over all hands; an empty hand counts as F = 0 in fscore_all.
+    A person without outputs ({"status": "missing"}) or listed in `expected` (e.g. the manifest's people)
+    but absent from `scores` counts as two missing hands, F = 0: a partial batch cannot look complete."""
+    people = {k: v for k, v in scores.items() if isinstance(v, dict) and ("l" in v or "status" in v)}
+    for name in expected or ():
+        people.setdefault(name, {"status": "missing"})
+    rows, missing = [], 0
+    for v in people.values():
+        if "l" in v:
+            rows += [v[s][variant] for s in ("l", "r")]
+        else:
+            rows += [{"status": "missing"}] * 2
+            missing += 2
     got = [r for r in rows if "chamfer_mm" in r]
-    return {"hands": len(rows), "measured": len(got), "empty": len(rows) - len(got),
+    return {"hands": len(rows), "measured": len(got), "empty": len(rows) - len(got) - missing,
+            "missing": missing, "people": len(people),
             "coverage": len(got) / len(rows) if rows else 0.0,
             "chamfer_mm_median_measured": float(np.median([r["chamfer_mm"] for r in got])) if got else None,
             "chamfer_mm_mean_measured": float(np.mean([r["chamfer_mm"] for r in got])) if got else None,
             "fscore@5mm_mean_all": float(np.mean([r.get("fscore@5mm", 0.0) for r in rows])) if rows else None,
             "fscore@5mm_mean_measured": float(np.mean([r["fscore@5mm"] for r in got])) if got else None}
+
+
+def manifest_people(data_dir) -> list[str]:
+    """Expected people of a human_v1 folder, from manifest.json (not from whatever folders exist)."""
+    return [o["name"] for o in json.loads((Path(data_dir) / "manifest.json").read_text())["objects"]]
 
 
 def crop_box(mesh: Mesh, box: tuple[np.ndarray, np.ndarray], pad: float = 0.0) -> Mesh:

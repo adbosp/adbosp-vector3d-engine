@@ -77,6 +77,17 @@ def test_summarize_counts_empty_hands_as_zero():
     assert out["fscore@5mm_mean_all"] == 0.2 and out["fscore@5mm_mean_measured"] == 0.4
 
 
+def test_summarize_counts_missing_people_as_missing_hands():
+    """Codex review -07 P2: one perfect person + one person without outputs must not read as full coverage."""
+    perfect = {"chamfer_mm": 0.35, "fscore@5mm": 1.0}
+    s = {"p0": {"l": {"placed": perfect}, "r": {"placed": perfect}}, "p1": {"status": "missing"}}
+    out = human_v1.summarize(s, "placed")
+    assert out["hands"] == 4 and out["missing"] == 2 and out["coverage"] == 0.5
+    assert out["fscore@5mm_mean_all"] == 0.5
+    out = human_v1.summarize({"p0": s["p0"]}, "placed", expected=["p0", "p1"])   # absent from the scores
+    assert out["hands"] == 4 and out["coverage"] == 0.5 and out["fscore@5mm_mean_all"] == 0.5
+
+
 def test_region_metrics_reports_empty_region():
     hand = humanoid.hand_mesh(voxel=0.002)
     far = (np.array([5.0, 5, 5]), np.array([6.0, 6, 6]))

@@ -476,12 +476,13 @@ def rtmw_keypoints(out_dir, **step_kw) -> Callable[[Path], dict]:
 
 def score(data_dir, bench_dir) -> dict:
     """hand and body scores for the teacher and its same-input whole-body baseline (human_v1 metrics)."""
-    from .human_v1 import body_scores, hand_scores, summarize
+    from .human_v1 import body_scores, hand_scores, manifest_people, summarize
 
     out = {}
+    expected = manifest_people(data_dir) if (Path(data_dir) / "manifest.json").is_file() else None
     for proto in ("body_front_only_hires", "teacher_front_only"):
         h = hand_scores(bench_dir, data_dir, proto)
-        out[proto] = {"hands": h, "summary": {v: summarize(h, v) for v in ("placed", "local", "noise_floor")},
+        out[proto] = {"hands": h, "summary": {v: summarize(h, v, expected) for v in ("placed", "local", "noise_floor")},
                       "body": body_scores(bench_dir, data_dir, proto)}
     return out
 
