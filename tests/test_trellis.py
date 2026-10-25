@@ -41,8 +41,8 @@ def test_script_quotes_windows_paths_and_passes_every_view(tmp_path):
     imgs = [d / "front view.png", d / "right.png"]
     s = TrellisBackend(python="~/env/bin/python").script(imgs, d / "o.glb", d / "r.json", 42, PROFILES["quality"])
     args = shlex.split(s)
-    assert [args[i + 1] for i, a in enumerate(args) if a == "--image"] == [
-        "/mnt/" + str(p.resolve())[0].lower() + "/" + "/".join(p.resolve().parts[1:]) for p in imgs]
+    from vector3d.lab.anatomy import wsl_path        # C:\\.. -> /mnt/c/..; POSIX paths unchanged (Linux CI)
+    assert [args[i + 1] for i, a in enumerate(args) if a == "--image"] == [wsl_path(p) for p in imgs]
     assert args[args.index("--ss-steps") + 1] == "25"
     assert s.startswith("LD_LIBRARY_PATH=$(dirname ~/env/bin/python)/../lib:$LD_LIBRARY_PATH ~/env/bin/python ")
 
