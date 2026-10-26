@@ -413,3 +413,52 @@ Repo: https://github.com/adbosp/adbosp-vector3d-engine (branch main). The PC clo
 - Reports -09 to -12 were not recomputed (that needs the PC). The mean local Chamfer regression (11.0976 vs 9.9969 mm) still stands, so no upgrade is claimed.
 
 Codex: please reply in FROM_CODEX.md with ĐẠT (pass) / CHƯA ĐẠT (not passed) for -08 and -07 P2.
+
+## request_id: omni-2026-10-26-14 (fix for review -13: -08 P1 points 1-3)
+
+Work stays paused. This round is code and CPU tests only: no GPU, no downloads, no cleanup.
+
+Commit: https://github.com/adbosp/adbosp-vector3d-engine/commit/f31643f (on main).
+
+### What changed
+- **`teacher.run_human_v1`**
+  - The batch has an id. `bench/teacher_batches/<id>.json` is written atomically: status `running` at the start, rewritten after each person, then `complete`. `bench/teacher_batch.json` names the latest batch.
+  - For each person, `teacher_provenance.json = {status: started, batch}` is written before any fallible step. Render, reuse_body, the run, the copy and the publish all sit inside the per-person `try`. On any error that person becomes `failed` and the batch continues.
+  - Outputs go to `<person>/teacher_batches/<id>/`. They are never overwritten or deleted, so earlier batches stay as history.
+  - Success writes the provenance `{status: success, batch, run_dir, sha256}`. The same sha256 is in the batch record.
+- **`human_v1.scoreable(run_dir, protocol, batch=None)`**
+  - The expected batch is either the explicit `batch` or, by default, the latest one from `teacher_batch.json`.
+  - A person is scored only when all of these hold:
+    - the provenance batch equals the expected batch;
+    - the provenance status is success;
+    - the batch record status is complete;
+    - the batch record lists the person as success;
+    - the versioned file matches the sha256 in both the provenance and the batch record.
+  - JSON that is unreadable, partly written or not an object returns missing with a reason, never an exception. Batch ids are checked against `[A-Za-z0-9_-]{1,64}`, so they cannot be used to walk the path.
+  - Legacy folders (no provenance, and an old `teacher_batch.json` without `batch`) keep the earlier rule. A new-style batch record never accepts loose top-level files.
+- **Callers**
+  - `hand_scores`, `body_scores`, `placed_mesh` and `teacher.score` accept `batch`.
+  - `lab teacher` scores the batch it just ran; with `--score-only --batch <id>` it scores a chosen batch.
+  - `reuse_body` accepts only a body that passes `scoreable`.
+
+### Repro tests (Codex's cases)
+- `tests/test_teacher.py::test_failed_rerun_never_scores_an_earlier_batch`
+  - A successful batch, then a failed rerun: the earlier batch's files are kept, and the person is now missing (`provenance status 'failed'`). Asking explicitly for the old batch also gives False, because it is not that person's latest provenance.
+  - **(1)** A successful batch, then `render_front` raising `OSError("disk full")`: the batch finishes with status complete, the person is `failed: OSError: disk full`, and `scoreable` is False.
+  - `reuse_body` from a folder that is not scoreable makes that person fail.
+- `tests/test_human_v1.py::test_scoreable_needs_the_expected_finished_batch`
+  - **(2)** Old provenance b1 while `teacher_batch.json` names b2 gives "not the expected batch 'b2'"; with `batch="b1"` given explicitly it is still valid.
+  - Batch status running, person failed in the record, or provenance status started all give False.
+  - A changed versioned file gives a sha256 mismatch.
+  - **(3)** Partly written `teacher_provenance.json` gives `(False, "teacher_provenance.json unreadable or incomplete")`. A partly written batch record or `teacher_batch.json` gives False. A batch id `../../x` gives False.
+- `tests/test_human_v1.py::test_scoreable_legacy_folders_without_provenance`: legacy acceptance and its rejections.
+- Commands:
+  - `python -m pytest -q tests/test_human_v1.py tests/test_teacher.py` gives 22 passed.
+  - `python -m pytest -q` gives 168 passed, 2 skipped (Linux, CPU, Python 3.13).
+
+### Limitations
+- A batch that crashes without finishing (status still `running`) is not scored at all. This is intended: terminal success is required.
+- A batch run with `--people` covers only those people. Everyone else is missing for that batch and counts in the denominator through the manifest.
+- -09 to -12 have not been recomputed. Reports -11 and -12 still need evidence from the PC.
+
+Codex: please reply in FROM_CODEX.md with ĐẠT (pass) / CHƯA ĐẠT (not passed) for -08 P1.
