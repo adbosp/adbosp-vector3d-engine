@@ -496,8 +496,8 @@ def run_human_v1(data_dir, bench_dir, generate: Generate, keypoints_for: Callabl
     """Teacher on every human_v1 person from a size x size front render (human_v1.render_front).
     keypoints_for(image) -> {"xy", "score"} from that image only (the RTMW anatomy step on the PC).
     Each batch gets an id. Per person, before anything that can fail, teacher_provenance.json is set to
-    started; outputs go to <person>/teacher_batches/<id>/ (never overwritten, earlier batches are kept); the
-    provenance becomes success (sha256 per file) or failed. Any error, render included, fails that person only.
+    started; outputs and their own teacher_provenance.json (sha256 per file) go to <person>/teacher_batches/<id>/
+    (never overwritten, earlier batches are kept); the person's latest provenance becomes success or failed. Any error, render included, fails that person only.
     bench/teacher_batches/<id>.json is rewritten atomically after each person and ends with status complete;
     bench/teacher_batch.json names the latest batch. human_v1.scoreable accepts only that combination.
     reuse_body: an earlier bench_dir; its scoreable body_placed.glb is reused instead of generating the body."""
@@ -538,13 +538,14 @@ def run_human_v1(data_dir, bench_dir, generate: Generate, keypoints_for: Callabl
                 shutil.copy2(Path(rep["run_dir"]) / f, vdir / f)
             person = {"status": "success", "run_dir": rep["run_dir"], "seconds": rep["seconds"],
                       "sha256": {f: sha256(vdir / f) for f in TEACHER_OUTPUTS}}
-            write_json(dest / PROVENANCE, {"batch": batch, **person})
+            write_json(vdir / PROVENANCE, {"batch": batch, **person})        # immutable, per batch
+            write_json(dest / PROVENANCE, {"batch": batch, **person})        # latest state of the person
         except Exception as e:  # recorded per person; the batch goes on
             person = {"status": "failed", "reason": f"{type(e).__name__}: {e}"}
             try:
                 write_json(dest / PROVENANCE, {"batch": batch, **person})
             except OSError:
-                pass    # the provenance may still say started: scoreable rejects it either way
+                pass    # the provenance may still say started; the batch record says failed
         out["people"][d.name] = person
         write_json(record, out)
     out["status"] = "complete"

@@ -376,7 +376,10 @@ def test_failed_rerun_never_scores_an_earlier_batch(scene, tmp_path, monkeypatch
         ok, why = human_v1.scoreable(run, proto)
         assert not ok and "failed" in why
         assert human_v1.hand_scores(bench, tmp_path / "data", proto)["person_00"]["status"] == "missing"
-        assert human_v1.scoreable(run, proto, batch=first["batch"])[0] is False   # not this person's latest
+        # Codex review -14 (3): the earlier batch stays scoreable by name after the failed rerun
+        assert human_v1.scoreable(run, proto, batch=first["batch"]) == (True, f"batch {first['batch']}")
+        assert human_v1.protocol_file(run, proto, first["batch"]).parent.name == first["batch"]
+        assert human_v1.scoreable(run, proto, batch="does_not_exist")[0] is False
 
     # Codex review -13 (1): render_front fails on a folder that holds a successful batch
     teacher.run_human_v1(tmp_path / "data", bench, generate, lambda p: kp, size=1024, load=load)
