@@ -92,6 +92,7 @@ def main(argv: list[str]) -> int:
     te.add_argument("--isolation", choices=("contour", "band", "discs"), default="contour",
                     help="hand isolation in the crop (discs = v0)")
     te.add_argument("--reuse-body", help="earlier teacher bench dir whose body_placed.glb is reused")
+    te.add_argument("--batch", help="batch id to score (default: the latest in teacher_batch.json)")
     te.add_argument("--no-tidy", dest="tidy", action="store_false",
                     help="v0-v3 behaviour: keep scattered pieces and the raw hand depth")
     te.add_argument("--depth", choices=("body", "skeleton"), default="body",
@@ -222,7 +223,7 @@ def main(argv: list[str]) -> int:
                                      isolation=args.isolation, reuse_body=args.reuse_body,
                                      depth=args.depth, tidy=args.tidy)
             print(json.dumps({k: v["status"] for k, v in b["people"].items()}, indent=1))
-        s = teacher.score(args.data, out)
+        s = teacher.score(args.data, out, args.batch if args.score_only else b["batch"])
         (out / "teacher_scores.json").write_text(json.dumps(s, indent=1, default=str))
         print(json.dumps({p: v["summary"] for p, v in s.items()}, indent=1))
         return 0

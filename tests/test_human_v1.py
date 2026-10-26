@@ -106,8 +106,58 @@ def test_build_layout(tmp_path):
     assert set(json.loads((d / "joints.json").read_text())) == set(names)
 
 
-def test_scoreable_needs_matching_provenance_or_legacy_batch(tmp_path):
-    """Codex review -08 (P1): teacher outputs count only with per-run provenance whose sha256 matches."""
+def _batch(bench, name, batch, status="complete", person="success", prov="success", data=b"mesh"):
+    """A bench folder as teacher.run_human_v1 writes it, with each piece settable."""
+    run = bench / name
+    (run / human_v1.VERSIONS / batch).mkdir(parents=True, exist_ok=True)
+    for f in human_v1.TEACHER_OUTPUTS:
+        (run / human_v1.VERSIONS / batch / f).write_bytes(data + f.encode())
+    sums = {f: human_v1.sha256(run / human_v1.VERSIONS / batch / f) for f in human_v1.TEACHER_OUTPUTS}
+    rec = {"batch": batch, "status": status, "people": {name: {"status": person, "sha256": sums}}}
+    (bench / human_v1.VERSIONS).mkdir(exist_ok=True)
+    human_v1.write_json(bench / human_v1.VERSIONS / f"{batch}.json", rec)
+    human_v1.write_json(bench / human_v1.BATCH_RECORD, rec)
+    human_v1.write_json(run / human_v1.PROVENANCE, {"status": prov, "batch": batch, "sha256": sums})
+    return run
+
+
+def test_scoreable_needs_the_expected_finished_batch(tmp_path):
+    """Codex reviews -08 and -13 (P1): teacher outputs count only for the expected batch, finished, with the
+    person a success in both the batch record and the provenance and the bytes matching; bad metadata is
+    missing, never an exception."""
+    bench, proto = tmp_path / "bench", "teacher_front_only"
+    run = _batch(bench, "p0", "b1")
+    assert human_v1.scoreable(run, proto) == (True, "batch b1")
+    assert human_v1.protocol_file(run, proto) == run / "teacher_batches" / "b1" / "teacher_placed.glb"
+    # (2) provenance from an old batch while teacher_batch.json names a newer one
+    human_v1.write_json(bench / human_v1.BATCH_RECORD, {"batch": "b2", "status": "complete", "people": {}})
+    ok, why = human_v1.scoreable(run, proto)
+    assert not ok and "not the expected batch 'b2'" in why
+    assert human_v1.scoreable(run, proto, batch="b1")[0]             # asked for explicitly: still valid
+    human_v1.write_json(bench / human_v1.BATCH_RECORD, {"batch": "b1"})
+    for kw, word in ((dict(status="running"), "not complete"), (dict(person="failed"), "failed"),
+                     (dict(prov="started"), "started")):
+        ok, why = human_v1.scoreable(_batch(tmp_path / str(kw), "p0", "b1", **kw), proto)
+        assert not ok and word in why, (kw, why)
+    (run / human_v1.VERSIONS / "b1" / "teacher_placed.glb").write_bytes(b"changed")
+    ok, why = human_v1.scoreable(run, proto)
+    assert not ok and "sha256" in why
+    # (3) half-written metadata
+    run = _batch(tmp_path / "half", "p0", "b1")
+    (run / human_v1.PROVENANCE).write_text('{"status": "succ')
+    assert human_v1.scoreable(run, proto) == (False, "teacher_provenance.json unreadable or incomplete")
+    run = _batch(tmp_path / "half2", "p0", "b1")
+    (run.parent / human_v1.VERSIONS / "b1.json").write_text("[1, 2")
+    assert human_v1.scoreable(run, proto) == (False, "batch record b1 missing or unreadable")
+    (run.parent / human_v1.BATCH_RECORD).write_text("{")
+    assert human_v1.scoreable(run, proto)[0] is False
+    human_v1.write_json(run / human_v1.PROVENANCE, {"status": "success", "batch": "../../x"})
+    assert human_v1.scoreable(run, proto, batch="../../x")[0] is False
+
+
+def test_scoreable_legacy_folders_without_provenance(tmp_path):
+    """Folders from before provenance: accepted only via a success entry in an old-style teacher_batch.json
+    whose run_dir copy has the same bytes."""
     run = tmp_path / "bench" / "p0"
     src = tmp_path / "runs" / "r1"
     run.mkdir(parents=True), src.mkdir(parents=True)
@@ -115,21 +165,15 @@ def test_scoreable_needs_matching_provenance_or_legacy_batch(tmp_path):
         (src / f).write_bytes(b"new " + f.encode())
         (run / f).write_bytes(b"new " + f.encode())
     proto = "teacher_front_only"
-    # legacy folder (before provenance): accepted only via a success entry with the same bytes
     assert human_v1.scoreable(run, proto)[0] is False
     batch = {"people": {"p0": {"status": "success", "run_dir": str(src)}}}
-    (run.parent / "teacher_batch.json").write_text(json.dumps(batch))
+    human_v1.write_json(run.parent / "teacher_batch.json", batch)
     assert human_v1.scoreable(run, proto) == (True, "legacy teacher_batch.json entry, sha256 matches run_dir")
     (run / "teacher_placed.glb").write_bytes(b"stale from an older batch")
     assert human_v1.scoreable(run, proto)[0] is False
     batch["people"]["p0"] = {"status": "failed", "reason": "RuntimeError"}
-    (run.parent / "teacher_batch.json").write_text(json.dumps(batch))
+    human_v1.write_json(run.parent / "teacher_batch.json", batch)
     assert human_v1.scoreable(run, proto)[0] is False
-    # provenance wins over the batch file, and a changed file no longer matches it
-    (run / human_v1.PROVENANCE).write_text(json.dumps(
-        {"status": "success", "batch": "b2", "sha256": {f: human_v1.sha256(run / f) for f in human_v1.TEACHER_OUTPUTS}}))
-    assert human_v1.scoreable(run, proto) == (True, "provenance batch b2")
-    (run / "teacher_placed.glb").write_bytes(b"overwritten later")
-    ok, why = human_v1.scoreable(run, proto)
-    assert not ok and "sha256" in why
-    assert human_v1.scoreable(run, "front_only")[0] is False     # other protocols: unchanged file check
+    human_v1.write_json(run.parent / "teacher_batch.json", {"batch": "b9", "people": batch["people"]})
+    assert "provenance batch" in human_v1.scoreable(run, proto)[1]   # a new-style record never takes legacy files
+    assert human_v1.scoreable(run, "front_only")[0] is False         # other protocols: unchanged file check

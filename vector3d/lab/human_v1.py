@@ -14,6 +14,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
+import uuid
 from pathlib import Path
 
 import numpy as np
@@ -166,48 +169,112 @@ PROTOCOL_FILES = {"multiview_oracle": "A_placed.glb", "front_only": "raw_triposg
 RAW_OUTPUTS = ("raw_triposg.glb", "raw_trellis.glb")      # raw model output of each lab backend
 
 
-def protocol_file(run_dir: Path, protocol: str) -> Path:
-    """The file a protocol scores in one benchmark run folder (front_only: whichever backend's raw output)."""
+def protocol_file(run_dir: Path, protocol: str, batch: str | None = None) -> Path:
+    """The file a protocol scores in one benchmark run folder (front_only: whichever backend's raw output;
+    teacher protocols: the versioned copy of `batch`, default the batch in the person's provenance)."""
     if protocol == "front_only":
         found = [run_dir / f for f in RAW_OUTPUTS if (run_dir / f).is_file()]
         return found[0] if found else run_dir / RAW_OUTPUTS[0]
+    if protocol in TEACHER_PROTOCOLS and (run_dir / PROVENANCE).exists():
+        b = batch or batch_id(read_json(run_dir / PROVENANCE))
+        if b:
+            return run_dir / VERSIONS / b / PROTOCOL_FILES[protocol]
     return run_dir / PROTOCOL_FILES[protocol]
 
 
-TEACHER_OUTPUTS = ("body_placed.glb", "teacher_placed.glb")   # copied by teacher.run_human_v1
-PROVENANCE = "teacher_provenance.json"
+TEACHER_OUTPUTS = ("body_placed.glb", "teacher_placed.glb")   # written by teacher.run_human_v1
+TEACHER_PROTOCOLS = ("body_front_only_hires", "teacher_front_only")
+PROVENANCE = "teacher_provenance.json"     # <person>/: this person's state in the latest batch
+BATCH_RECORD = "teacher_batch.json"        # bench/: the latest batch; bench/teacher_batches/<id>.json keeps each
+VERSIONS = "teacher_batches"               # <person>/teacher_batches/<id>/: immutable outputs of one batch
+_BATCH_ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
 
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def scoreable(run_dir: Path, protocol: str) -> tuple[bool, str]:
-    """Whether a run folder holds this protocol's output from a successful run. Teacher protocols need
-    teacher_provenance.json (status success, matching sha256), or, for folders written before it existed, a
-    success entry in ../teacher_batch.json whose run_dir file has the same bytes. A stale or failed person
-    is never scored from files an earlier batch left behind."""
-    f = protocol_file(run_dir, protocol)
-    if not f.is_file():
-        return False, f"{f.name} not found"
-    if protocol not in ("body_front_only_hires", "teacher_front_only"):
-        return True, "file present"
-    prov = run_dir / PROVENANCE
-    if prov.is_file():
-        rec = json.loads(prov.read_text())
-        if rec.get("status") != "success":
-            return False, f"provenance status {rec.get('status')!r}"
-        if rec.get("sha256", {}).get(f.name) != sha256(f):
-            return False, f"{f.name} does not match its provenance sha256"
-        return True, f"provenance batch {rec.get('batch')}"
-    batch = run_dir.parent / "teacher_batch.json"
-    rec = json.loads(batch.read_text()).get("people", {}).get(run_dir.name) if batch.is_file() else None
-    if not rec or rec.get("status") != "success":
-        return False, f"no provenance and teacher_batch.json status {rec and rec.get('status')!r}"
-    src = Path(rec["run_dir"]) / f.name
-    if not src.is_file() or sha256(src) != sha256(f):
+def read_json(path: Path):
+    """A JSON object, or None when the file is absent, unreadable, half written or not an object."""
+    try:
+        rec = json.loads(Path(path).read_text())
+    except (OSError, ValueError):
+        return None
+    return rec if isinstance(rec, dict) else None
+
+
+def write_json(path: Path, data: dict) -> None:
+    """Atomic write: readers see the old file or the new one, never a partial one."""
+    path = Path(path)
+    tmp = path.with_name(f".{path.name}.{uuid.uuid4().hex[:8]}.tmp")
+    tmp.write_text(json.dumps(data, indent=1, default=str))
+    os.replace(tmp, path)
+
+
+def batch_id(rec) -> str | None:
+    b = rec.get("batch") if isinstance(rec, dict) else None
+    return b if isinstance(b, str) and _BATCH_ID.fullmatch(b) else None
+
+
+def _legacy(run_dir: Path, f: Path) -> tuple[bool, str]:
+    """Folders written before provenance: a success entry whose run_dir copy has the same bytes."""
+    rec = read_json(run_dir.parent / BATCH_RECORD)
+    if rec is None:
+        return False, f"no provenance and {BATCH_RECORD} missing or unreadable"
+    if "batch" in rec:
+        return False, f"no provenance although {BATCH_RECORD} is from a provenance batch"
+    person = rec.get("people", {}).get(run_dir.name) if isinstance(rec.get("people"), dict) else None
+    if not isinstance(person, dict) or person.get("status") != "success" or not isinstance(person.get("run_dir"), str):
+        return False, f"no provenance and {BATCH_RECORD} status {person and person.get('status')!r}"
+    src = Path(person["run_dir"]) / f.name
+    if not f.is_file() or not src.is_file() or sha256(src) != sha256(f):
         return False, f"no provenance and {f.name} differs from the batch's run_dir copy"
-    return True, "legacy teacher_batch.json entry, sha256 matches run_dir"
+    return True, f"legacy {BATCH_RECORD} entry, sha256 matches run_dir"
+
+
+def scoreable(run_dir: Path, protocol: str, batch: str | None = None) -> tuple[bool, str]:
+    """Whether a run folder holds this protocol's output from a successful, finished run.
+    Teacher protocols are scored for one expected batch (`batch`, default the batch named by
+    bench/teacher_batch.json). All of these must hold, else the person is missing:
+      - bench/teacher_batches/<batch>.json exists, has status complete and lists the person as success;
+      - <person>/teacher_provenance.json names that batch, has status success and readable metadata;
+      - <person>/teacher_batches/<batch>/<file> has the sha256 recorded in both.
+    Folders from before provenance fall back to _legacy. Never raises on bad metadata."""
+    run_dir = Path(run_dir)
+    if protocol not in TEACHER_PROTOCOLS:
+        f = protocol_file(run_dir, protocol)
+        return (True, "file present") if f.is_file() else (False, f"{f.name} not found")
+    name = PROTOCOL_FILES[protocol]
+    prov_path = run_dir / PROVENANCE
+    if not prov_path.exists():
+        return _legacy(run_dir, run_dir / name)
+    prov = read_json(prov_path)
+    if prov is None:
+        return False, f"{PROVENANCE} unreadable or incomplete"
+    expected = batch or batch_id(read_json(run_dir.parent / BATCH_RECORD))
+    if not expected:
+        return False, f"no expected batch ({BATCH_RECORD} missing or unreadable)"
+    if batch_id(prov) != expected:
+        return False, f"provenance batch {prov.get('batch')!r} is not the expected batch {expected!r}"
+    if prov.get("status") != "success":
+        return False, f"provenance status {prov.get('status')!r} in batch {expected}"
+    rec = read_json(run_dir.parent / VERSIONS / f"{expected}.json")
+    if rec is None or batch_id(rec) != expected:
+        return False, f"batch record {expected} missing or unreadable"
+    if rec.get("status") != "complete":
+        return False, f"batch {expected} status {rec.get('status')!r}, not complete"
+    person = rec.get("people", {}).get(run_dir.name) if isinstance(rec.get("people"), dict) else None
+    if not isinstance(person, dict) or person.get("status") != "success":
+        return False, f"batch {expected} lists the person as {person and person.get('status')!r}"
+    f = run_dir / VERSIONS / expected / name
+    if not f.is_file():
+        return False, f"{f.relative_to(run_dir)} not found"
+    digest = sha256(f)
+    for where, rec_ in (("provenance", prov), ("batch record", person)):
+        sums = rec_.get("sha256")
+        if not isinstance(sums, dict) or sums.get(name) != digest:
+            return False, f"{name} does not match the {where} sha256"
+    return True, f"batch {expected}"
 
 
 def render_front(obj_dir, size: int = 2048):
@@ -228,15 +295,15 @@ def render_front(obj_dir, size: int = 2048):
     return png, cam
 
 
-def placed_mesh(run_dir: Path, obj_dir: Path, protocol: str) -> Mesh:
+def placed_mesh(run_dir: Path, obj_dir: Path, protocol: str, batch: str | None = None) -> Mesh:
     from . import dataset
     from .align import place_front_only
     from .mesh_io import load_mesh
 
     if protocol == "multiview_oracle":
         return load_mesh(run_dir / "A_placed.glb")
-    if protocol in ("body_front_only_hires", "teacher_front_only"):
-        return load_mesh(run_dir / PROTOCOL_FILES[protocol])      # already placed by teacher.run
+    if protocol in TEACHER_PROTOCOLS:
+        return load_mesh(protocol_file(run_dir, protocol, batch))  # already placed by teacher.run
     if protocol == "front_only":
         cams = dataset.load_cameras(obj_dir)
         front = dataset.load_masks(obj_dir, ["front"])["front"]
@@ -244,7 +311,7 @@ def placed_mesh(run_dir: Path, obj_dir: Path, protocol: str) -> Mesh:
     raise ValueError(f"unknown protocol {protocol!r}; choose from {sorted(PROTOCOLS)}")
 
 
-def hand_scores(bench_dir, data_dir, protocol: str = "front_only") -> dict:
+def hand_scores(bench_dir, data_dir, protocol: str = "front_only", batch: str | None = None) -> dict:
     """Per person and hand: placed (protocol placement, no GT) and local (rigid crop ICP, uses GT) region
     metrics, plus the GT-vs-GT noise floor of the same sampling."""
     from .mesh_io import load_mesh
@@ -253,11 +320,11 @@ def hand_scores(bench_dir, data_dir, protocol: str = "front_only") -> dict:
     out = {"protocol": protocol, "protocol_description": PROTOCOLS[protocol], "density_per_m2": DENSITY}
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir()):
         run = bench_dir / d.name
-        ok, why = scoreable(run, protocol)
+        ok, why = scoreable(run, protocol, batch)
         if not ok:
             out[d.name] = {"status": "missing", "reason": why}
             continue
-        gt, pred = load_mesh(d / "gt.glb"), placed_mesh(run, d, protocol)
+        gt, pred = load_mesh(d / "gt.glb"), placed_mesh(run, d, protocol, batch)
         joints = {k: np.array(v) for k, v in json.loads((d / "joints.json").read_text()).items()}
         out[d.name] = {side: {"placed": region_metrics(pred, gt, hand_region(joints, side)),
                               "local": region_metrics_local(pred, gt, hand_region(joints, side)),
@@ -266,7 +333,7 @@ def hand_scores(bench_dir, data_dir, protocol: str = "front_only") -> dict:
     return out
 
 
-def body_scores(bench_dir, data_dir, protocol: str = "front_only") -> dict:
+def body_scores(bench_dir, data_dir, protocol: str = "front_only", batch: str | None = None) -> dict:
     """Whole-body A metrics (experiments.evaluate) under a placement protocol, from the raw outputs."""
     from . import dataset
     from .experiments import evaluate
@@ -277,12 +344,12 @@ def body_scores(bench_dir, data_dir, protocol: str = "front_only") -> dict:
     out = {"protocol": protocol, "protocol_description": PROTOCOLS[protocol]}
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir()):
         run = bench_dir / d.name
-        ok, why = scoreable(run, protocol)
+        ok, why = scoreable(run, protocol, batch)
         if not ok:
             out[d.name] = {"status": "missing", "reason": why}
             continue
         cams = dataset.load_cameras(d)
-        out[d.name] = evaluate(placed_mesh(run, d, protocol), load_mesh(d / "gt.glb"), cams,
+        out[d.name] = evaluate(placed_mesh(run, d, protocol, batch), load_mesh(d / "gt.glb"), cams,
                                dataset.load_masks(d, manifest["reference_views"]),
                                dataset.load_masks(d, manifest["heldout_views"]))
     return out

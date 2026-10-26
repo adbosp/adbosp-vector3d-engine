@@ -336,7 +336,7 @@ def test_tidy_part_drops_scattered_plates_and_limits_thickness(scene):
     assert np.allclose(flat.vertices, hand.vertices)
 
 
-def test_failed_rerun_never_scores_an_earlier_batch(scene, tmp_path):
+def test_failed_rerun_never_scores_an_earlier_batch(scene, tmp_path, monkeypatch):
     """Codex review -08 (P1): a person that fails in a rerun over an old bench folder must score as missing,
     not from the body_placed.glb / teacher_placed.glb an earlier successful batch left there."""
     from vector3d.export.writers import to_glb
@@ -364,13 +364,35 @@ def test_failed_rerun_never_scores_an_earlier_batch(scene, tmp_path):
     bench, run = tmp_path / "bench", tmp_path / "bench" / "person_00"
     first = teacher.run_human_v1(tmp_path / "data", bench, generate, lambda p: kp, size=1024, load=load)
     prov = json.loads((run / human_v1.PROVENANCE).read_text())
-    assert prov["status"] == "success" and prov["batch"] == first["batch"]
-    for proto in ("teacher_front_only", "body_front_only_hires"):
-        assert human_v1.scoreable(run, proto)[0]
+    assert prov["status"] == "success" and prov["batch"] == first["batch"] and first["status"] == "complete"
+    for proto in human_v1.TEACHER_PROTOCOLS:
+        assert human_v1.scoreable(run, proto) == (True, f"batch {first['batch']}")
+    old_files = sorted((run / human_v1.VERSIONS / first["batch"]).iterdir())
 
     res = teacher.run_human_v1(tmp_path / "data", bench, broken, lambda p: kp, size=1024)
     assert res["people"]["person_00"]["status"] == "failed" and res["batch"] != first["batch"]
-    assert not any((run / f).exists() for f in (*human_v1.TEACHER_OUTPUTS, human_v1.PROVENANCE))
-    for proto in ("teacher_front_only", "body_front_only_hires"):
-        assert human_v1.scoreable(run, proto)[0] is False
+    assert sorted((run / human_v1.VERSIONS / first["batch"]).iterdir()) == old_files     # history kept
+    for proto in human_v1.TEACHER_PROTOCOLS:
+        ok, why = human_v1.scoreable(run, proto)
+        assert not ok and "failed" in why
         assert human_v1.hand_scores(bench, tmp_path / "data", proto)["person_00"]["status"] == "missing"
+        assert human_v1.scoreable(run, proto, batch=first["batch"])[0] is False   # not this person's latest
+
+    # Codex review -13 (1): render_front fails on a folder that holds a successful batch
+    teacher.run_human_v1(tmp_path / "data", bench, generate, lambda p: kp, size=1024, load=load)
+
+    def no_disk(*a, **k):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(human_v1, "render_front", no_disk)
+    res = teacher.run_human_v1(tmp_path / "data", bench, generate, lambda p: kp, size=1024, load=load)
+    assert res["status"] == "complete" and res["people"]["person_00"] == {"status": "failed",
+                                                                          "reason": "OSError: disk full"}
+    for proto in human_v1.TEACHER_PROTOCOLS:
+        assert human_v1.scoreable(run, proto)[0] is False
+
+    # reuse_body only takes a scoreable body
+    monkeypatch.undo()
+    res = teacher.run_human_v1(tmp_path / "data", tmp_path / "bench_r", generate, lambda p: kp, size=1024,
+                               load=load, reuse_body=bench)
+    assert res["people"]["person_00"]["status"] == "failed" and "reuse_body" in res["people"]["person_00"]["reason"]

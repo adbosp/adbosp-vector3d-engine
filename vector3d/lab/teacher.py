@@ -474,16 +474,19 @@ def rtmw_keypoints(out_dir, **step_kw) -> Callable[[Path], dict]:
     return kp
 
 
-def score(data_dir, bench_dir) -> dict:
-    """hand and body scores for the teacher and its same-input whole-body baseline (human_v1 metrics)."""
-    from .human_v1 import body_scores, hand_scores, manifest_people, summarize
+def score(data_dir, bench_dir, batch: str | None = None) -> dict:
+    """hand and body scores for the teacher and its same-input whole-body baseline (human_v1 metrics), for one
+    batch (default: the latest, from teacher_batch.json); people without a scoreable output count as missing."""
+    from .human_v1 import BATCH_RECORD, batch_id, body_scores, hand_scores, manifest_people, read_json, summarize
 
     out = {}
     expected = manifest_people(data_dir) if (Path(data_dir) / "manifest.json").is_file() else None
+    batch = batch or batch_id(read_json(Path(bench_dir) / BATCH_RECORD))
     for proto in ("body_front_only_hires", "teacher_front_only"):
-        h = hand_scores(bench_dir, data_dir, proto)
-        out[proto] = {"hands": h, "summary": {v: summarize(h, v, expected) for v in ("placed", "local", "noise_floor")},
-                      "body": body_scores(bench_dir, data_dir, proto)}
+        h = hand_scores(bench_dir, data_dir, proto, batch)
+        out[proto] = {"batch": batch, "hands": h,
+                      "summary": {v: summarize(h, v, expected) for v in ("placed", "local", "noise_floor")},
+                      "body": body_scores(bench_dir, data_dir, proto, batch)}
     return out
 
 
@@ -492,40 +495,59 @@ def run_human_v1(data_dir, bench_dir, generate: Generate, keypoints_for: Callabl
                  depth: str = "body", tidy: bool = True) -> dict:
     """Teacher on every human_v1 person from a size x size front render (human_v1.render_front).
     keypoints_for(image) -> {"xy", "score"} from that image only (the RTMW anatomy step on the PC).
-    Copies body_placed.glb / teacher_placed.glb into bench_dir/<person>/ with teacher_provenance.json (batch,
-    run_dir, sha256) for human_v1.hand_scores; a person that fails keeps no scoreable files from earlier batches.
-    reuse_body: an earlier bench_dir; its <person>/body_placed.glb is reused instead of generating the body."""
+    Each batch gets an id. Per person, before anything that can fail, teacher_provenance.json is set to
+    started; outputs go to <person>/teacher_batches/<id>/ (never overwritten, earlier batches are kept); the
+    provenance becomes success (sha256 per file) or failed. Any error, render included, fails that person only.
+    bench/teacher_batches/<id>.json is rewritten atomically after each person and ends with status complete;
+    bench/teacher_batch.json names the latest batch. human_v1.scoreable accepts only that combination.
+    reuse_body: an earlier bench_dir; its scoreable body_placed.glb is reused instead of generating the body."""
     import shutil
 
-    from .human_v1 import render_front
-
-    data_dir, bench_dir = Path(data_dir), Path(bench_dir)
+    from .human_v1 import (BATCH_RECORD, PROVENANCE, TEACHER_OUTPUTS, VERSIONS, protocol_file, render_front,
+                           scoreable, sha256, write_json)
     from .mesh_io import load_mesh
 
-    from .human_v1 import PROVENANCE, TEACHER_OUTPUTS, sha256
-
-    batch = time.strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:6]
-    out = {"batch": batch, "size": size, "isolation": isolation, "depth": depth, "tidy": tidy,
+    data_dir, bench_dir = Path(data_dir), Path(bench_dir)
+    batch = time.strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:8]
+    out = {"batch": batch, "status": "running", "size": size, "isolation": isolation, "depth": depth, "tidy": tidy,
            "reuse_body": str(reuse_body) if reuse_body else None, "people": {}}
+    record = bench_dir / VERSIONS / f"{batch}.json"
+    record.parent.mkdir(parents=True, exist_ok=True)
+    write_json(record, out)
+    write_json(bench_dir / BATCH_RECORD, out)
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir() and (p / "gt.glb").is_file()):
         if names and d.name not in names:
             continue
-        png, cam = render_front(d, size)
         dest = bench_dir / d.name
-        for f in (*TEACHER_OUTPUTS, PROVENANCE):      # an earlier batch's outputs are never scored again
-            (dest / f).unlink(missing_ok=True)
         try:
-            body = load_mesh(Path(reuse_body) / d.name / "body_placed.glb") if reuse_body else None
+            dest.mkdir(parents=True, exist_ok=True)
+            write_json(dest / PROVENANCE, {"status": "started", "batch": batch})
+            png, cam = render_front(d, size)
+            body = None
+            if reuse_body:
+                src = Path(reuse_body) / d.name
+                ok, why = scoreable(src, "body_front_only_hires")
+                if not ok:
+                    raise RuntimeError(f"reuse_body {src}: {why}")
+                body = load_mesh(protocol_file(src, "body_front_only_hires"))
             rep = run(png, cam, keypoints_for(png), generate, dest / "teacher_runs", load=load,
                       isolation=isolation, body=body, depth=depth, tidy=tidy)
+            vdir = dest / VERSIONS / batch
+            vdir.mkdir(parents=True)
+            for f in TEACHER_OUTPUTS:
+                shutil.copy2(Path(rep["run_dir"]) / f, vdir / f)
+            person = {"status": "success", "run_dir": rep["run_dir"], "seconds": rep["seconds"],
+                      "sha256": {f: sha256(vdir / f) for f in TEACHER_OUTPUTS}}
+            write_json(dest / PROVENANCE, {"batch": batch, **person})
         except Exception as e:  # recorded per person; the batch goes on
-            out["people"][d.name] = {"status": "failed", "reason": f"{type(e).__name__}: {e}"}
-            continue
-        for f in TEACHER_OUTPUTS:
-            shutil.copy2(Path(rep["run_dir"]) / f, dest / f)
-        out["people"][d.name] = {"status": "success", "run_dir": rep["run_dir"], "seconds": rep["seconds"]}
-        (dest / PROVENANCE).write_text(json.dumps(
-            {"status": "success", "batch": batch, "run_dir": rep["run_dir"],
-             "sha256": {f: sha256(dest / f) for f in TEACHER_OUTPUTS}}, indent=1))
-    (bench_dir / "teacher_batch.json").write_text(json.dumps(out, indent=1))
+            person = {"status": "failed", "reason": f"{type(e).__name__}: {e}"}
+            try:
+                write_json(dest / PROVENANCE, {"batch": batch, **person})
+            except OSError:
+                pass    # the provenance may still say started: scoreable rejects it either way
+        out["people"][d.name] = person
+        write_json(record, out)
+    out["status"] = "complete"
+    write_json(record, out)
+    write_json(bench_dir / BATCH_RECORD, out)
     return out
