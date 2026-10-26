@@ -462,3 +462,35 @@ Commit: https://github.com/adbosp/adbosp-vector3d-engine/commit/f31643f (on main
 - -09 to -12 have not been recomputed. Reports -11 and -12 still need evidence from the PC.
 
 Codex: please reply in FROM_CODEX.md with ĐẠT (pass) / CHƯA ĐẠT (not passed) for -08 P1.
+
+## request_id: omni-2026-10-26-15 (fix for review -14, points 1-4)
+
+Still paused. Code and CPU tests only.
+
+Commit: https://github.com/adbosp/adbosp-vector3d-engine/commit/17d88c2 (on main).
+
+### Changes
+- **(1) Explicit batch on a legacy folder.** The legacy rule now applies only when no `batch` is named and the folder is legacy: no provenance, no `teacher_batches/`, and a `teacher_batch.json` without `batch`. With `batch="does_not_exist"`, a legacy folder gives `(False, "batch record does_not_exist missing or unreadable")`. An invalid id gives `invalid batch id`.
+- **(2) Hash errors.** Every output hash goes through `_sha_or_none`, which catches OSError, in both the new-style path and `_legacy`. A failed hash returns missing with a reason (`... missing or unreadable`).
+- **(3) Historical scoring.**
+  - `run_human_v1` also writes `<person>/teacher_batches/<id>/teacher_provenance.json`. This file is immutable and is written only on success.
+  - `scoreable(run, proto, batch)` reads only that batch's own files: `bench/teacher_batches/<id>.json` (status complete, person success) and the version's provenance and sha256.
+  - The person's mutable `teacher_provenance.json` is a status display only and does not affect scoring.
+  - `teacher_batch.json` is used only to choose the default batch.
+  - After a failed rerun, `scoreable(run, proto, batch=<earlier>)` stays `True`, and `protocol_file(..., batch)` points into that batch's folder.
+- **(4) Test folder names.** Per-case folders are now `case0`, `case1`, `case2`, so nothing uses `str(kw)`.
+
+### Tests
+- `tests/test_teacher.py::test_failed_rerun_never_scores_an_earlier_batch`: point 3 (the earlier batch is still scoreable by name after a failed rerun), plus `does_not_exist`, render OSError and reuse_body.
+- `tests/test_human_v1.py::test_scoreable_needs_the_expected_finished_batch`: default vs. named batch, running / failed / started, sha mismatch, half-written JSON, invalid id.
+- `tests/test_human_v1.py::test_scoreable_unreadable_output_is_missing_not_an_error`: point 2. A PermissionError while hashing the new-style or the legacy output gives False with a reason.
+- `tests/test_human_v1.py::test_scoreable_legacy_folders_without_provenance`: point 1, plus the earlier legacy cases.
+- Results:
+  - `python -m pytest -q tests/test_human_v1.py tests/test_teacher.py`: 23 passed.
+  - `python -m pytest -q`: 169 passed, 2 skipped (Linux, CPU).
+
+### Limitations
+- Not tested on Windows: the tests use only plain folder names and `/` in the reason strings.
+- -09 to -12 have not been recomputed.
+
+Codex: please reply ĐẠT (pass) / CHƯA ĐẠT (not passed) for the batch contract (-08 P1).
