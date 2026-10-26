@@ -104,3 +104,32 @@ def test_build_layout(tmp_path):
     assert m["version"] == "human_v1" and m["objects"][0]["category"] == "human"
     assert (d / "gt.glb").is_file() and (d / "views" / "front.png").is_file() and (d / "views" / "top.png").is_file()
     assert set(json.loads((d / "joints.json").read_text())) == set(names)
+
+
+def test_scoreable_needs_matching_provenance_or_legacy_batch(tmp_path):
+    """Codex review -08 (P1): teacher outputs count only with per-run provenance whose sha256 matches."""
+    run = tmp_path / "bench" / "p0"
+    src = tmp_path / "runs" / "r1"
+    run.mkdir(parents=True), src.mkdir(parents=True)
+    for f in human_v1.TEACHER_OUTPUTS:
+        (src / f).write_bytes(b"new " + f.encode())
+        (run / f).write_bytes(b"new " + f.encode())
+    proto = "teacher_front_only"
+    # legacy folder (before provenance): accepted only via a success entry with the same bytes
+    assert human_v1.scoreable(run, proto)[0] is False
+    batch = {"people": {"p0": {"status": "success", "run_dir": str(src)}}}
+    (run.parent / "teacher_batch.json").write_text(json.dumps(batch))
+    assert human_v1.scoreable(run, proto) == (True, "legacy teacher_batch.json entry, sha256 matches run_dir")
+    (run / "teacher_placed.glb").write_bytes(b"stale from an older batch")
+    assert human_v1.scoreable(run, proto)[0] is False
+    batch["people"]["p0"] = {"status": "failed", "reason": "RuntimeError"}
+    (run.parent / "teacher_batch.json").write_text(json.dumps(batch))
+    assert human_v1.scoreable(run, proto)[0] is False
+    # provenance wins over the batch file, and a changed file no longer matches it
+    (run / human_v1.PROVENANCE).write_text(json.dumps(
+        {"status": "success", "batch": "b2", "sha256": {f: human_v1.sha256(run / f) for f in human_v1.TEACHER_OUTPUTS}}))
+    assert human_v1.scoreable(run, proto) == (True, "provenance batch b2")
+    (run / "teacher_placed.glb").write_bytes(b"overwritten later")
+    ok, why = human_v1.scoreable(run, proto)
+    assert not ok and "sha256" in why
+    assert human_v1.scoreable(run, "front_only")[0] is False     # other protocols: unchanged file check

@@ -492,7 +492,8 @@ def run_human_v1(data_dir, bench_dir, generate: Generate, keypoints_for: Callabl
                  depth: str = "body", tidy: bool = True) -> dict:
     """Teacher on every human_v1 person from a size x size front render (human_v1.render_front).
     keypoints_for(image) -> {"xy", "score"} from that image only (the RTMW anatomy step on the PC).
-    Copies body_placed.glb / teacher_placed.glb into bench_dir/<person>/ for human_v1.hand_scores.
+    Copies body_placed.glb / teacher_placed.glb into bench_dir/<person>/ with teacher_provenance.json (batch,
+    run_dir, sha256) for human_v1.hand_scores; a person that fails keeps no scoreable files from earlier batches.
     reuse_body: an earlier bench_dir; its <person>/body_placed.glb is reused instead of generating the body."""
     import shutil
 
@@ -501,13 +502,18 @@ def run_human_v1(data_dir, bench_dir, generate: Generate, keypoints_for: Callabl
     data_dir, bench_dir = Path(data_dir), Path(bench_dir)
     from .mesh_io import load_mesh
 
-    out = {"size": size, "isolation": isolation, "depth": depth, "tidy": tidy, "reuse_body": str(reuse_body) if reuse_body else None,
-           "people": {}}
+    from .human_v1 import PROVENANCE, TEACHER_OUTPUTS, sha256
+
+    batch = time.strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:6]
+    out = {"batch": batch, "size": size, "isolation": isolation, "depth": depth, "tidy": tidy,
+           "reuse_body": str(reuse_body) if reuse_body else None, "people": {}}
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir() and (p / "gt.glb").is_file()):
         if names and d.name not in names:
             continue
         png, cam = render_front(d, size)
         dest = bench_dir / d.name
+        for f in (*TEACHER_OUTPUTS, PROVENANCE):      # an earlier batch's outputs are never scored again
+            (dest / f).unlink(missing_ok=True)
         try:
             body = load_mesh(Path(reuse_body) / d.name / "body_placed.glb") if reuse_body else None
             rep = run(png, cam, keypoints_for(png), generate, dest / "teacher_runs", load=load,
@@ -515,8 +521,11 @@ def run_human_v1(data_dir, bench_dir, generate: Generate, keypoints_for: Callabl
         except Exception as e:  # recorded per person; the batch goes on
             out["people"][d.name] = {"status": "failed", "reason": f"{type(e).__name__}: {e}"}
             continue
-        for f in ("body_placed.glb", "teacher_placed.glb"):
+        for f in TEACHER_OUTPUTS:
             shutil.copy2(Path(rep["run_dir"]) / f, dest / f)
         out["people"][d.name] = {"status": "success", "run_dir": rep["run_dir"], "seconds": rep["seconds"]}
+        (dest / PROVENANCE).write_text(json.dumps(
+            {"status": "success", "batch": batch, "run_dir": rep["run_dir"],
+             "sha256": {f: sha256(dest / f) for f in TEACHER_OUTPUTS}}, indent=1))
     (bench_dir / "teacher_batch.json").write_text(json.dumps(out, indent=1))
     return out

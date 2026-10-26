@@ -334,3 +334,43 @@ def test_tidy_part_drops_scattered_plates_and_limits_thickness(scene):
     flat, finfo = teacher.tidy_part(hand, cam)                    # a normal hand is left alone
     assert finfo["depth_squash"] == 1.0 and finfo["pieces_removed"] == 0
     assert np.allclose(flat.vertices, hand.vertices)
+
+
+def test_failed_rerun_never_scores_an_earlier_batch(scene, tmp_path):
+    """Codex review -08 (P1): a person that fails in a rerun over an old bench folder must score as missing,
+    not from the body_placed.glb / teacher_placed.glb an earlier successful batch left there."""
+    from vector3d.export.writers import to_glb
+    from vector3d.lab import human_v1
+
+    body, hand, _ = scene
+    d = tmp_path / "data" / "person_00"
+    (d / "views").mkdir(parents=True)
+    (d / "gt.glb").write_bytes(to_glb(body, "gt"))
+    cams = ds.cameras_for(body, 256)
+    (d / "cameras.json").write_text(json.dumps({k: c.to_dict() for k, c in cams.items()}))
+    _, cam = human_v1.render_front(d, 1024)
+    kp = keypoints_for(hand, cam)
+
+    def generate(image, out):
+        out.mkdir(parents=True, exist_ok=True)
+        m = canonical(body)
+        np.savez(out / "raw.npz", v=m.vertices, f=m.faces)
+        return out / "raw.npz"
+
+    def broken(image, out):
+        raise RuntimeError("TripoSG blocked: no GPU")
+
+    load = lambda f: Mesh(np.load(f)["v"], np.load(f)["f"])  # noqa: E731
+    bench, run = tmp_path / "bench", tmp_path / "bench" / "person_00"
+    first = teacher.run_human_v1(tmp_path / "data", bench, generate, lambda p: kp, size=1024, load=load)
+    prov = json.loads((run / human_v1.PROVENANCE).read_text())
+    assert prov["status"] == "success" and prov["batch"] == first["batch"]
+    for proto in ("teacher_front_only", "body_front_only_hires"):
+        assert human_v1.scoreable(run, proto)[0]
+
+    res = teacher.run_human_v1(tmp_path / "data", bench, broken, lambda p: kp, size=1024)
+    assert res["people"]["person_00"]["status"] == "failed" and res["batch"] != first["batch"]
+    assert not any((run / f).exists() for f in (*human_v1.TEACHER_OUTPUTS, human_v1.PROVENANCE))
+    for proto in ("teacher_front_only", "body_front_only_hires"):
+        assert human_v1.scoreable(run, proto)[0] is False
+        assert human_v1.hand_scores(bench, tmp_path / "data", proto)["person_00"]["status"] == "missing"

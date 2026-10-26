@@ -174,6 +174,42 @@ def protocol_file(run_dir: Path, protocol: str) -> Path:
     return run_dir / PROTOCOL_FILES[protocol]
 
 
+TEACHER_OUTPUTS = ("body_placed.glb", "teacher_placed.glb")   # copied by teacher.run_human_v1
+PROVENANCE = "teacher_provenance.json"
+
+
+def sha256(path: Path) -> str:
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def scoreable(run_dir: Path, protocol: str) -> tuple[bool, str]:
+    """Whether a run folder holds this protocol's output from a successful run. Teacher protocols need
+    teacher_provenance.json (status success, matching sha256), or, for folders written before it existed, a
+    success entry in ../teacher_batch.json whose run_dir file has the same bytes. A stale or failed person
+    is never scored from files an earlier batch left behind."""
+    f = protocol_file(run_dir, protocol)
+    if not f.is_file():
+        return False, f"{f.name} not found"
+    if protocol not in ("body_front_only_hires", "teacher_front_only"):
+        return True, "file present"
+    prov = run_dir / PROVENANCE
+    if prov.is_file():
+        rec = json.loads(prov.read_text())
+        if rec.get("status") != "success":
+            return False, f"provenance status {rec.get('status')!r}"
+        if rec.get("sha256", {}).get(f.name) != sha256(f):
+            return False, f"{f.name} does not match its provenance sha256"
+        return True, f"provenance batch {rec.get('batch')}"
+    batch = run_dir.parent / "teacher_batch.json"
+    rec = json.loads(batch.read_text()).get("people", {}).get(run_dir.name) if batch.is_file() else None
+    if not rec or rec.get("status") != "success":
+        return False, f"no provenance and teacher_batch.json status {rec and rec.get('status')!r}"
+    src = Path(rec["run_dir"]) / f.name
+    if not src.is_file() or sha256(src) != sha256(f):
+        return False, f"no provenance and {f.name} differs from the batch's run_dir copy"
+    return True, "legacy teacher_batch.json entry, sha256 matches run_dir"
+
+
 def render_front(obj_dir, size: int = 2048):
     """views/front_<size>.png: the front camera of cameras.json at a higher resolution (same view, same
     framing). Stands in for a high-resolution photo; nothing but the image and its camera is derived."""
@@ -217,8 +253,9 @@ def hand_scores(bench_dir, data_dir, protocol: str = "front_only") -> dict:
     out = {"protocol": protocol, "protocol_description": PROTOCOLS[protocol], "density_per_m2": DENSITY}
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir()):
         run = bench_dir / d.name
-        if not protocol_file(run, protocol).is_file():
-            out[d.name] = {"status": "missing"}
+        ok, why = scoreable(run, protocol)
+        if not ok:
+            out[d.name] = {"status": "missing", "reason": why}
             continue
         gt, pred = load_mesh(d / "gt.glb"), placed_mesh(run, d, protocol)
         joints = {k: np.array(v) for k, v in json.loads((d / "joints.json").read_text()).items()}
@@ -240,8 +277,9 @@ def body_scores(bench_dir, data_dir, protocol: str = "front_only") -> dict:
     out = {"protocol": protocol, "protocol_description": PROTOCOLS[protocol]}
     for d in sorted(p for p in data_dir.iterdir() if p.is_dir()):
         run = bench_dir / d.name
-        if not protocol_file(run, protocol).is_file():
-            out[d.name] = {"status": "missing"}
+        ok, why = scoreable(run, protocol)
+        if not ok:
+            out[d.name] = {"status": "missing", "reason": why}
             continue
         cams = dataset.load_cameras(d)
         out[d.name] = evaluate(placed_mesh(run, d, protocol), load_mesh(d / "gt.glb"), cams,
