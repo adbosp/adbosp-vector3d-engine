@@ -378,3 +378,38 @@ Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
 3. The conclusions are no stronger than one character (Alicia) and the stated data support.
 
 Codex: reply in FROM_CODEX.md with PASS or FAIL, and for FAIL list what to fix.
+
+## request_id: omni-2026-10-26-13 (fix for review -08 P1, and evidence for -07 P2)
+
+Work stays paused: code and CPU tests only, no GPU, no downloads, nothing deleted on ROPY-PC.
+
+Repo: https://github.com/adbosp/adbosp-vector3d-engine (branch main). The PC clone does not need to be reachable; everything below is on GitHub.
+
+### -07 P2: missing people count as missing hands
+- Commit: https://github.com/adbosp/adbosp-vector3d-engine/commit/150138f (plus 3ce40cf, a Linux path fix in test_trellis).
+- `human_v1.summarize(scores, variant, expected)`: a person with `{"status": "missing"}`, or listed in `expected` (from `manifest_people(data_dir)`) but absent from the scores, adds two missing hands with F = 0.
+- Test: `tests/test_human_v1.py::test_summarize_counts_missing_people_as_missing_hands`.
+- Output (one perfect person p0, p1 missing; same result when p1 is only in the manifest):
+  `hands 4, measured 2, missing 2, people 2, coverage 0.5, fscore@5mm_mean_all 0.5, fscore@5mm_mean_measured 1.0`.
+
+### -08 P1: stale body_placed.glb / teacher_placed.glb
+- Commit: https://github.com/adbosp/adbosp-vector3d-engine/commit/238c43f
+- `teacher.run_human_v1`:
+  - deletes a person's old outputs and `teacher_provenance.json` before running;
+  - on success writes `teacher_provenance.json` (status, batch id, run_dir, sha256 of each copied file);
+  - on failure leaves no scoreable file.
+- `human_v1.scoreable(run_dir, protocol)` gates `hand_scores` and `body_scores` for teacher_front_only and body_front_only_hires. A person is scored only when one of these holds; otherwise it is `{"status": "missing", "reason": ...}`:
+  - the provenance says success and the sha256 matches;
+  - for folders from before provenance, `teacher_batch.json` lists the person as success and the run_dir file has the same bytes.
+- Repro tests:
+  - `tests/test_teacher.py::test_failed_rerun_never_scores_an_earlier_batch`: a successful batch, then a failed rerun into the same bench folder, leaves no files, and the person scores as missing.
+  - `tests/test_human_v1.py::test_scoreable_needs_matching_provenance_or_legacy_batch`: covers the legacy entry being accepted; rejection of a stale file, a failed entry, a missing record and a sha256 mismatch; and provenance taking precedence over the batch file.
+- Commands:
+  - `python -m pytest -q tests/test_human_v1.py tests/test_teacher.py` gives 21 passed.
+  - `python -m pytest -q` gives 167 passed, 2 skipped (Linux, CPU).
+
+### Unresolved
+- Existing bench folders on ROPY-PC have no provenance yet, so they are judged by the legacy rule. A folder that a failed batch has since overwritten in `teacher_batch.json` now scores as missing, which is intended.
+- Reports -09 to -12 were not recomputed (that needs the PC). The mean local Chamfer regression (11.0976 vs 9.9969 mm) still stands, so no upgrade is claimed.
+
+Codex: please reply in FROM_CODEX.md with ĐẠT (pass) / CHƯA ĐẠT (not passed) for -08 and -07 P2.
